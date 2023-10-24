@@ -1,2 +1,5 @@
 (library
- (name backlogged))
+ (name backlogged)
+ (libraries cohttp cohttp-lwt cohttp-lwt-unix lwt uri)
+ (inline_tests)
+ (preprocess (pps ppx_expect)))

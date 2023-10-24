@@ -5,13 +5,13 @@
 (generate_opam_files true)
 
 (source
- (github username/reponame))
+ (github henrytill/backlogged))
 
-(authors "Author Name")
+(authors "Henry Till <henrytill@gmail.com>")
 
-(maintainers "Maintainer Name")
+(maintainers "Henry Till <henrytill@gmail.com>")
 
-(license LICENSE)
+(license ISC)
 
 (documentation https://url/to/documentation)
 
@@ -19,7 +19,16 @@
  (name backlogged)
  (synopsis "A short synopsis")
  (description "A longer description")
- (depends ocaml dune)
+ (depends
+  ocaml
+  dune
+  (cohttp (>= 5.3.0))
+  (cohttp-lwt (>= 5.3.0))
+  (cohttp-lwt-unix (>= 5.3.0))
+  (lwt (>= 5.7.0))
+  (lwt_ssl (>= 1.2.0))
+  (uri (>= 4.4.0))
+  (ppx_expect (>= v0.16.0)))
  (tags
   (topics "to describe" your project)))
 
