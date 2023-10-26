@@ -26,5 +26,3 @@ let min_get () =
   let headers = Header.of_list [ ("Accept", "application/json"); ("Host", "www.howsmyssl.com") ] in
   let* _, body = Client.get ~headers (Uri.of_string "https://www.howsmyssl.com/a/check") in
   Cohttp_lwt.Body.to_string body
-
-let run () = Lwt_main.run (get ())

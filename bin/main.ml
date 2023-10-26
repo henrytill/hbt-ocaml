@@ -1,1 +1,1 @@
-let () = Backlogged.run ()
+let () = Lwt_main.run (Backlogged.get ())
