@@ -27,8 +27,7 @@
   (cohttp-lwt-unix (>= 5.3.0))
   (lwt (>= 5.7.0))
   (lwt_ssl (>= 1.2.0))
-  (uri (>= 4.4.0))
-  (ppx_expect (>= v0.16.0)))
+  (uri (>= 4.4.0)))
  (tags
   (topics "to describe" your project)))
 

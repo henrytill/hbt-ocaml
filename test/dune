@@ -1,2 +1,3 @@
 (test
- (name backlogged))
+ (name backlogged)
+ (libraries backlogged lwt.unix))
