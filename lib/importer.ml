@@ -8,6 +8,28 @@ type post = {
   shared : bool;
 }
 
+let pp fmt post =
+  let escape_quotes s = Str.global_replace (Str.regexp "\"") "\\\"" s in
+  Format.pp_print_char fmt '{';
+  Format.fprintf fmt "href: \"%s\", " post.href;
+  Format.fprintf fmt "time: \"%s\", " post.time;
+  Format.pp_print_option
+    (fun fmt s -> Format.fprintf fmt "description: \"%s\", " (escape_quotes s))
+    fmt post.description;
+  Format.pp_print_option
+    (fun fmt s -> Format.fprintf fmt "extended: \"%s\", " (escape_quotes s))
+    fmt post.extended;
+  Format.pp_print_string fmt "tag: [";
+  Format.pp_print_list
+    ~pp_sep:(fun fmt _ -> Format.pp_print_string fmt "; ")
+    (fun fmt s -> Format.fprintf fmt "\"%s\"" s)
+    fmt post.tag;
+  Format.pp_print_string fmt "], ";
+  Format.fprintf fmt "hash: \"%s\", " post.hash;
+  Format.pp_print_string fmt "shared: ";
+  Format.pp_print_bool fmt post.shared;
+  Format.pp_print_char fmt '}'
+
 let parse_post attrs =
   let get_attr k =
     try
