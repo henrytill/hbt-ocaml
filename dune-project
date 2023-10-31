@@ -1,4 +1,4 @@
-(lang dune 3.11)
+(lang dune 3.10)
 
 (name backlogged)
 
@@ -28,9 +28,9 @@
   (lwt (>= 5.7.0))
   (lwt_ssl (>= 1.2.0))
   (uri (>= 4.4.0))
-  (xdg (>= 3.11.1))
+  (xdg (>= 3.10.0))
   (xmlm (>= 1.4.0))
-  (yojson (>= 2.1.1)))
+  (yojson (>= 2.1.0)))
  (tags
   (topics "to describe" your project)))
 
