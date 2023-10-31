@@ -29,7 +29,8 @@
   (lwt_ssl (>= 1.2.0))
   (uri (>= 4.4.0))
   (xdg (>= 3.11.1))
-  (xmlm (>= 1.4.0)))
+  (xmlm (>= 1.4.0))
+  (yojson (>= 2.1.1)))
  (tags
   (topics "to describe" your project)))
 

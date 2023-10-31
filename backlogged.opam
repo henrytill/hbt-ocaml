@@ -20,6 +20,7 @@ depends: [
   "uri" {>= "4.4.0"}
   "xdg" {>= "3.11.1"}
   "xmlm" {>= "1.4.0"}
+  "yojson" {>= "2.1.1"}
   "odoc" {with-doc}
 ]
 build: [

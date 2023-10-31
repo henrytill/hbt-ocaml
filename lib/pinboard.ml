@@ -72,3 +72,20 @@ let from_xml file =
   if not (Xmlm.eoi xml) then invalid_arg "document not well-formed";
   close_in ic;
   posts
+
+let from_json file =
+  let json = Yojson.Basic.from_file file in
+  let open Yojson.Basic.Util in
+  let to_t j =
+    let href = j |> member "href" |> to_string in
+    let time = j |> member "time" |> to_string in
+    let description = j |> member "description" |> to_string_option in
+    let extended = j |> member "extended" |> to_string_option in
+    let tags = j |> member "tags" |> to_string in
+    let tag = Str.split (Str.regexp "[ \t]+") tags in
+    let hash = j |> member "hash" |> to_string in
+    let shared = j |> member "shared" |> to_string = "yes" in
+    let toread = j |> member "toread" |> to_string = "yes" in
+    { href; time; description; extended; tag; hash; shared; toread }
+  in
+  convert_each to_t json
