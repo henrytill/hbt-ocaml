@@ -2,34 +2,36 @@ module Pinboard = struct
   type t = {
     href : string;
     time : string;
-    description : string Option.t;
-    extended : string Option.t;
+    description : string option;
+    extended : string option;
     tag : string list;
     hash : string;
     shared : bool;
+    toread : bool;
   }
 
   let pp fmt p =
-    let escape_quotes s = Str.global_replace (Str.regexp "\"") "\\\"" s in
     Format.pp_print_char fmt '{';
-    Format.fprintf fmt "href: \"%s\", " p.href;
-    Format.fprintf fmt "time: \"%s\", " p.time;
+    Format.fprintf fmt "href = %S" p.href;
+    Format.fprintf fmt ", time = %S" p.time;
     Format.pp_print_option
-      (fun fmt s -> Format.fprintf fmt "description: \"%s\", " (escape_quotes s))
+      (fun fmt s -> Format.fprintf fmt ", description = %S" s)
       fmt p.description;
-    Format.pp_print_option
-      (fun fmt s -> Format.fprintf fmt "extended: \"%s\", " (escape_quotes s))
-      fmt p.extended;
-    Format.pp_print_string fmt "tag: [";
+    Format.pp_print_option (fun fmt s -> Format.fprintf fmt ", extended = %S" s) fmt p.extended;
+    Format.pp_print_string fmt ", tag = [";
     Format.pp_print_list
       ~pp_sep:(fun fmt _ -> Format.pp_print_string fmt "; ")
-      (fun fmt s -> Format.fprintf fmt "\"%s\"" s)
+      (fun fmt s -> Format.fprintf fmt "%S" s)
       fmt p.tag;
-    Format.pp_print_string fmt "], ";
-    Format.fprintf fmt "hash: \"%s\", " p.hash;
-    Format.pp_print_string fmt "shared: ";
+    Format.pp_print_string fmt "]";
+    Format.fprintf fmt ", hash = %S" p.hash;
+    Format.pp_print_string fmt ", shared = ";
     Format.pp_print_bool fmt p.shared;
+    Format.pp_print_string fmt ", toread = ";
+    Format.pp_print_bool fmt p.toread;
     Format.pp_print_char fmt '}'
+
+  let to_string p = Format.asprintf "%a" pp p
 
   let parse_post attrs =
     let get_attr k =
@@ -38,18 +40,19 @@ module Pinboard = struct
         List.assoc k attrs
       with Not_found -> String.empty
     in
-    let get_attr_maybe k =
+    let get_attr_option k =
       let s = get_attr k in
       Option.(if String.empty = s then None else Some s)
     in
     {
       href = get_attr "href";
       time = get_attr "time";
-      description = get_attr_maybe "description";
-      extended = get_attr_maybe "extended";
+      description = get_attr_option "description";
+      extended = get_attr_option "extended";
       tag = Str.split (Str.regexp "[ \t]+") (get_attr "tag");
       hash = get_attr "hash";
       shared = get_attr "shared" = "yes";
+      toread = get_attr "toread" = "yes";
     }
 
   let from_xml file =
