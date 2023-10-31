@@ -1,5 +1,5 @@
 module Config = Backlogged.Config
-module Importer = Backlogged.Importer
+module Pinboard = Backlogged.Importer.Pinboard
 module StringSet = Set.Make (String)
 
 let find_xml_files dir =
@@ -46,12 +46,11 @@ let () =
   Format.pp_print_string fmt "xml_files: ";
   pp_string_list fmt xml_files;
   Format.pp_print_newline fmt ();
-  let posts = Importer.parse_xml (List.hd xml_files) in
+  let posts = Pinboard.from_xml (List.hd xml_files) in
   Format.fprintf fmt "parsed: %d posts, " (List.length posts);
-  let open Importer in
   let tags =
     List.fold_left
-      (fun acc post -> StringSet.of_list post.tag |> StringSet.union acc)
+      (fun acc post -> Pinboard.(StringSet.of_list post.tag) |> StringSet.union acc)
       StringSet.empty posts
   in
   Format.fprintf fmt "%d tags\n" (StringSet.cardinal tags);
