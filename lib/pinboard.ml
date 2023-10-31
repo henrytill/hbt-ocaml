@@ -10,23 +10,24 @@ type t = {
 }
 
 let pp fmt p =
-  Format.pp_print_char fmt '{';
-  Format.fprintf fmt "href = %S" p.href;
-  Format.fprintf fmt ", time = %S" p.time;
-  Format.pp_print_option (fun fmt s -> Format.fprintf fmt ", description = %S" s) fmt p.description;
-  Format.pp_print_option (fun fmt s -> Format.fprintf fmt ", extended = %S" s) fmt p.extended;
-  Format.pp_print_string fmt ", tag = [";
-  Format.pp_print_list
-    ~pp_sep:(fun fmt _ -> Format.pp_print_string fmt "; ")
-    (fun fmt s -> Format.fprintf fmt "%S" s)
+  let open Format in
+  pp_print_char fmt '{';
+  fprintf fmt "href = %S" p.href;
+  fprintf fmt ", time = %S" p.time;
+  pp_print_option (fun fmt s -> fprintf fmt ", description = %S" s) fmt p.description;
+  pp_print_option (fun fmt s -> fprintf fmt ", extended = %S" s) fmt p.extended;
+  pp_print_string fmt ", tag = [";
+  pp_print_list
+    ~pp_sep:(fun fmt _ -> pp_print_string fmt "; ")
+    (fun fmt s -> fprintf fmt "%S" s)
     fmt p.tag;
-  Format.pp_print_string fmt "]";
-  Format.fprintf fmt ", hash = %S" p.hash;
-  Format.pp_print_string fmt ", shared = ";
-  Format.pp_print_bool fmt p.shared;
-  Format.pp_print_string fmt ", toread = ";
-  Format.pp_print_bool fmt p.toread;
-  Format.pp_print_char fmt '}'
+  pp_print_string fmt "]";
+  fprintf fmt ", hash = %S" p.hash;
+  pp_print_string fmt ", shared = ";
+  pp_print_bool fmt p.shared;
+  pp_print_string fmt ", toread = ";
+  pp_print_bool fmt p.toread;
+  pp_print_char fmt '}'
 
 let to_string p = Format.asprintf "%a" pp p
 
