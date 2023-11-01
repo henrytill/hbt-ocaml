@@ -3,8 +3,12 @@
     opam-nix.url = "github:tweag/opam-nix";
     flake-utils.url = "github:numtide/flake-utils";
     nixpkgs.follows = "opam-nix/nixpkgs";
+    flake-compat = {
+      url = "github:edolstra/flake-compat";
+      flake = false;
+    };
   };
-  outputs = { self, flake-utils, opam-nix, nixpkgs }@inputs:
+  outputs = { self, flake-utils, opam-nix, nixpkgs, ... }@inputs:
     let package = "backlogged";
     in flake-utils.lib.eachDefaultSystem (system:
       let
