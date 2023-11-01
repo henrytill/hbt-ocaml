@@ -1,5 +1,5 @@
 module Config = Backlogged.Config
-module Pinboard = Backlogged.Importer.Pinboard
+module Pinboard = Backlogged.Pinboard
 module StringSet = Set.Make (String)
 
 let find_files suffix dir =
@@ -49,14 +49,10 @@ let parse_xml fmt import_dir =
   pp_print_newline fmt ();
   let posts = Pinboard.from_xml (List.hd xml_files) in
   fprintf fmt "parsed: %d posts, " (List.length posts);
-  let tags =
-    List.fold_left
-      (fun acc post -> Pinboard.(StringSet.of_list post.tag) |> StringSet.union acc)
-      StringSet.empty posts
-  in
-  fprintf fmt "%d tags\n" (StringSet.cardinal tags);
+  let tags = Pinboard.tags posts in
+  fprintf fmt "%d tags\n" (Pinboard.Tags.cardinal tags);
   pp_print_string fmt "tags: ";
-  pp_string_list fmt (StringSet.elements tags);
+  Pinboard.Tags.pp fmt tags;
   pp_print_newline fmt ()
 
 let parse_json fmt import_dir =
@@ -67,14 +63,10 @@ let parse_json fmt import_dir =
   pp_print_newline fmt ();
   let posts = Pinboard.from_json (List.hd json_files) in
   fprintf fmt "parsed: %d posts, " (List.length posts);
-  let tags =
-    List.fold_left
-      (fun acc post -> Pinboard.(StringSet.of_list post.tag) |> StringSet.union acc)
-      StringSet.empty posts
-  in
-  fprintf fmt "%d tags\n" (StringSet.cardinal tags);
+  let tags = Pinboard.tags posts in
+  fprintf fmt "%d tags\n" (Pinboard.Tags.cardinal tags);
   pp_print_string fmt "tags: ";
-  pp_string_list fmt (StringSet.elements tags);
+  Pinboard.Tags.pp fmt tags;
   pp_print_newline fmt ()
 
 let () =

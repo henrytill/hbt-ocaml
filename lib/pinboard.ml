@@ -8,6 +8,21 @@ type t = {
   shared : bool;
   toread : bool;
 }
+[@@warning "-69"]
+
+module Tags = struct
+  include Set.Make (String)
+
+  let pp fmt t =
+    let open Format in
+    let pp_elem fmt elem = fprintf fmt "\"%s\"" elem in
+    let pp_sep fmt () = fprintf fmt "; " in
+    fprintf fmt "@[<hov 2>[";
+    pp_print_list ~pp_sep pp_elem fmt (elements t);
+    fprintf fmt "]@]"
+end
+
+let tags ts = List.fold_left (fun acc post -> Tags.of_list post.tag |> Tags.union acc) Tags.empty ts
 
 let from_xml file =
   let ic = In_channel.open_text file in
