@@ -19,7 +19,7 @@ let test_pp () =
   in
   let actual = Pinboard.to_string post in
   let expected =
-    {|{href = "http://goodmath.scientopia.org/2010/04/26/finger-trees-done-right-i-hope/", time = "2018-04-14T01:46:34Z", description = "Finger Trees Done Right (I hope) | Good Math Bad Math", extended = "\"Finger Trees: a simple general-purpose data structure\", by Ralf Hinze and Ross Patterson.", tag = ["data-structures"], hash = "4c5865711d6b3522c8e75dff3f44e6c3", shared = false, toread = true}|}
+    {|{ href = "http://goodmath.scientopia.org/2010/04/26/finger-trees-done-right-i-hope/"; time = "2018-04-14T01:46:34Z"; description = Some "Finger Trees Done Right (I hope) | Good Math Bad Math"; extended = Some "\"Finger Trees: a simple general-purpose data structure\", by Ralf Hinze and Ross Patterson."; tag = ["data-structures"]; hash = "4c5865711d6b3522c8e75dff3f44e6c3"; shared = false; toread = true; }|}
   in
   if expected <> actual then (
     Printf.printf "expected: %s\n" expected;
