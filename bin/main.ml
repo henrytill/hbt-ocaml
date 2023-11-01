@@ -33,9 +33,9 @@ let find_json_files dir =
 
 let pp_list pp_val fmt xs =
   let open Format in
-  pp_print_char fmt '[';
+  fprintf fmt "@[<hov 2>[";
   pp_print_list ~pp_sep:(fun fmt _ -> pp_print_string fmt "; ") pp_val fmt xs;
-  pp_print_char fmt ']'
+  fprintf fmt "]@]"
 
 let pp_string_list fmt xs =
   let pp_string fmt s = Format.fprintf fmt "\"%s\"" s in
