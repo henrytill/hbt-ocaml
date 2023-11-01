@@ -21,7 +21,7 @@ let pp fmt p =
     ~pp_sep:(fun fmt _ -> pp_print_string fmt "; ")
     (fun fmt s -> fprintf fmt "%S" s)
     fmt p.tag;
-  pp_print_string fmt "]";
+  pp_print_char fmt ']';
   fprintf fmt ", hash = %S" p.hash;
   pp_print_string fmt ", shared = ";
   pp_print_bool fmt p.shared;
