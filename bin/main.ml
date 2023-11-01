@@ -14,7 +14,7 @@ let find_files suffix dir =
       let file = Unix.readdir dir_handle in
       let full_path = Filename.concat dir file in
       if is_file full_path && Filename.check_suffix file suffix then
-        go (Filename.concat dir file :: acc)
+        go (full_path :: acc)
       else
         go acc
     with End_of_file ->
