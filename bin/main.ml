@@ -32,47 +32,50 @@ let find_json_files dir =
   find_files suffix dir
 
 let pp_list pp_val fmt xs =
-  Format.pp_print_char fmt '[';
-  Format.pp_print_list ~pp_sep:(fun fmt _ -> Format.pp_print_string fmt "; ") pp_val fmt xs;
-  Format.pp_print_char fmt ']'
+  let open Format in
+  pp_print_char fmt '[';
+  pp_print_list ~pp_sep:(fun fmt _ -> pp_print_string fmt "; ") pp_val fmt xs;
+  pp_print_char fmt ']'
 
 let pp_string_list fmt xs =
   let pp_string fmt s = Format.fprintf fmt "\"%s\"" s in
   pp_list pp_string fmt xs
 
 let parse_xml fmt import_dir =
+  let open Format in
   let xml_files = find_xml_files import_dir in
-  Format.pp_print_string fmt "xml_files: ";
+  pp_print_string fmt "xml_files: ";
   pp_string_list fmt xml_files;
-  Format.pp_print_newline fmt ();
+  pp_print_newline fmt ();
   let posts = Pinboard.from_xml (List.hd xml_files) in
-  Format.fprintf fmt "parsed: %d posts, " (List.length posts);
+  fprintf fmt "parsed: %d posts, " (List.length posts);
   let tags =
     List.fold_left
       (fun acc post -> Pinboard.(StringSet.of_list post.tag) |> StringSet.union acc)
       StringSet.empty posts
   in
-  Format.fprintf fmt "%d tags\n" (StringSet.cardinal tags);
-  Format.pp_print_string fmt "tags: ";
+  fprintf fmt "%d tags\n" (StringSet.cardinal tags);
+  pp_print_string fmt "tags: ";
   pp_string_list fmt (StringSet.elements tags);
-  Format.pp_print_newline fmt ()
+  pp_print_newline fmt ()
 
 let parse_json fmt import_dir =
+  let open Format in
   let json_files = find_json_files import_dir in
-  Format.pp_print_string fmt "json_files: ";
+  pp_print_string fmt "json_files: ";
   pp_string_list fmt json_files;
-  Format.pp_print_newline fmt ();
+  pp_print_newline fmt ();
   let posts = Pinboard.from_json (List.hd json_files) in
-  Format.fprintf fmt "parsed: %d posts, " (List.length posts);
+  fprintf fmt "parsed: %d posts, " (List.length posts);
   let tags =
     List.fold_left
       (fun acc post -> Pinboard.(StringSet.of_list post.tag) |> StringSet.union acc)
       StringSet.empty posts
   in
-  Format.fprintf fmt "%d tags\n" (StringSet.cardinal tags);
-  Format.pp_print_string fmt "tags: ";
+  fprintf fmt "%d tags\n" (StringSet.cardinal tags);
+  pp_print_string fmt "tags: ";
   pp_string_list fmt (StringSet.elements tags);
-  Format.pp_print_newline fmt ()
+  pp_print_newline fmt ()
 
 let () =
   let fmt = Format.std_formatter in
