@@ -20,7 +20,7 @@ module Tags = struct
     fprintf fmt "@[{%a}@]" (pp_print_list ~pp_sep pp_elem) (elements t)
 end
 
-let tags ts = List.fold_left (fun acc post -> Tags.of_list post.tag |> Tags.union acc) Tags.empty ts
+let tags = List.fold_left (fun acc post -> Tags.of_list post.tag |> Tags.union acc) Tags.empty
 
 let from_xml file =
   let ic = In_channel.open_text file in
