@@ -27,6 +27,10 @@ let find_xml_files dir =
   let suffix = ".xml" in
   find_files suffix dir
 
+let find_html_files dir =
+  let suffix = ".html" in
+  find_files suffix dir
+
 let find_json_files dir =
   let suffix = ".json" in
   find_files suffix dir
@@ -47,7 +51,18 @@ let parse_xml fmt import_dir =
   let tags = Pinboard.tags posts in
   fprintf fmt "@[xml_files: %a@]@;" pp_string_list xml_files;
   fprintf fmt "@[parsed: %d posts, %d tags@]@;" (List.length posts) (Pinboard.Tags.cardinal tags);
-  fprintf fmt "@[tags: %a@]@;" Pinboard.Tags.pp tags
+  fprintf fmt "@[tags: %a@]@;" Pinboard.Tags.pp tags;
+  tags
+
+let parse_html fmt import_dir =
+  let open Format in
+  let html_files = find_html_files import_dir in
+  let posts = Pinboard.from_html (List.hd html_files) in
+  let tags = Pinboard.tags posts in
+  fprintf fmt "@[html_files: %a@]@;" pp_string_list html_files;
+  fprintf fmt "@[parsed: %d posts, %d tags@]@;" (List.length posts) (Pinboard.Tags.cardinal tags);
+  fprintf fmt "@[tags: %a@]@;" Pinboard.Tags.pp tags;
+  tags
 
 let parse_json fmt import_dir =
   let open Format in
@@ -56,7 +71,8 @@ let parse_json fmt import_dir =
   let tags = Pinboard.tags posts in
   fprintf fmt "@[json_files: %a@]@;" pp_string_list json_files;
   fprintf fmt "@[parsed: %d posts, %d tags@]@;" (List.length posts) (Pinboard.Tags.cardinal tags);
-  fprintf fmt "@[tags: %a@]@;" Pinboard.Tags.pp tags
+  fprintf fmt "@[tags: %a@]@;" Pinboard.Tags.pp tags;
+  tags
 
 let () =
   let fmt = Format.std_formatter in
@@ -68,6 +84,10 @@ let () =
   if not (Sys.file_exists import_dir && Sys.is_directory import_dir) then
     Sys.mkdir import_dir 0o700;
   (* xml *)
-  parse_xml fmt import_dir;
+  ignore (parse_xml fmt import_dir);
+  (* html *)
+  let html_tags = parse_html fmt import_dir in
   (* json *)
-  parse_json fmt import_dir
+  let json_tags = parse_json fmt import_dir in
+  let diff = Pinboard.Tags.diff html_tags json_tags in
+  Format.fprintf fmt "@[diff: %a@]@;" Pinboard.Tags.pp diff

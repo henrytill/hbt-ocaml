@@ -1,3 +1,4 @@
 (library
  (name backlogged)
- (libraries cohttp cohttp-lwt cohttp-lwt-unix lwt lwt.unix str uri xdg xmlm yojson))
+ (preprocess (pps ppx_deriving.eq ppx_deriving.show))
+ (libraries cohttp cohttp-lwt cohttp-lwt-unix lwt lwt.unix markup str uri xdg xmlm yojson))
