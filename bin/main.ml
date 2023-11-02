@@ -33,48 +33,37 @@ let find_json_files dir =
 
 let pp_list pp_val fmt xs =
   let open Format in
-  fprintf fmt "@[<hov 2>[";
-  pp_print_list ~pp_sep:(fun fmt _ -> pp_print_string fmt "; ") pp_val fmt xs;
-  fprintf fmt "]@]"
+  let pp_sep fmt () = pp_print_string fmt ";@ " in
+  fprintf fmt "@[[%a]@]" (pp_print_list ~pp_sep pp_val) xs
 
 let pp_string_list fmt xs =
-  let pp_string fmt s = Format.fprintf fmt "\"%s\"" s in
+  let pp_string fmt = Format.fprintf fmt "%S" in
   pp_list pp_string fmt xs
 
 let parse_xml fmt import_dir =
   let open Format in
   let xml_files = find_xml_files import_dir in
-  pp_print_string fmt "xml_files: ";
-  pp_string_list fmt xml_files;
-  pp_print_newline fmt ();
   let posts = Pinboard.from_xml (List.hd xml_files) in
-  fprintf fmt "parsed: %d posts, " (List.length posts);
   let tags = Pinboard.tags posts in
-  fprintf fmt "%d tags\n" (Pinboard.Tags.cardinal tags);
-  pp_print_string fmt "tags: ";
-  Pinboard.Tags.pp fmt tags;
-  pp_print_newline fmt ()
+  fprintf fmt "@[xml_files: %a@]@;" pp_string_list xml_files;
+  fprintf fmt "@[parsed: %d posts, %d tags@]@;" (List.length posts) (Pinboard.Tags.cardinal tags);
+  fprintf fmt "@[tags: %a@]@;" Pinboard.Tags.pp tags
 
 let parse_json fmt import_dir =
   let open Format in
   let json_files = find_json_files import_dir in
-  pp_print_string fmt "json_files: ";
-  pp_string_list fmt json_files;
-  pp_print_newline fmt ();
   let posts = Pinboard.from_json (List.hd json_files) in
-  fprintf fmt "parsed: %d posts, " (List.length posts);
   let tags = Pinboard.tags posts in
-  fprintf fmt "%d tags\n" (Pinboard.Tags.cardinal tags);
-  pp_print_string fmt "tags: ";
-  Pinboard.Tags.pp fmt tags;
-  pp_print_newline fmt ()
+  fprintf fmt "@[json_files: %a@]@;" pp_string_list json_files;
+  fprintf fmt "@[parsed: %d posts, %d tags@]@;" (List.length posts) (Pinboard.Tags.cardinal tags);
+  fprintf fmt "@[tags: %a@]@;" Pinboard.Tags.pp tags
 
 let () =
   let fmt = Format.std_formatter in
   let data_dir = Config.get_data_dir () in
   if not (Sys.file_exists data_dir && Sys.is_directory data_dir) then
     Sys.mkdir data_dir 0o700;
-  Format.fprintf fmt "data_dir: %s\n" data_dir;
+  Format.fprintf fmt "@[data_dir: %S@]@;" data_dir;
   let import_dir = Config.get_import_dir () in
   if not (Sys.file_exists import_dir && Sys.is_directory import_dir) then
     Sys.mkdir import_dir 0o700;
