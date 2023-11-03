@@ -12,7 +12,7 @@ let small =
 <DT><A HREF="https://docs.microsoft.com/en-us/sysinternals/downloads/procmon" ADD_DATE="1606184699" PRIVATE="1" TOREAD="0" TAGS="windows-dev">Process Monitor - Windows Sysinternals | Microsoft Docs</A>
 <DD>Monitor file system, Registry, process, thread and DLL activity in real-time.
 
-<DT><A HREF="https://www.intel.com/content/www/us/en/developer/tools/oneapi/vtune-profiler.html#gs.x8oazh" ADD_DATE="1649855530" PRIVATE="1" TOREAD="0" TAGS="performance,profiling,tools">Fix Performance Bottlenecks with Intel® VTune™ Profiler</A>
+<DT><A HREF="https://www.intel.com/content/www/us/en/developer/tools/oneapi/vtune-profiler.html#gs.x8oazh" ADD_DATE="1649855530" PRIVATE="1" TOREAD="1" TAGS="performance,profiling,tools,toread">Fix Performance Bottlenecks with Intel® VTune™ Profiler</A>
 </DL></p>
 |}
 
@@ -28,7 +28,7 @@ let small_expected =
     Pinboard.make
       ~href:
         "https://www.intel.com/content/www/us/en/developer/tools/oneapi/vtune-profiler.html#gs.x8oazh"
-      ~time:"1649855530" ~shared:false ~toread:false
+      ~time:"1649855530" ~shared:false ~toread:true
       ~tag:[ "performance"; "profiling"; "tools" ]
       ~description:"Fix Performance Bottlenecks with Intel® VTune™ Profiler" ();
   ]

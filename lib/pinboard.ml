@@ -164,7 +164,10 @@ let from_html file =
     let extended = Option.map String.trim (parse_dd ()) in
     let href = get_attr attrs "href" in
     let time = get_attr attrs "add_date" in
-    let tag = Str.split (Str.regexp "[,]+") (get_attr attrs "tags") in
+    let tag =
+      let tags = Str.split (Str.regexp "[,]+") (get_attr attrs "tags") in
+      List.filter (( <> ) "toread") tags
+    in
     let hash = get_attr_option attrs "hash" in
     let shared = get_attr attrs "private" = "0" in
     let toread = get_attr attrs "toread" = "1" in
