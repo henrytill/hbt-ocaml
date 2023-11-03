@@ -7,7 +7,7 @@ let small =
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <TITLE>Pinboard Bookmarks</TITLE>
 <H1>Bookmarks</H1>
-<DL><p><DT><A HREF="http://c-faq.com/decl/spiral.anderson.html" ADD_DATE="1653114361" PRIVATE="1" TOREAD="0" TAGS="c,c++">Clockwise/Spiral Rule</A>
+<DL><p><DT><A HREF="http://c-faq.com/decl/spiral.anderson.html" ADD_DATE="1653114361" PRIVATE="0" TOREAD="0" TAGS="c,c++">Clockwise/Spiral Rule</A>
 
 <DT><A HREF="https://docs.microsoft.com/en-us/sysinternals/downloads/procmon" ADD_DATE="1606184699" PRIVATE="1" TOREAD="0" TAGS="windows-dev">Process Monitor - Windows Sysinternals | Microsoft Docs</A>
 <DD>Monitor file system, Registry, process, thread and DLL activity in real-time.
@@ -18,8 +18,8 @@ let small =
 
 let small_expected =
   [
-    Pinboard.make ~href:"http://c-faq.com/decl/spiral.anderson.html" ~time:"1653114361"
-      ~shared:false ~toread:false ~tag:[ "c"; "c++" ] ~description:"Clockwise/Spiral Rule" ();
+    Pinboard.make ~href:"http://c-faq.com/decl/spiral.anderson.html" ~time:"1653114361" ~shared:true
+      ~toread:false ~tag:[ "c"; "c++" ] ~description:"Clockwise/Spiral Rule" ();
     Pinboard.make ~href:"https://docs.microsoft.com/en-us/sysinternals/downloads/procmon"
       ~time:"1606184699" ~shared:false ~toread:false ~tag:[ "windows-dev" ]
       ~description:"Process Monitor - Windows Sysinternals | Microsoft Docs"
