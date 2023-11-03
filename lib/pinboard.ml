@@ -35,10 +35,10 @@ let get_attr attrs k =
 
 let get_attr_option attrs k =
   let s = get_attr attrs k in
-  Option.(if String.empty = s then None else Some s)
+  if String.empty = s then None else Some s
 
 let _from_xml file =
-  let ic = In_channel.open_text file in
+  let ic = open_in file in
   let xml = Xmlm.make_input (`Channel ic) in
   let to_t attrs =
     let href = get_attr attrs "href" in
@@ -65,11 +65,11 @@ let _from_xml file =
   in
   let ret = go 0 [] in
   if not (Xmlm.eoi xml) then invalid_arg "document not well-formed";
-  In_channel.close ic;
+  close_in ic;
   ret
 
 let from_xml file =
-  let ic = In_channel.open_text file in
+  let ic = open_in file in
   let channel = Markup.channel ic in
   let html = Markup.parse_html channel in
   let signals = Markup.signals html in
@@ -94,10 +94,10 @@ let from_xml file =
     | Some `End_element when depth = 1 -> acc
     | Some `End_element -> go (depth - 1) acc
     | Some _ -> go depth acc
-    | None -> failwith "foo"
+    | None -> failwith "unexpected end of stream"
   in
   let ret = go 0 [] in
-  In_channel.close ic;
+  close_in ic;
   ret
 
 let maybe_start_dd stream ~on_failure on_success =
@@ -139,7 +139,7 @@ let skip_newlines stream () =
   | _ -> ()
 
 let from_html file =
-  let ic = In_channel.open_text file in
+  let ic = open_in file in
   let channel = Markup.channel ic in
   let html = Markup.parse_html channel in
   let signals = Markup.signals html in
@@ -158,16 +158,16 @@ let from_html file =
         ~on_failure:(fun () -> None)
         (fun xs -> Some (String.trim (String.concat String.empty xs)))
     in
-    skip `End_element;
+    skip `End_element (* </a> *);
     skip_newlines signals ();
-    skip `End_element;
+    skip `End_element (* implicit </dt> *);
+    let extended = Option.map String.trim (parse_dd ()) in
     let href = get_attr attrs "href" in
     let time = get_attr attrs "add_date" in
     let tag = Str.split (Str.regexp "[,]+") (get_attr attrs "tags") in
     let hash = get_attr_option attrs "hash" in
     let shared = get_attr attrs "private" = "0" in
     let toread = get_attr attrs "toread" = "1" in
-    let extended = Option.map String.trim (parse_dd ()) in
     { href; time; description; extended; tag; hash; shared; toread }
   in
   let rec go depth acc =
@@ -179,10 +179,10 @@ let from_html file =
     | Some `End_element when depth = 1 -> acc
     | Some `End_element -> go (depth - 1) acc
     | Some _ -> go depth acc
-    | None -> failwith "quux"
+    | None -> failwith "unexpected end of stream"
   in
   let ret = go 0 [] in
-  In_channel.close ic;
+  close_in ic;
   ret
 
 let from_json file =
