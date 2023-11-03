@@ -1,3 +1,15 @@
 (test
  (name main)
+ (modules main common test_pinboard)
+ (libraries alcotest backlogged lwt.unix))
+
+(test
+ (name test_client)
+ (modules test_client)
+ (enabled_if false)
  (libraries backlogged lwt.unix))
+
+(rule
+ (alias foo)
+ (action
+  (run %{exe:test_client.exe})))

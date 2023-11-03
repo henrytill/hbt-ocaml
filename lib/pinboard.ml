@@ -4,11 +4,14 @@ type t = {
   description : string option;
   extended : string option;
   tag : string list;
-  hash : string;
+  hash : string option;
   shared : bool;
   toread : bool;
 }
 [@@deriving eq, show { with_path = false }]
+
+let make ~href ~time ?description ?extended ~tag ?hash ~shared ~toread () =
+  { href; time; description; extended; tag; hash; shared; toread }
 
 let to_string = show
 
@@ -43,7 +46,7 @@ let _from_xml file =
     let description = get_attr_option attrs "description" in
     let extended = get_attr_option attrs "extended" in
     let tag = Str.split (Str.regexp "[ \t]+") (get_attr attrs "tag") in
-    let hash = get_attr attrs "hash" in
+    let hash = get_attr_option attrs "hash" in
     let shared = get_attr attrs "shared" = "yes" in
     let toread = get_attr attrs "toread" = "yes" in
     { href; time; description; extended; tag; hash; shared; toread }
@@ -76,7 +79,7 @@ let from_xml file =
     let description = get_attr_option attrs "description" in
     let extended = get_attr_option attrs "extended" in
     let tag = Str.split (Str.regexp "[ \t]+") (get_attr attrs "tag") in
-    let hash = get_attr attrs "hash" in
+    let hash = get_attr_option attrs "hash" in
     let shared = get_attr attrs "shared" = "yes" in
     let toread = get_attr attrs "toread" = "yes" in
     { href; time; description; extended; tag; hash; shared; toread }
@@ -140,7 +143,7 @@ let from_html file =
   let channel = Markup.channel ic in
   let html = Markup.parse_html channel in
   let signals = Markup.signals html in
-  let tag s = (("", s), []) in
+  let tag s = ((String.empty, s), []) in
   let skip t = if Markup.peek signals = Some t then ignore (Markup.next signals) else () in
   let parse_dd () =
     maybe_start_dd signals ~on_failure:(fun () -> None) @@ fun () ->
@@ -153,7 +156,7 @@ let from_html file =
     let description =
       maybe_text signals
         ~on_failure:(fun () -> None)
-        (fun xs -> Some (String.concat String.empty xs))
+        (fun xs -> Some (String.trim (String.concat String.empty xs)))
     in
     skip `End_element;
     skip_newlines signals ();
@@ -161,10 +164,10 @@ let from_html file =
     let href = get_attr attrs "href" in
     let time = get_attr attrs "add_date" in
     let tag = Str.split (Str.regexp "[,]+") (get_attr attrs "tags") in
-    let hash = get_attr attrs "hash" in
+    let hash = get_attr_option attrs "hash" in
     let shared = get_attr attrs "private" = "0" in
     let toread = get_attr attrs "toread" = "1" in
-    let extended = parse_dd () in
+    let extended = Option.map String.trim (parse_dd ()) in
     { href; time; description; extended; tag; hash; shared; toread }
   in
   let rec go depth acc =
@@ -192,7 +195,7 @@ let from_json file =
     let extended = j |> member "extended" |> to_string_option in
     let tags = j |> member "tags" |> to_string in
     let tag = Str.split (Str.regexp "[ \t]+") tags in
-    let hash = j |> member "hash" |> to_string in
+    let hash = j |> member "hash" |> to_string_option in
     let shared = j |> member "shared" |> to_string = "yes" in
     let toread = j |> member "toread" |> to_string = "yes" in
     { href; time; description; extended; tag; hash; shared; toread }

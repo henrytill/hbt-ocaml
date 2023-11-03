@@ -22,6 +22,7 @@
  (depends
   ocaml
   dune
+  (alcotest (and :with-test (>= 1.7.0)))
   (cohttp (>= 5.3.0))
   (cohttp-lwt (>= 5.3.0))
   (cohttp-lwt-unix (>= 5.3.0))
