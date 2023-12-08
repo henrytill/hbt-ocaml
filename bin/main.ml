@@ -72,6 +72,7 @@ let parse_json fmt import_dir =
   fprintf fmt "@[json_files: %a@]@;" pp_string_list json_files;
   fprintf fmt "@[parsed: %d posts, %d tags@]@;" (List.length posts) (Pinboard.Tags.cardinal tags);
   fprintf fmt "@[tags: %a@]@;" Pinboard.Tags.pp tags;
+  fprintf fmt "@[sample: %a@;@]@;" Pinboard.pp (List.hd posts);
   tags
 
 let () =

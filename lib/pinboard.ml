@@ -8,11 +8,39 @@ type t = {
   shared : bool;
   toread : bool;
 }
-[@@deriving eq, show { with_path = false }]
 
 let make ~href ~time ?description ?extended ~tag ?hash ~shared ~toread () =
   { href; time; description; extended; tag; hash; shared; toread }
 
+let equal x y =
+  x.href = y.href
+  && x.time = y.time
+  && x.description = y.description
+  && x.extended = y.extended
+  && x.tag = y.tag
+  && x.hash = y.hash
+  && x.shared = y.shared
+  && x.toread = y.toread
+
+let pp fmt x =
+  let open Format in
+  fprintf fmt "@[<2>{@ ";
+  fprintf fmt "@[href =@ %S@];@ " x.href;
+  fprintf fmt "@[time =@ %S@];@ " x.time;
+  let none fmt () = fprintf fmt "None" in
+  let some fmt x = fprintf fmt "(Some %S)" x in
+  let pp_string_option = pp_print_option ~none some in
+  fprintf fmt "@[description =@ %a@];@ " pp_string_option x.description;
+  fprintf fmt "@[extended =@ %a@];@ " pp_string_option x.extended;
+  let pp_sep fmt () = fprintf fmt ";@ " in
+  let pp_tag = pp_print_list ~pp_sep pp_print_string in
+  fprintf fmt "@[tag =@ @[[@ %a@,@ ]@]@];@ " pp_tag x.tag;
+  fprintf fmt "@[hash =@ %a@];@ " pp_string_option x.hash;
+  fprintf fmt "@[shared =@ %B@];@ " x.shared;
+  fprintf fmt "@[toread =@ %B@];@ " x.toread;
+  fprintf fmt "}@]"
+
+let show x = Format.asprintf "%a" pp x
 let to_string = show
 
 module Tags = struct
