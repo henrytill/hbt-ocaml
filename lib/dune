@@ -1,3 +1,14 @@
 (library
  (name backlogged)
- (libraries cohttp cohttp-lwt cohttp-lwt-unix lwt lwt.unix markup str uri xdg xmlm yojson))
+ (libraries
+  cohttp
+  cohttp-lwt
+  cohttp-lwt-unix
+  lwt
+  lwt.unix
+  markup
+  str
+  uri
+  xdg
+  xmlm
+  yojson))
