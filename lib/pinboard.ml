@@ -9,7 +9,7 @@ type t = {
   toread : bool;
 }
 
-let make ~href ~time ?description ?extended ~tag ?hash ~shared ~toread () =
+let make ~href ~time ~description ~extended ~tag ~hash ~shared ~toread =
   { href; time; description; extended; tag; hash; shared; toread }
 
 let equal x y =

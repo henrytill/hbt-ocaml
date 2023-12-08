@@ -3,13 +3,12 @@ type t
 val make :
   href:string ->
   time:string ->
-  ?description:string ->
-  ?extended:string ->
+  description:string option ->
+  extended:string option ->
   tag:string list ->
-  ?hash:string ->
+  hash:string option ->
   shared:bool ->
   toread:bool ->
-  unit ->
   t
 
 val equal : t -> t -> bool
