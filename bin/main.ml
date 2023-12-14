@@ -72,7 +72,7 @@ let parse_json fmt import_dir =
   fprintf fmt "@[json_files: %a@]@;" pp_string_list json_files;
   fprintf fmt "@[parsed: %d posts, %d tags@]@;" (List.length posts) (Pinboard.Tags.cardinal tags);
   fprintf fmt "@[tags: %a@]@;" Pinboard.Tags.pp tags;
-  fprintf fmt "@[sample: %a@;@]@;" Pinboard.pp (List.hd posts);
+  fprintf fmt "@[sample: %a@]@;" Pinboard.pp (List.hd posts);
   tags
 
 let () =
@@ -91,4 +91,5 @@ let () =
   (* json *)
   let json_tags = parse_json fmt import_dir in
   let diff = Pinboard.Tags.diff html_tags json_tags in
-  Format.fprintf fmt "@[diff: %a@]@;" Pinboard.Tags.pp diff
+  Format.fprintf fmt "@[diff: %a@]@;" Pinboard.Tags.pp diff;
+  Format.pp_print_flush fmt ()

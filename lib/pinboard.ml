@@ -33,12 +33,13 @@ let pp fmt x =
   fprintf fmt "@[description =@ %a@];@ " pp_string_option x.description;
   fprintf fmt "@[extended =@ %a@];@ " pp_string_option x.extended;
   let pp_sep fmt () = fprintf fmt ";@ " in
-  let pp_tag = pp_print_list ~pp_sep pp_print_string in
+  let pp_elem fmt elem = fprintf fmt "%S" elem in
+  let pp_tag = pp_print_list ~pp_sep pp_elem in
   fprintf fmt "@[tag =@ @[[@ %a@,@ ]@]@];@ " pp_tag x.tag;
   fprintf fmt "@[hash =@ %a@];@ " pp_string_option x.hash;
   fprintf fmt "@[shared =@ %B@];@ " x.shared;
   fprintf fmt "@[toread =@ %B@];@ " x.toread;
-  fprintf fmt "}@]"
+  fprintf fmt "}@]@;"
 
 let show x = Format.asprintf "%a" pp x
 let to_string = show
@@ -50,7 +51,7 @@ module Tags = struct
     let open Format in
     let pp_sep fmt () = fprintf fmt ";@ " in
     let pp_elem fmt elem = fprintf fmt "%S" elem in
-    fprintf fmt "@[{%a}@]" (pp_print_list ~pp_sep pp_elem) (elements t)
+    fprintf fmt "@[<2>{@ %a@ }@]" (pp_print_list ~pp_sep pp_elem) (elements t)
 end
 
 let tags = List.fold_left (fun acc post -> Tags.of_list post.tag |> Tags.union acc) Tags.empty
