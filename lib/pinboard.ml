@@ -12,46 +12,46 @@ type t = {
 let make ~href ~time ~description ~extended ~tag ~hash ~shared ~toread =
   { href; time; description; extended; tag; hash; shared; toread }
 
-let equal x y =
-  x.href = y.href
-  && x.time = y.time
-  && x.description = y.description
-  && x.extended = y.extended
-  && x.tag = y.tag
-  && x.hash = y.hash
-  && x.shared = y.shared
-  && x.toread = y.toread
+let equal a b =
+  a.href = b.href
+  && a.time = b.time
+  && a.description = b.description
+  && a.extended = b.extended
+  && a.tag = b.tag
+  && a.hash = b.hash
+  && a.shared = b.shared
+  && a.toread = b.toread
 
-let pp fmt x =
+let pp fmt a =
   let open Format in
   fprintf fmt "@[<2>{@ ";
-  fprintf fmt "@[href =@ %S@];@ " x.href;
-  fprintf fmt "@[time =@ %S@];@ " x.time;
+  fprintf fmt "@[href =@ %S@];@ " a.href;
+  fprintf fmt "@[time =@ %S@];@ " a.time;
   let none fmt () = fprintf fmt "None" in
-  let some fmt x = fprintf fmt "(Some %S)" x in
+  let some fmt elem = fprintf fmt "(Some %S)" elem in
   let pp_string_option = pp_print_option ~none some in
-  fprintf fmt "@[description =@ %a@];@ " pp_string_option x.description;
-  fprintf fmt "@[extended =@ %a@];@ " pp_string_option x.extended;
+  fprintf fmt "@[description =@ %a@];@ " pp_string_option a.description;
+  fprintf fmt "@[extended =@ %a@];@ " pp_string_option a.extended;
   let pp_sep fmt () = fprintf fmt ";@ " in
   let pp_elem fmt elem = fprintf fmt "%S" elem in
   let pp_tag = pp_print_list ~pp_sep pp_elem in
-  fprintf fmt "@[tag =@ @[[@ %a@,@ ]@]@];@ " pp_tag x.tag;
-  fprintf fmt "@[hash =@ %a@];@ " pp_string_option x.hash;
-  fprintf fmt "@[shared =@ %B@];@ " x.shared;
-  fprintf fmt "@[toread =@ %B@];@ " x.toread;
+  fprintf fmt "@[tag =@ @[[@ %a@,@ ]@]@];@ " pp_tag a.tag;
+  fprintf fmt "@[hash =@ %a@];@ " pp_string_option a.hash;
+  fprintf fmt "@[shared =@ %B@];@ " a.shared;
+  fprintf fmt "@[toread =@ %B@];@ " a.toread;
   fprintf fmt "}@]@;"
 
-let show x = Format.asprintf "%a" pp x
+let show a = Format.asprintf "%a" pp a
 let to_string = show
 
 module Tags = struct
   include Set.Make (String)
 
-  let pp fmt t =
+  let pp fmt a =
     let open Format in
     let pp_sep fmt () = fprintf fmt ";@ " in
     let pp_elem fmt elem = fprintf fmt "%S" elem in
-    fprintf fmt "@[<2>{@ %a@ }@]" (pp_print_list ~pp_sep pp_elem) (elements t)
+    fprintf fmt "@[<2>{@ %a@ }@]" (pp_print_list ~pp_sep pp_elem) (elements a)
 end
 
 let tags = List.fold_left (fun acc post -> Tags.of_list post.tag |> Tags.union acc) Tags.empty
