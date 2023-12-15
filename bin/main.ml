@@ -1,5 +1,5 @@
-module Config = Backlogged.Config
-module Pinboard = Backlogged.Pinboard
+module Config = Hbt.Config
+module Pinboard = Hbt.Pinboard
 module StringSet = Set.Make (String)
 
 let find_files suffix dir =

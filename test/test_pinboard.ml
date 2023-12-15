@@ -1,6 +1,6 @@
 [@@@ocamlformat "wrap-fun-args = false"]
 
-module Pinboard = Backlogged.Pinboard
+module Pinboard = Hbt.Pinboard
 
 let pinboard_testable = Alcotest.testable Pinboard.pp Pinboard.equal
 

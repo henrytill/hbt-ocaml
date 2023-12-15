@@ -1,4 +1,4 @@
-module Client = Backlogged.Client
+module Client = Hbt.Client
 
 let test_client () =
   let actual = Lwt_main.run (Client.min_get ()) in

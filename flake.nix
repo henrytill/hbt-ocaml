@@ -9,7 +9,7 @@
     };
   };
   outputs = { self, flake-utils, opam-nix, nixpkgs, ... }@inputs:
-    let package = "backlogged";
+    let package = "hbt";
     in flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};

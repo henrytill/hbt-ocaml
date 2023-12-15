@@ -1,11 +1,11 @@
 (lang dune 3.10)
 
-(name backlogged)
+(name hbt)
 
 (generate_opam_files true)
 
 (source
- (github henrytill/backlogged))
+ (github henrytill/hbt-ocaml))
 
 (authors "Henry Till <henrytill@gmail.com>")
 
@@ -16,7 +16,7 @@
 (documentation https://url/to/documentation)
 
 (package
- (name backlogged)
+ (name hbt)
  (synopsis "A short synopsis")
  (description "A longer description")
  (depends

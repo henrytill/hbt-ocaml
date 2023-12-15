@@ -1,4 +1,4 @@
 (executable
- (public_name backlogged)
+ (public_name hbt)
  (name main)
- (libraries backlogged lwt.unix))
+ (libraries hbt lwt.unix))

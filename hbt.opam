@@ -6,9 +6,9 @@ maintainer: ["Henry Till <henrytill@gmail.com>"]
 authors: ["Henry Till <henrytill@gmail.com>"]
 license: "ISC"
 tags: ["topics" "to describe" "your" "project"]
-homepage: "https://github.com/henrytill/backlogged"
+homepage: "https://github.com/henrytill/hbt-ocaml"
 doc: "https://url/to/documentation"
-bug-reports: "https://github.com/henrytill/backlogged/issues"
+bug-reports: "https://github.com/henrytill/hbt-ocaml/issues"
 depends: [
   "ocaml"
   "dune" {>= "3.10"}
@@ -39,4 +39,4 @@ build: [
     "@doc" {with-doc}
   ]
 ]
-dev-repo: "git+https://github.com/henrytill/backlogged.git"
+dev-repo: "git+https://github.com/henrytill/hbt-ocaml.git"

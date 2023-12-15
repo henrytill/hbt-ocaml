@@ -1,5 +1,5 @@
 (library
- (name backlogged)
+ (name hbt)
  (libraries
   cohttp
   cohttp-lwt
