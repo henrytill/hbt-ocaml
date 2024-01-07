@@ -1,16 +1,5 @@
 type t
 
-val make :
-  href:string ->
-  time:string ->
-  description:string option ->
-  extended:string option ->
-  tag:string list ->
-  hash:string option ->
-  shared:bool ->
-  toread:bool ->
-  t
-
 val equal : t -> t -> bool
 val pp : Format.formatter -> t -> unit
 val to_string : t -> string

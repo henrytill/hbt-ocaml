@@ -1,6 +1,6 @@
 [@@@ocamlformat "wrap-fun-args = false"]
 
-module Pinboard = Hbt.Pinboard
+module Pinboard = Hbt.Pinboard_internal
 
 let pinboard_testable = Alcotest.testable Pinboard.pp Pinboard.equal
 
