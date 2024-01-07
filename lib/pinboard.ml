@@ -52,6 +52,9 @@ module Tags = struct
     let pp_sep fmt () = fprintf fmt ";@ " in
     let pp_elem fmt elem = fprintf fmt "%S" elem in
     fprintf fmt "@[<2>{@ %a@ }@]" (pp_print_list ~pp_sep pp_elem) (elements a)
+
+  let show a = Format.asprintf "%a" pp a
+  let to_string = show
 end
 
 let tags = List.fold_left (fun acc post -> Tags.of_list post.tag |> Tags.union acc) Tags.empty

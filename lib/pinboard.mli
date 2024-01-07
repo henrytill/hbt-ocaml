@@ -19,6 +19,7 @@ module Tags : sig
   include Set.S
 
   val pp : Format.formatter -> t -> unit
+  val to_string : t -> string
 end
 
 val tags : t list -> Tags.t
