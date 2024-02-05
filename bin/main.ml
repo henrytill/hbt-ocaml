@@ -1,6 +1,5 @@
 module Config = Hbt.Config
 module Pinboard = Hbt.Pinboard
-module StringSet = Set.Make (String)
 
 let find_files suffix dir =
   let dir_handle = Unix.opendir dir in
