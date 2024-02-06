@@ -1,3 +1,4 @@
+module Body = Cohttp_lwt.Body
 module Client = Cohttp_lwt_unix.Client
 module Code = Cohttp.Code
 module Header = Cohttp.Header
@@ -11,7 +12,7 @@ let return = Lwt.return
 let get () =
   let headers = Header.of_list [ ("Accept", "application/json"); ("Host", "www.howsmyssl.com") ] in
   let* resp, body = Client.get ~headers (Uri.of_string "https://www.howsmyssl.com/a/check") in
-  let* body = Cohttp_lwt.Body.to_string body in
+  let* body = Body.to_string body in
   let code = resp |> Response.status |> Code.code_of_status in
   let headers = resp |> Response.headers |> Header.to_string in
   let body_len = String.length body in
@@ -25,4 +26,4 @@ let get () =
 let min_get () =
   let headers = Header.of_list [ ("Accept", "application/json"); ("Host", "www.howsmyssl.com") ] in
   let* _, body = Client.get ~headers (Uri.of_string "https://www.howsmyssl.com/a/check") in
-  Cohttp_lwt.Body.to_string body
+  Body.to_string body
