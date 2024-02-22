@@ -43,8 +43,7 @@ let test_small () =
       Pinboard.make
         ~href:"https://www.intel.com/content/www/us/en/developer/tools/oneapi/vtune-profiler.html"
         ~time:"1649855530"
-        ~description:
-          (Some "Fix Performance Bottlenecks with Intel\194\174 VTune\226\132\162 Profiler")
+        ~description:(Some "Fix Performance Bottlenecks with Intel® VTune™ Profiler")
         ~extended:None
         ~tag:[ "performance"; "profiling"; "tools" ]
         ~hash:None
