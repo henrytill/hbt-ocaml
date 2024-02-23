@@ -1,13 +1,13 @@
 module Config = Hbt.Config
 module Pinboard = Hbt.Pinboard
 
+let is_file path =
+  match (Unix.stat path).st_kind with
+  | Unix.S_REG -> true
+  | _ -> false
+
 let find_files suffix dir =
   let dir_handle = Unix.opendir dir in
-  let is_file path =
-    match (Unix.stat path).st_kind with
-    | Unix.S_REG -> true
-    | _ -> false
-  in
   let rec go acc =
     try
       let file = Unix.readdir dir_handle in
