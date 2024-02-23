@@ -69,37 +69,6 @@ let get_attr_option attrs k =
   let s = get_attr attrs k in
   if String.empty = s then None else Some s
 
-let _from_xml file =
-  let ic = open_in file in
-  let xml = Xmlm.make_input (`Channel ic) in
-  let to_t attrs =
-    let href = get_attr attrs "href" in
-    let time = get_attr attrs "time" in
-    let description = get_attr_option attrs "description" in
-    let extended = get_attr_option attrs "extended" in
-    let tag = Str.split (Str.regexp "[ \t]+") (get_attr attrs "tag") in
-    let hash = get_attr_option attrs "hash" in
-    let shared = get_attr attrs "shared" = "yes" in
-    let toread = get_attr attrs "toread" = "yes" in
-    { href; time; description; extended; tag; hash; shared; toread }
-  in
-  let rec go depth acc =
-    match Xmlm.input xml with
-    | `El_start ((_, "post"), attrs) ->
-        let parsed = to_t attrs in
-        go (depth + 1) (parsed :: acc)
-    | `El_start ((_, "posts"), _) -> go (depth + 1) acc
-    | `El_start ((_, s), _) -> failwith ("unexpected El_start: " ^ s)
-    | `El_end when depth = 1 -> acc
-    | `El_end -> go (depth - 1) acc
-    | `Data _ -> go depth acc
-    | `Dtd _ -> go depth acc
-  in
-  let ret = go 0 [] in
-  if not (Xmlm.eoi xml) then invalid_arg "document not well-formed";
-  close_in ic;
-  ret
-
 let from_xml file =
   let ic = open_in file in
   let channel = Markup.channel ic in
