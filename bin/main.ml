@@ -22,18 +22,6 @@ let find_files suffix dir =
   in
   go []
 
-let find_xml_files dir =
-  let suffix = ".xml" in
-  find_files suffix dir
-
-let find_html_files dir =
-  let suffix = ".html" in
-  find_files suffix dir
-
-let find_json_files dir =
-  let suffix = ".json" in
-  find_files suffix dir
-
 let pp_list pp_val fmt xs =
   let open Format in
   let pp_sep fmt () = pp_print_string fmt ";@ " in
@@ -45,7 +33,7 @@ let pp_string_list fmt xs =
 
 let parse_xml fmt import_dir =
   let open Format in
-  let xml_files = find_xml_files import_dir in
+  let xml_files = find_files "xml" import_dir in
   let posts = Pinboard.from_xml (List.hd xml_files) in
   let tags = Pinboard.tags posts in
   fprintf fmt "@[xml_files: %a@]@;" pp_string_list xml_files;
@@ -55,7 +43,7 @@ let parse_xml fmt import_dir =
 
 let parse_html fmt import_dir =
   let open Format in
-  let html_files = find_html_files import_dir in
+  let html_files = find_files "html" import_dir in
   let posts = Pinboard.from_html (List.hd html_files) in
   let tags = Pinboard.tags posts in
   fprintf fmt "@[html_files: %a@]@;" pp_string_list html_files;
@@ -65,7 +53,7 @@ let parse_html fmt import_dir =
 
 let parse_json fmt import_dir =
   let open Format in
-  let json_files = find_json_files import_dir in
+  let json_files = find_files "json" import_dir in
   let posts = Pinboard.from_json (List.hd json_files) in
   let tags = Pinboard.tags posts in
   fprintf fmt "@[json_files: %a@]@;" pp_string_list json_files;
