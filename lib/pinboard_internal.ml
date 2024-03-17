@@ -41,7 +41,7 @@ let pp fmt a =
   fprintf fmt "@[toread =@ %B@];@ " a.toread;
   fprintf fmt "}@]@;"
 
-let show a = Format.asprintf "%a" pp a
+let show = Format.asprintf "%a" pp
 let to_string = show
 
 module Tags = struct
@@ -53,7 +53,7 @@ module Tags = struct
     let pp_elem fmt elem = fprintf fmt "%S" elem in
     fprintf fmt "@[<2>{@ %a@ }@]" (pp_print_list ~pp_sep pp_elem) (elements a)
 
-  let show a = Format.asprintf "%a" pp a
+  let show = Format.asprintf "%a" pp
   let to_string = show
 end
 
