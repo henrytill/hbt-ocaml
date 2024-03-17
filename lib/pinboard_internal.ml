@@ -13,14 +13,14 @@ let make ~href ~time ~description ~extended ~tag ~hash ~shared ~toread =
   { href; time; description; extended; tag; hash; shared; toread }
 
 let equal a b =
-  a.href = b.href
-  && a.time = b.time
-  && a.description = b.description
-  && a.extended = b.extended
-  && a.tag = b.tag
-  && a.hash = b.hash
-  && a.shared = b.shared
-  && a.toread = b.toread
+  String.equal a.href b.href
+  && String.equal a.time b.time
+  && Option.equal String.equal a.description b.description
+  && Option.equal String.equal a.extended b.extended
+  && List.equal String.equal a.tag b.tag
+  && Option.equal String.equal a.hash b.hash
+  && Bool.equal a.shared b.shared
+  && Bool.equal a.toread b.toread
 
 let pp fmt a =
   let open Format in
