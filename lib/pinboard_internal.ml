@@ -153,7 +153,7 @@ let from_html file =
   in
   let to_t () =
     skip signals (`Start_element (tag "p"));
-    let attrs = next_start signals "a" (fun x -> x) in
+    let attrs = next_start signals "a" Fun.id in
     let description =
       maybe_text signals
         ~on_failure:(fun _ -> None)
