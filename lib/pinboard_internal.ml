@@ -59,15 +59,17 @@ end
 
 let tags = List.fold_left (fun acc post -> Tags.of_list post.tag |> Tags.union acc) Tags.empty
 
-let get_attr attrs k =
+let get_attr_option attrs k =
   try
     let k = (String.empty, k) in
-    List.assoc k attrs
-  with Not_found -> String.empty
+    let v = List.assoc k attrs in
+    Some v
+  with Not_found -> None
 
-let get_attr_option attrs k =
-  let s = get_attr attrs k in
-  if String.empty = s then None else Some s
+let get_attr attrs k =
+  match get_attr_option attrs k with
+  | Some v -> v
+  | None -> String.empty
 
 let from_xml file =
   let ic = open_in file in
