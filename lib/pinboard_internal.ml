@@ -66,10 +66,7 @@ let get_attr_option attrs k =
     Some v
   with Not_found -> None
 
-let get_attr attrs k =
-  match get_attr_option attrs k with
-  | Some v -> v
-  | None -> String.empty
+let get_attr attrs k = Option.value ~default:String.empty (get_attr_option attrs k)
 
 let from_xml file =
   let ic = open_in file in
