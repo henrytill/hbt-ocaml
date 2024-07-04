@@ -62,13 +62,7 @@ let tags = List.fold_left (fun acc post -> Tags.of_list post.tag |> Tags.union a
 module Attrs = struct
   type t = ((string * string) * string) list
 
-  let get_opt (attrs : t) (k : string) : string option =
-    try
-      let k = (String.empty, k) in
-      let v = List.assoc k attrs in
-      Some v
-    with Not_found -> None
-
+  let get_opt (attrs : t) (k : string) : string option = List.assoc_opt (String.empty, k) attrs
   let get (attrs : t) (k : string) : string = Option.value ~default:String.empty (get_opt attrs k)
 end
 
