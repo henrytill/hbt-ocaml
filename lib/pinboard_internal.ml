@@ -59,29 +59,33 @@ end
 
 let tags = List.fold_left (fun acc post -> Tags.of_list post.tag |> Tags.union acc) Tags.empty
 
-let get_attr_option attrs k =
-  try
-    let k = (String.empty, k) in
-    let v = List.assoc k attrs in
-    Some v
-  with Not_found -> None
+module Attrs = struct
+  type t = ((string * string) * string) list
 
-let get_attr attrs k = Option.value ~default:String.empty (get_attr_option attrs k)
+  let get_opt (attrs : t) (k : string) : string option =
+    try
+      let k = (String.empty, k) in
+      let v = List.assoc k attrs in
+      Some v
+    with Not_found -> None
+
+  let get (attrs : t) (k : string) : string = Option.value ~default:String.empty (get_opt attrs k)
+end
 
 let from_xml file =
   let ic = open_in file in
   let channel = Markup.channel ic in
   let html = Markup.parse_html channel in
   let signals = Markup.signals html in
-  let to_t attrs =
-    let href = get_attr attrs "href" in
-    let time = get_attr attrs "time" in
-    let description = get_attr_option attrs "description" in
-    let extended = get_attr_option attrs "extended" in
-    let tag = Str.split (Str.regexp "[ \t]+") (get_attr attrs "tag") in
-    let hash = get_attr_option attrs "hash" in
-    let shared = get_attr attrs "shared" = "yes" in
-    let toread = get_attr attrs "toread" = "yes" in
+  let to_t (attrs : Attrs.t) : t =
+    let href = Attrs.get attrs "href" in
+    let time = Attrs.get attrs "time" in
+    let description = Attrs.get_opt attrs "description" in
+    let extended = Attrs.get_opt attrs "extended" in
+    let tag = Str.split (Str.regexp "[ \t]+") (Attrs.get attrs "tag") in
+    let hash = Attrs.get_opt attrs "hash" in
+    let shared = Attrs.get attrs "shared" = "yes" in
+    let toread = Attrs.get attrs "toread" = "yes" in
     { href; time; description; extended; tag; hash; shared; toread }
   in
   let rec go depth acc =
@@ -162,15 +166,15 @@ let from_html file =
     skip_newlines signals ();
     skip signals `End_element (* implicit </dt> *);
     let extended = Option.map String.trim (parse_dd ()) in
-    let href = get_attr attrs "href" in
-    let time = get_attr attrs "add_date" in
+    let href = Attrs.get attrs "href" in
+    let time = Attrs.get attrs "add_date" in
     let tag =
-      let tags = Str.split (Str.regexp "[,]+") (get_attr attrs "tags") in
+      let tags = Str.split (Str.regexp "[,]+") (Attrs.get attrs "tags") in
       List.filter (( <> ) "toread") tags
     in
-    let hash = get_attr_option attrs "hash" in
-    let shared = get_attr attrs "private" = "0" in
-    let toread = get_attr attrs "toread" = "1" in
+    let hash = Attrs.get_opt attrs "hash" in
+    let shared = Attrs.get attrs "private" = "0" in
+    let toread = Attrs.get attrs "toread" = "1" in
     { href; time; description; extended; tag; hash; shared; toread }
   in
   let rec go depth acc =
