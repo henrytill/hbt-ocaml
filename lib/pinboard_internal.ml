@@ -133,7 +133,7 @@ let next_end stream ?(on_failure = fun _ -> failwith "parse error") on_success =
   | Some `End_element -> on_success ()
   | e -> on_failure e
 
-let is_newline xs =
+let is_newline (xs : string list) : bool =
   let s = String.concat String.empty xs in
   Str.string_match (Str.regexp "[\n\r]*") s 0
 
