@@ -133,10 +133,7 @@ let is_newline (xs : string list) : bool =
   let s = String.concat String.empty xs in
   Str.string_match (Str.regexp "[\n\r]*") s 0
 
-let skip_newlines stream () =
-  let f _ = () in
-  maybe_text stream ~p:is_newline ~on_failure:f f
-
+let skip_newlines stream () = maybe_text stream is_newline ignore ignore
 let tag s = ((String.empty, s), [])
 let skip stream t = if Markup.peek stream = Some t then ignore (Markup.next stream) else ()
 
