@@ -1,3 +1,5 @@
+open Base
+
 type t = {
   href : string;
   time : string;
@@ -98,31 +100,31 @@ let from_xml file =
   close_in ic;
   ret
 
-let maybe_start stream name ~on_failure on_success =
+let maybe_start stream name on_failure on_success =
   match Markup.peek stream with
   | Some (`Start_element ((_, n), attrs)) when n = name ->
       ignore (Markup.next stream);
       on_success attrs
   | e -> on_failure e
 
-let maybe_text stream ?(p = fun _ -> true) ~on_failure on_success =
+let maybe_text stream p on_failure on_success =
   match Markup.peek stream with
   | Some (`Text xs) when p xs ->
       ignore (Markup.next stream);
       on_success xs
   | e -> on_failure e
 
-let next_start stream name ?(on_failure = fun _ -> failwith "parse error") on_success =
+let next_start stream name on_failure on_success =
   match Markup.next stream with
   | Some (`Start_element ((_, n), attrs)) when n = name -> on_success attrs
   | e -> on_failure e
 
-let next_text stream ?(on_failure = fun _ -> failwith "parse error") on_success =
+let next_text stream on_failure on_success =
   match Markup.next stream with
   | Some (`Text xs) -> on_success xs
   | e -> on_failure e
 
-let next_end stream ?(on_failure = fun _ -> failwith "parse error") on_success =
+let next_end stream on_failure on_success =
   match Markup.next stream with
   | Some `End_element -> on_success ()
   | e -> on_failure e
@@ -143,17 +145,20 @@ let from_html file =
   let channel = Markup.channel ic in
   let html = Markup.parse_html channel in
   let signals = Markup.signals html in
+  let on_failure _ = failwith "parse error" in
   let parse_dd () =
-    maybe_start signals "dd" ~on_failure:(fun _ -> None) @@ fun _ ->
-    next_text signals @@ fun xs ->
-    next_end signals @@ fun () -> Some (String.trim (String.concat String.empty xs))
+    let@ _ = maybe_start signals "dd" (fun _ -> None) in
+    let@ xs = next_text signals on_failure in
+    let@ () = next_end signals on_failure in
+    Some (String.trim (String.concat String.empty xs))
   in
   let to_t () =
     skip signals (`Start_element (tag "p"));
-    let attrs = next_start signals "a" Fun.id in
+    let attrs = next_start signals "a" on_failure Fun.id in
     let description =
       maybe_text signals
-        ~on_failure:(fun _ -> None)
+        (fun _ -> true)
+        (fun _ -> None)
         (fun xs -> Some (String.trim (String.concat String.empty xs)))
     in
     skip signals `End_element (* </a> *);
