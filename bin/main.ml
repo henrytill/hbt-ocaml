@@ -1,9 +1,9 @@
-module Config = Hbt.Config
-module Pinboard = Hbt.Pinboard
+open Hbt
 
 let is_file path =
-  match (Unix.stat path).st_kind with
-  | Unix.S_REG -> true
+  let open Unix in
+  match (stat path).st_kind with
+  | S_REG -> true
   | _ -> false
 
 let find_files suffix dir =
