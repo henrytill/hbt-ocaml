@@ -80,6 +80,7 @@ let test_collection_add_edge () =
   Alcotest.(check (array testable_id)) same_edges edges_b (edges collection id_b);
   (* Test that add_edge is idempotent *)
   let () = add_edge collection id_a id_b in
+  let () = add_edge collection id_b id_a in
   Alcotest.(check (array testable_id)) same_edges edges_a (edges collection id_a);
   Alcotest.(check (array testable_id)) same_edges edges_b (edges collection id_b)
 
