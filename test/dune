@@ -1,4 +1,4 @@
 (test
  (name main)
- (modules main common test_pinboard)
+ (modules main common pinboard_test)
  (libraries alcotest hbt))

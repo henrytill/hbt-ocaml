@@ -1,3 +1,3 @@
 let () =
   let open Alcotest in
-  run "Pinboard" Test_pinboard.tests
+  run "Pinboard" Pinboard_test.tests
