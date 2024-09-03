@@ -27,6 +27,8 @@
    (and
     :with-test
     (>= 1.7.0)))
+  (cmarkit
+   (>= 0.3.0))
   (markup
    (>= 1.0.3))
   (ppx_expect
