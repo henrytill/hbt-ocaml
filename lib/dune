@@ -2,6 +2,7 @@
  (name hbt)
  (libraries
   markup
+  ptime
   str
   uri
   xdg

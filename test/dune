@@ -1,3 +1,16 @@
+(library
+ (name collection_expect)
+ (modules collection_expect)
+ (libraries hbt uri)
+ (inline_tests)
+ (preprocess
+  (pps ppx_expect)))
+
+(test
+ (name collection_test)
+ (modules collection_test)
+ (libraries alcotest hbt uri))
+
 (test
  (name pinboard_test)
  (modules common pinboard_test)

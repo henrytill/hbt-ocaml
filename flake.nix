@@ -35,7 +35,7 @@
         pkgs = nixpkgs.legacyPackages.${system};
         on = opam-nix.lib.${system};
         scope = on.buildOpamProject { resolveArgs.with-test = true; } package ./. {
-          ocaml-base-compiler = "4.14.2";
+          ocaml-base-compiler = "5.2.0";
         };
         overlay = final: prev: { };
       in

@@ -20,7 +20,8 @@
  (synopsis "A short synopsis")
  (description "A longer description")
  (depends
-  ocaml
+  (ocaml
+   (>= 5.2.0))
   dune
   (alcotest
    (and
@@ -28,6 +29,12 @@
     (>= 1.7.0)))
   (markup
    (>= 1.0.3))
+  (ppx_expect
+   (and
+    :with-test
+    (>= 0.17.0)))
+  (ptime
+   (>= 1.1.0))
   (uri
    (>= 4.4.0))
   (xdg
