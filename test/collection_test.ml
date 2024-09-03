@@ -7,6 +7,7 @@ let testable_uri = Alcotest.testable Uri.pp Uri.equal
 let testable_time = Alcotest.testable Time.pp Time.equal
 let testable_name_set = Alcotest.testable Name_set.pp Name_set.equal
 let testable_label_set = Alcotest.testable Label_set.pp Label_set.equal
+let testable_entity = Alcotest.testable Entity.pp Entity.equal
 let same_uri = "same uri"
 let same_created_at = "same created_at"
 let same_updated_at = "same updated_at"
@@ -14,6 +15,37 @@ let same_names = "same names"
 let same_labels = "same labels"
 let same_length = "same length"
 let same_edges = "same edges"
+
+let test_entity_equal () =
+  let uri = Uri.of_string "https://foo.org" in
+  let name = Name.of_string "foo" in
+  let created = Time.of_string "September 2, 2024" in
+  let labels = Label_set.of_list [ Label.of_string "foo" ] in
+  let a = Entity.make uri created (Some name) labels in
+  let b = Entity.make uri created (Some name) labels in
+  Alcotest.(check testable_entity) "same_entity" a b
+
+let test_entity_update () =
+  let uri = Uri.of_string "https://foo.org" in
+  let name = Name.of_string "foo" in
+  let created = Time.of_string "September 2, 2024" in
+  let labels = Label_set.of_list [ Label.of_string "foo" ] in
+  let a = Entity.make uri created (Some name) labels in
+  let updated = Time.of_string "September 4, 2024" in
+  let names_update = Name_set.of_list [ Name.of_string "Foo.org"; Name.of_string "F00" ] in
+  let labels_update = Label_set.of_list [ Label.of_string "foozer"; Label.of_string "bar" ] in
+  let () = Entity.update a updated names_update labels_update in
+  Alcotest.(check testable_uri) same_uri uri (Entity.uri a);
+  Alcotest.(check testable_time) same_created_at created (Entity.created_at a);
+  Alcotest.(check (list testable_time)) same_updated_at [ updated ] (Entity.updated_at a);
+  Alcotest.(check testable_name_set)
+    same_names
+    (Name_set.union (Name_set.of_list [ name ]) names_update)
+    (Entity.names a);
+  Alcotest.(check testable_label_set)
+    same_labels
+    (Label_set.union labels labels_update)
+    (Entity.labels a)
 
 let test_entity_absorb () =
   let uri = Uri.of_string "https://foo.org" in
@@ -87,7 +119,12 @@ let test_collection_add_edge () =
 let tests =
   let open Alcotest in
   [
-    ("Entity", [ test_case "absorb" `Quick test_entity_absorb ]);
+    ( "Entity",
+      [
+        test_case "equal" `Quick test_entity_equal;
+        test_case "update" `Quick test_entity_update;
+        test_case "absorb" `Quick test_entity_absorb;
+      ] );
     ( "Collection",
       [
         test_case "insert" `Quick test_collection_upsert;
