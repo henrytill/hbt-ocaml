@@ -26,16 +26,6 @@
    (and
     :with-test
     (>= 1.7.0)))
-  (cohttp
-   (>= 5.3.0))
-  (cohttp-lwt
-   (>= 5.3.0))
-  (cohttp-lwt-unix
-   (>= 5.3.0))
-  (lwt
-   (>= 5.7.0))
-  (lwt_ssl
-   (>= 1.2.0))
   (markup
    (>= 1.0.3))
   (uri

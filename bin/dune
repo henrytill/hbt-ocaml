@@ -1,4 +1,4 @@
 (executable
  (public_name hbt)
  (name main)
- (libraries hbt lwt.unix))
+ (libraries hbt unix))
