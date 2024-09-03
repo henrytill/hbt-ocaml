@@ -20,7 +20,6 @@ module Name = struct
   let to_string = Fun.id
   let equal = String.equal
   let compare = String.compare
-  let hash = Hashtbl.hash
   let pp fmt = Format.fprintf fmt "%S"
 end
 
@@ -37,7 +36,6 @@ module Label = struct
   let to_string = Fun.id
   let equal = String.equal
   let compare = String.compare
-  let hash = Hashtbl.hash
   let pp fmt = Format.fprintf fmt "%S"
 end
 

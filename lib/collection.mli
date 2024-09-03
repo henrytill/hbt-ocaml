@@ -14,7 +14,6 @@ module Name : sig
   val to_string : t -> string
   val equal : t -> t -> bool
   val compare : t -> t -> int
-  val hash : t -> int
   val pp : Format.formatter -> t -> unit
 end
 
@@ -31,7 +30,6 @@ module Label : sig
   val to_string : t -> string
   val equal : t -> t -> bool
   val compare : t -> t -> int
-  val hash : t -> int
   val pp : Format.formatter -> t -> unit
 end
 
