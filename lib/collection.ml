@@ -108,11 +108,9 @@ module Entity = struct
   let labels self = self.labels
 end
 
-type edges = Id.t Dynarray.t
-
 type t = {
   nodes : Entity.t Dynarray.t;
-  edges : edges Dynarray.t;
+  edges : Id.t Dynarray.t Dynarray.t;
   uris : (Uri.t, Id.t) Hashtbl.t;
 }
 
