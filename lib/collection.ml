@@ -153,9 +153,7 @@ let upsert self other =
 
 let add_edge self from target =
   let from_edges = Dynarray.get self.edges from in
-  if Dynarray.exists (Id.equal target) from_edges then
-    ()
-  else
+  if not (Dynarray.exists (Id.equal target) from_edges) then
     Dynarray.add_last from_edges target
 
 let entity self id = Dynarray.get self.nodes id
