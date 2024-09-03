@@ -56,3 +56,4 @@ let test_small () =
   Alcotest.(check (list pinboard_testable)) "same list" expected actual
 
 let tests = [ ("from_html", [ Alcotest.test_case "test_small" `Quick test_small ]) ]
+let () = Alcotest.run "Pinboard" tests
