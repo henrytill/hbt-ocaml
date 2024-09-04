@@ -111,7 +111,7 @@ end
 type t = {
   nodes : Entity.t Dynarray.t;
   edges : Id.t Dynarray.t Dynarray.t;
-  uris : (Uri.t, Id.t) Hashtbl.t;
+  uris : (string, Id.t) Hashtbl.t;
 }
 
 let make () =
@@ -130,15 +130,15 @@ let is_empty self =
   assert (ret = Dynarray.is_empty self.edges);
   ret
 
-let contains self uri = Hashtbl.find_opt self.uris uri |> Option.is_some
-let id self uri = Hashtbl.find_opt self.uris uri
+let contains self uri = Hashtbl.find_opt self.uris (Uri.to_string uri) |> Option.is_some
+let id self uri = Hashtbl.find_opt self.uris (Uri.to_string uri)
 
 let insert self entity =
   let id = Id.of_int (length self) in
   Dynarray.add_last self.nodes entity;
   Dynarray.add_last self.edges (Dynarray.create ());
   let uri = (Dynarray.get self.nodes id).uri in
-  Hashtbl.add self.uris uri id;
+  Hashtbl.add self.uris (Uri.to_string uri) id;
   id
 
 let upsert self other =
