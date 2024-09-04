@@ -161,3 +161,4 @@ let add_edges self from target =
 
 let entity self id = Dynarray.get self.nodes id
 let edges self id = Dynarray.get self.edges id |> Dynarray.to_array
+let entities self = Dynarray.to_array self.nodes
