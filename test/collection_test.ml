@@ -1,5 +1,3 @@
-[@@@ocamlformat "wrap-fun-args = false"]
-
 open Hbt.Collection
 
 let testable_id = Alcotest.testable Id.pp Id.equal

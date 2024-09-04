@@ -6,3 +6,4 @@ exp-grouping = preserve
 if-then-else = fit-or-vertical
 margin = 100
 type-decl = sparse
+wrap-fun-args = false

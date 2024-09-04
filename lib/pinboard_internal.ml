@@ -153,7 +153,8 @@ let from_html file =
     skip signals (`Start_element (tag "p"));
     let attrs = next_start signals "a" on_failure Fun.id in
     let description =
-      maybe_text signals
+      maybe_text
+        signals
         (fun _ -> true)
         (fun _ -> None)
         (fun xs -> Some (String.trim (String.concat String.empty xs)))
