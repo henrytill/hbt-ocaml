@@ -1,3 +1,3 @@
 (library
  (name hbt)
- (libraries markup ptime str uri xdg yojson))
+ (libraries cmarkit markup ptime str uri xdg yojson))

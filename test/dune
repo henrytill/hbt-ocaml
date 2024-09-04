@@ -12,6 +12,11 @@
  (libraries alcotest hbt uri))
 
 (test
+ (name markdown_test)
+ (modules common markdown_test)
+ (libraries alcotest hbt))
+
+(test
  (name pinboard_test)
  (modules common pinboard_test)
  (libraries alcotest hbt))

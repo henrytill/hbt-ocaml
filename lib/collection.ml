@@ -154,5 +154,9 @@ let add_edge self from target =
   if not (Dynarray.exists (Id.equal target) from_edges) then
     Dynarray.add_last from_edges target
 
+let add_edges self from target =
+  add_edge self from target;
+  add_edge self target from
+
 let entity self id = Dynarray.get self.nodes id
 let edges self id = Dynarray.get self.edges id |> Dynarray.to_array

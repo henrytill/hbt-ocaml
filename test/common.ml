@@ -1,5 +1,21 @@
 (** Utilities for testing. *)
 
+let read_file file =
+  let ic = open_in file in
+  let ret = ref [] in
+  try
+    while true do
+      let line = input_line ic in
+      ret := line :: !ret
+    done
+  with
+  | End_of_file ->
+      close_in ic;
+      String.concat "\n" (List.rev !ret)
+  | e ->
+      close_in ic;
+      raise e
+
 (** [with_temp_file contents f] creates a temporary file with the given
     contents and calls [f] with the filename. The file is deleted after [f]
     returns. *)
