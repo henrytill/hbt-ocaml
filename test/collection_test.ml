@@ -33,7 +33,7 @@ let test_entity_update () =
   let names_update = Name_set.of_list [ Name.of_string "Foo.org"; Name.of_string "F00" ] in
   let labels_update = Label_set.of_list [ Label.of_string "foozer"; Label.of_string "bar" ] in
   let () = Entity.update a updated names_update labels_update in
-  Alcotest.(check testable_uri) same_uri uri (Entity.uri a);
+  Alcotest.(check testable_uri) same_uri (Uri.canonicalize uri) (Entity.uri a);
   Alcotest.(check testable_time) same_created_at created (Entity.created_at a);
   Alcotest.(check (list testable_time)) same_updated_at [ updated ] (Entity.updated_at a);
   Alcotest.(check testable_name_set)
@@ -55,7 +55,7 @@ let test_entity_absorb () =
   let a = Entity.make uri created_a None labels_foo in
   let b = Entity.make uri created_b (Some name) labels_bar in
   let () = Entity.absorb a b in
-  Alcotest.(check testable_uri) same_uri uri (Entity.uri a);
+  Alcotest.(check testable_uri) same_uri (Uri.canonicalize uri) (Entity.uri a);
   Alcotest.(check testable_time) same_created_at created_b (Entity.created_at a);
   Alcotest.(check (list testable_time)) same_updated_at [ created_a ] (Entity.updated_at a);
   Alcotest.(check testable_name_set) same_names (Name_set.of_list [ name ]) (Entity.names a);
@@ -80,7 +80,7 @@ let test_collection_upsert () =
   Alcotest.(check int) same_length expected_length (length collection);
   Alcotest.(check testable_id) "same id" id_a id_b;
   let e = entity collection id_a in
-  Alcotest.(check testable_uri) same_uri uri (Entity.uri e);
+  Alcotest.(check testable_uri) same_uri (Uri.canonicalize uri) (Entity.uri e);
   Alcotest.(check testable_time) same_created_at created_b (Entity.created_at e);
   Alcotest.(check (list testable_time)) same_updated_at [ created_a ] (Entity.updated_at e);
   Alcotest.(check testable_name_set) same_names (Name_set.of_list [ name ]) (Entity.names e);

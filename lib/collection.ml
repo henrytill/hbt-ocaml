@@ -64,6 +64,7 @@ module Entity = struct
   }
 
   let make uri created_at maybe_name labels =
+    let uri = Uri.canonicalize uri in
     let updated_at = [] in
     let names =
       match maybe_name with
