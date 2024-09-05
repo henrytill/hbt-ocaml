@@ -760,6 +760,76 @@ let test_nested () =
   Alcotest.(check testable_entity) "same entity" (entity expected id_quux) (entity actual id_quux);
   Alcotest.(check testable_entity) "same entity" (entity expected id_baz) (entity actual id_baz)
 
+let empty_link = {|# November 15, 2023
+
+- [](https://foo.com)
+|}
+
+let test_empty_link () =
+  let open Collection in
+  let actual = Markdown.parse empty_link in
+  let foo =
+    Entity.make
+      (Uri.of_string "https://foo.com")
+      (Time.of_string "November 15, 2023")
+      None
+      Label_set.empty
+  in
+  let expected, id_foo =
+    let ret = make () in
+    let id_foo = upsert ret foo in
+    (ret, id_foo)
+  in
+  Alcotest.(check int) "same length" (length expected) (length actual);
+  Alcotest.(check testable_entity) "same entity" (entity expected id_foo) (entity actual id_foo)
+
+let link_text_with_backticks = {|# November 15, 2023
+
+- [`Foo`](https://foo.com)
+|}
+
+let test_link_text_with_backticks () =
+  let open Collection in
+  let actual = Markdown.parse link_text_with_backticks in
+  let foo =
+    Entity.make
+      (Uri.of_string "https://foo.com")
+      (Time.of_string "November 15, 2023")
+      (Some (Name.of_string "`Foo`"))
+      Label_set.empty
+  in
+  let expected, id_foo =
+    let ret = make () in
+    let id_foo = upsert ret foo in
+    (ret, id_foo)
+  in
+  Alcotest.(check int) "same length" (length expected) (length actual);
+  Alcotest.(check testable_entity) "same entity" (entity expected id_foo) (entity actual id_foo)
+
+let mixed_link_text_with_backticks =
+  {|# November 15, 2023
+
+- [Hello `Foo`, world!](https://foo.com)
+|}
+
+let test_mixed_link_text_with_backticks () =
+  let open Collection in
+  let actual = Markdown.parse mixed_link_text_with_backticks in
+  let foo =
+    Entity.make
+      (Uri.of_string "https://foo.com")
+      (Time.of_string "November 15, 2023")
+      (Some (Name.of_string "Hello `Foo`, world!"))
+      Label_set.empty
+  in
+  let expected, id_foo =
+    let ret = make () in
+    let id_foo = upsert ret foo in
+    (ret, id_foo)
+  in
+  Alcotest.(check int) "same length" (length expected) (length actual);
+  Alcotest.(check testable_entity) "same entity" (entity expected id_foo) (entity actual id_foo)
+
 let tests =
   let open Alcotest in
   [
@@ -786,6 +856,9 @@ let tests =
         test_case "test_mixed_dates" `Quick test_mixed_dates;
         test_case "test_basic" `Quick test_basic;
         test_case "test_nested" `Quick test_nested;
+        test_case "test_empty_link" `Quick test_empty_link;
+        test_case "test_link_text_with_backticks" `Quick test_link_text_with_backticks;
+        test_case "test_mixed_link_text_with_backticks" `Quick test_mixed_link_text_with_backticks;
       ] );
   ]
 

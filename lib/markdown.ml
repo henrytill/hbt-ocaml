@@ -110,6 +110,22 @@ let handle_autolink (link : Inline.Autolink.t) ((c, st) : Collection.t * Fold_st
   let st = { st with uri } in
   save_entity c st
 
+let rec extract_string is =
+  (* TODO: handle more cases *)
+  let rec go acc = function
+    | Inline.Code_span (x, _) :: xs ->
+        let s = Printf.sprintf "`%s`" (Inline.Code_span.code x) in
+        go (s :: acc) xs
+    | Inline.Inlines (is, _) :: xs ->
+        (* ugh *)
+        let s = extract_string is in
+        go (s :: acc) xs
+    | Inline.Text (s, _) :: xs -> go (s :: acc) xs
+    | _ :: xs -> go acc xs
+    | [] -> String.concat String.empty (List.rev acc)
+  in
+  go [] is
+
 let handle_link (link : Inline.Link.t) ((c, st) : Collection.t * Fold_state.t) =
   let get_def l kf ks =
     match Inline.Link.reference l with
@@ -121,17 +137,19 @@ let handle_link (link : Inline.Link.t) ((c, st) : Collection.t * Fold_state.t) =
     | Some (link_dest, _) -> ks link_dest
     | _ -> kf ()
   in
-  let get_text l kf ks =
-    match Inline.Link.text l with
-    | Inline.Text (link_text, _) -> ks link_text
-    | _ -> kf ()
+  let get_text l =
+    let s = Inline.Link.text l |> Inline.normalize |> fun x -> [ x ] |> extract_string in
+    if String.length s = 0 then
+      None
+    else
+      Some s
   in
   let kf () = Folder.default in
   let@ link_def = get_def link kf in
   let@ link_dest = get_dest link_def kf in
-  let@ link_text = get_text link kf in
+  let link_text = get_text link in
   let uri = Some (Uri.of_string link_dest) in
-  let name = Some (Collection.Name.of_string link_text) in
+  let name = Option.map Collection.Name.of_string link_text in
   let st = { st with uri; name } in
   save_entity c st
 
