@@ -13,7 +13,7 @@ module Fold_state = struct
   let empty =
     { name = None; time = None; uri = None; labels = []; maybe_parent = None; parents = [] }
 
-  let pp fmt self =
+  let[@warning "-32"] pp fmt self =
     let open Format in
     let none fmt () = fprintf fmt "None" in
     let pp_sep fmt () = fprintf fmt ";@;<1 2>" in
@@ -48,9 +48,9 @@ let _inspect_st st =
   Fold_state.pp Format.std_formatter st;
   Format.pp_print_newline Format.std_formatter ()
 
-let tail xs = try List.tl xs with _ -> []
+let ttail l = try List.tl l with _ -> []
 
-let take n l =
+let ttake n l =
   let rec go acc i = function
     | x :: xs when i > 0 -> go (x :: acc) (i - 1) xs
     | _ :: _ when i = 0 -> List.rev acc
@@ -80,7 +80,7 @@ let block m ((c, st) : Collection.t * Fold_state.t) = function
       Folder.ret (c, st)
   | Block.Heading (heading, _) ->
       let heading_level = Block.Heading.level heading in
-      let labels = take (heading_level - 2) st.labels in
+      let labels = ttake (heading_level - 2) st.labels in
       let@ heading_text = get_heading_text heading (fun () -> Folder.default) in
       let labels = Collection.Label.of_string heading_text :: labels in
       let st = { st with labels } in
@@ -97,7 +97,7 @@ let block m ((c, st) : Collection.t * Fold_state.t) = function
           (c, st)
           (Block.List'.items list)
       in
-      let st = { st with maybe_parent = None; parents = tail st.parents } in
+      let st = { st with maybe_parent = None; parents = ttail st.parents } in
       Folder.ret (c, st)
   | _ -> Folder.default
 
@@ -126,23 +126,23 @@ let get_dest ld kf ks =
   | Some (link_dest, _) -> ks link_dest
   | _ -> kf ()
 
-let rec extract_string (is : Inline.t list) : string =
-  (* TODO: handle more cases *)
+let rec extract_string (inlines : Inline.t list) : string =
+  (* TODO: handle more cases, rewrite as loop *)
   let rec go acc = function
-    | Inline.Code_span (x, _) :: xs ->
-        let s = Printf.sprintf "`%s`" (Inline.Code_span.code x) in
-        go (s :: acc) xs
+    | Inline.Code_span (s, _) :: xs ->
+        let a = Printf.sprintf "`%s`" (Inline.Code_span.code s) in
+        go (a :: acc) xs
     | Inline.Inlines (is, _) :: xs ->
-        let s = extract_string is in
-        go (s :: acc) xs
-    | Inline.Text (s, _) :: xs -> go (s :: acc) xs
+        let a = extract_string is in
+        go (a :: acc) xs (* ugh *)
+    | Inline.Text (t, _) :: xs -> go (t :: acc) xs
     | _ :: xs -> go acc xs
     | [] -> String.concat String.empty (List.rev acc)
   in
-  go [] is
+  go [] inlines
 
-let get_text (l : Inline.Link.t) : string option =
-  Inline.Link.text l |> Inline.normalize |> fun x -> [ x ] |> extract_string |> option_of_string
+let get_text (link : Inline.Link.t) : string option =
+  Inline.Link.text link |> Inline.normalize |> fun x -> [ x ] |> extract_string |> option_of_string
 
 let handle_link (link : Inline.Link.t) ((c, st) : Collection.t * Fold_state.t) =
   let kf () = Folder.default in
@@ -165,4 +165,5 @@ let parse input =
   let collection = Collection.make () in
   let state = Fold_state.empty in
   let ret, _state = Folder.fold_doc folder (collection, state) doc in
+  assert (collection = ret);
   ret
