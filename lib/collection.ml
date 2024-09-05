@@ -109,16 +109,27 @@ module Entity = struct
   let labels self = self.labels
 end
 
+module Uri_hashtbl = Hashtbl.Make (struct
+  type t = Uri.t
+
+  let equal = Uri.equal
+
+  let hash (uri : Uri.t) =
+    (* force thunk *)
+    let _ = Uri.query uri in
+    Hashtbl.hash uri
+end)
+
 type t = {
   nodes : Entity.t Dynarray.t;
   edges : Id.t Dynarray.t Dynarray.t;
-  uris : (string, Id.t) Hashtbl.t;
+  uris : Id.t Uri_hashtbl.t;
 }
 
 let make () =
   let nodes = Dynarray.create () in
   let edges = Dynarray.create () in
-  let uris = Hashtbl.create 1024 in
+  let uris = Uri_hashtbl.create 1024 in
   { nodes; edges; uris }
 
 let length self =
@@ -131,15 +142,15 @@ let is_empty self =
   assert (ret = Dynarray.is_empty self.edges);
   ret
 
-let contains self uri = Hashtbl.find_opt self.uris (Uri.to_string uri) |> Option.is_some
-let id self uri = Hashtbl.find_opt self.uris (Uri.to_string uri)
+let contains self uri = Uri_hashtbl.find_opt self.uris uri |> Option.is_some
+let id self uri = Uri_hashtbl.find_opt self.uris uri
 
 let insert self entity =
   let id = Id.of_int (length self) in
   Dynarray.add_last self.nodes entity;
   Dynarray.add_last self.edges (Dynarray.create ());
   let uri = (Dynarray.get self.nodes id).uri in
-  Hashtbl.add self.uris (Uri.to_string uri) id;
+  Uri_hashtbl.add self.uris uri id;
   id
 
 let upsert self other =
