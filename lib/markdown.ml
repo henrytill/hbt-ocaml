@@ -59,6 +59,12 @@ let take n l =
   in
   go [] n l
 
+let option_of_string s =
+  if Int.equal (String.length s) 0 then
+    None
+  else
+    Some s
+
 open Cmarkit
 
 let get_heading_text (h : Block.Heading.t) kf ks =
@@ -110,14 +116,23 @@ let handle_autolink (link : Inline.Autolink.t) ((c, st) : Collection.t * Fold_st
   let st = { st with uri } in
   save_entity c st
 
-let rec extract_string is =
+let get_def l kf ks =
+  match Inline.Link.reference l with
+  | `Inline (link_def, _) -> ks link_def
+  | _ -> kf ()
+
+let get_dest ld kf ks =
+  match Link_definition.dest ld with
+  | Some (link_dest, _) -> ks link_dest
+  | _ -> kf ()
+
+let rec extract_string (is : Inline.t list) : string =
   (* TODO: handle more cases *)
   let rec go acc = function
     | Inline.Code_span (x, _) :: xs ->
         let s = Printf.sprintf "`%s`" (Inline.Code_span.code x) in
         go (s :: acc) xs
     | Inline.Inlines (is, _) :: xs ->
-        (* ugh *)
         let s = extract_string is in
         go (s :: acc) xs
     | Inline.Text (s, _) :: xs -> go (s :: acc) xs
@@ -126,24 +141,10 @@ let rec extract_string is =
   in
   go [] is
 
+let get_text (l : Inline.Link.t) : string option =
+  Inline.Link.text l |> Inline.normalize |> fun x -> [ x ] |> extract_string |> option_of_string
+
 let handle_link (link : Inline.Link.t) ((c, st) : Collection.t * Fold_state.t) =
-  let get_def l kf ks =
-    match Inline.Link.reference l with
-    | `Inline (link_def, _) -> ks link_def
-    | _ -> kf ()
-  in
-  let get_dest ld kf ks =
-    match Link_definition.dest ld with
-    | Some (link_dest, _) -> ks link_dest
-    | _ -> kf ()
-  in
-  let get_text l =
-    let s = Inline.Link.text l |> Inline.normalize |> fun x -> [ x ] |> extract_string in
-    if String.length s = 0 then
-      None
-    else
-      Some s
-  in
   let kf () = Folder.default in
   let@ link_def = get_def link kf in
   let@ link_dest = get_dest link_def kf in
