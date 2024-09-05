@@ -114,7 +114,7 @@ module Uri_hashtbl = Hashtbl.Make (struct
 
   let equal = Uri.equal
 
-  let hash (uri : Uri.t) =
+  let hash uri =
     (* force thunk *)
     let _ = Uri.query uri in
     Hashtbl.hash uri
