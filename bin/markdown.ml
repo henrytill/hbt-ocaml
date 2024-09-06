@@ -1,18 +1,8 @@
 let read_file file =
   let ic = open_in file in
-  let ret = ref [] in
-  try
-    while true do
-      let line = input_line ic in
-      ret := line :: !ret
-    done
-  with
-  | End_of_file ->
-      close_in ic;
-      String.concat "\n" (List.rev !ret)
-  | e ->
-      close_in ic;
-      raise e
+  let ret = In_channel.input_all ic in
+  close_in ic;
+  ret
 
 let () =
   let dump_entities = ref false in
