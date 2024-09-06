@@ -24,6 +24,8 @@ let equal a b =
   && Bool.equal a.shared b.shared
   && Bool.equal a.toread b.toread
 
+let href self = self.href
+
 let pp fmt a =
   let open Format in
   fprintf fmt "@[<2>{@ ";

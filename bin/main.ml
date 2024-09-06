@@ -1,78 +1,102 @@
-open Hbt
+module type FILE_HANDLER = sig
+  type t
 
-let is_file path =
-  let open Unix in
-  match (stat path).st_kind with
-  | S_REG -> true
-  | _ -> false
+  val parse : string -> t
+  val print : string -> bool -> t -> unit
+end
 
-let find_files suffix dir =
-  let dir_handle = Unix.opendir dir in
-  let rec go acc =
-    try
-      let file = Unix.readdir dir_handle in
-      let full_path = Filename.concat dir file in
-      if is_file full_path && Filename.check_suffix file suffix then
-        go (full_path :: acc)
-      else
-        go acc
-    with End_of_file ->
-      Unix.closedir dir_handle;
-      acc
-  in
-  go []
+module Markdown : FILE_HANDLER = struct
+  type t = Hbt.Collection.t
 
-let mkdir_p dir =
-  if not (Sys.file_exists dir && Sys.is_directory dir) then
-    Sys.mkdir dir 0o700
+  let read_file file =
+    let ic = open_in file in
+    let ret = In_channel.input_all ic in
+    close_in ic;
+    ret
 
-let parse dir suffix parse_fn =
-  let files = find_files suffix dir in
-  let posts = parse_fn (List.hd files) in
-  let tags = Pinboard.tags posts in
-  (files, posts, tags)
+  let parse file = read_file file |> Hbt.Markdown.parse
 
-let parse_xml dir = parse dir "xml" Pinboard.from_xml
-let parse_html dir = parse dir "html" Pinboard.from_html
-let parse_json dir = parse dir "json" Pinboard.from_json
+  let print file dump_entities collection =
+    let open Hbt in
+    if dump_entities then
+      let entities = Collection.entities collection in
+      Array.iter
+        (fun e -> Collection.Entity.uri e |> Uri.to_string |> Printf.printf "%s\n")
+        entities
+    else
+      let length = Collection.length collection in
+      Printf.printf "%s: %d entities\n" file length
+end
 
-let pp_list pp_val fmt xs =
-  let pp_sep fmt () = Format.pp_print_string fmt ";@ " in
-  Format.fprintf fmt "@[[%a]@]" (Format.pp_print_list ~pp_sep pp_val) xs
+module Pinboard_shared = struct
+  type t = Hbt.Pinboard.t list
 
-let pp_string_list fmt xs =
-  let pp_string fmt = Format.fprintf fmt "%S" in
-  pp_list pp_string fmt xs
+  let print file dump_entities posts =
+    if dump_entities then
+      List.iter (fun p -> Hbt.Pinboard.href p |> Printf.printf "%s\n") posts
+    else
+      let length = List.length posts in
+      Printf.printf "%s: %d entities\n" file length
+end
 
-let pp_posts fmt posts tags =
-  let posts_len = List.length posts in
-  let tags_len = Pinboard.Tags.cardinal tags in
-  Format.fprintf fmt "@[parsed: %d posts, %d tags@]@;" posts_len tags_len;
-  Format.fprintf fmt "@[tags: %a@]@;" Pinboard.Tags.pp tags
+module Xml : FILE_HANDLER = struct
+  include Pinboard_shared
+
+  let parse = Hbt.Pinboard.from_xml
+end
+
+module Html : FILE_HANDLER = struct
+  include Pinboard_shared
+
+  let parse = Hbt.Pinboard.from_html
+end
+
+module Json : FILE_HANDLER = struct
+  include Pinboard_shared
+
+  let parse = Hbt.Pinboard.from_json
+end
+
+module Option_syntax = struct
+  let ( let* ) = Option.bind
+  let[@warning "-32"] return a = Some a
+end
+
+let suffixes = [ (".md", `Markdown); (".xml", `Xml); (".html", `Html); (".json", `Json) ]
+
+let suffix_handlers : (_ * (module FILE_HANDLER)) list =
+  [
+    (`Markdown, (module Markdown));
+    (`Xml, (module Xml));
+    (`Html, (module Html));
+    (`Json, (module Json));
+  ]
+
+let select_file_handler (file : string) : (module FILE_HANDLER) option =
+  let open Option_syntax in
+  let extension = Filename.extension file in
+  let* suffix = List.assoc_opt extension suffixes in
+  List.assoc_opt suffix suffix_handlers
 
 let () =
-  let fmt = Format.std_formatter in
-  (* config dirs *)
-  let data_dir = Config.get_data_dir () in
-  mkdir_p data_dir;
-  Format.fprintf fmt "@[data_dir: %S@]@;" data_dir;
-  let import_dir = Config.get_import_dir () in
-  mkdir_p import_dir;
-  Format.fprintf fmt "@[import_dir: %S@]@;" import_dir;
-  (* xml *)
-  let xml_files, xml_posts, xml_tags = parse_xml import_dir in
-  Format.fprintf fmt "@[xml_files: %a@]@;" pp_string_list xml_files;
-  pp_posts fmt xml_posts xml_tags;
-  (* html *)
-  let html_files, html_posts, html_tags = parse_html import_dir in
-  Format.fprintf fmt "@[html_files: %a@]@;" pp_string_list html_files;
-  pp_posts fmt html_posts html_tags;
-  (* json *)
-  let json_files, json_posts, json_tags = parse_json import_dir in
-  Format.fprintf fmt "@[json_files: %a@]@;" pp_string_list json_files;
-  pp_posts fmt json_posts json_tags;
-  Format.fprintf fmt "@[sample: %a@]@;" Pinboard.pp (List.hd json_posts);
-  (* tags diff *)
-  let diff = Pinboard.Tags.diff html_tags json_tags in
-  Format.fprintf fmt "@[diff: %a@]@;" Pinboard.Tags.pp diff;
-  Format.pp_print_flush fmt ()
+  let dump_entities = ref false in
+  let file = ref None in
+  let usage_string = "Usage: " ^ Sys.argv.(0) ^ " [OPTIONS...] <FILE>" in
+  let opt_list = [ ("-dump", Arg.Set dump_entities, "dump entities") ] in
+  let process_arg arg = file := Some arg in
+  Arg.parse opt_list process_arg usage_string;
+  let file =
+    match !file with
+    | Some file -> file
+    | None ->
+        Printf.eprintf "Error: missing file argument\n";
+        Arg.usage opt_list usage_string;
+        exit 1
+  in
+  match select_file_handler file with
+  | Some (module M) ->
+      M.parse file |> M.print file !dump_entities;
+      exit 0
+  | _ ->
+      Printf.eprintf "No handlers for this file type\n";
+      exit 1

@@ -3,6 +3,7 @@ type t
 val equal : t -> t -> bool
 val pp : Format.formatter -> t -> unit
 val to_string : t -> string
+val href : t -> string
 
 module Tags : sig
   include Set.S

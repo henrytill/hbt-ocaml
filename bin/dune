@@ -1,9 +1,4 @@
 (executable
  (public_name hbt)
  (name main)
- (libraries hbt unix))
-
-(executable
- (public_name markdown)
- (name markdown)
  (libraries hbt))
