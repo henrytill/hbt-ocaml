@@ -25,8 +25,8 @@ module Entity_construction = struct
       |}]
 
   let%expect_test "name and label" =
-    let labels = [ Label.of_string "archives" ] in
-    let entity = Entity.make archive_uri created_at archive_maybe_name (Label_set.of_list labels) in
+    let labels = Label_set.of_list [ Label.of_string "archives" ] in
+    let entity = Entity.make archive_uri created_at archive_maybe_name labels in
     Entity.pp Format.std_formatter entity;
     [%expect
       {|
@@ -40,8 +40,8 @@ module Entity_construction = struct
       |}]
 
   let%expect_test "more labels" =
-    let labels = [ Label.of_string "archives"; Label.of_string "books" ] in
-    let entity = Entity.make archive_uri created_at archive_maybe_name (Label_set.of_list labels) in
+    let labels = Label_set.of_list [ Label.of_string "archives"; Label.of_string "books" ] in
+    let entity = Entity.make archive_uri created_at archive_maybe_name labels in
     Entity.pp Format.std_formatter entity;
     [%expect
       {|
@@ -56,14 +56,14 @@ module Entity_construction = struct
 
   let%expect_test "multiples" =
     let archive =
-      let archive_labels = [ Label.of_string "archives"; Label.of_string "search" ] in
-      Entity.make archive_uri created_at archive_maybe_name (Label_set.of_list archive_labels)
+      let labels = Label_set.of_list [ Label.of_string "archives"; Label.of_string "search" ] in
+      Entity.make archive_uri created_at archive_maybe_name labels
     in
     let google =
       let google_uri = Uri.of_string "https://www.google.com/" in
       let google_maybe_name = Some (Name.of_string "Google") in
-      let google_labels = [ Label.of_string "search" ] in
-      Entity.make google_uri created_at google_maybe_name (Label_set.of_list google_labels)
+      let labels = Label_set.of_list [ Label.of_string "search" ] in
+      Entity.make google_uri created_at google_maybe_name labels
     in
     let entities = [ archive; google ] in
     pp_list Entity.pp Format.std_formatter entities;
