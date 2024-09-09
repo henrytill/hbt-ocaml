@@ -82,11 +82,11 @@ module Entity = struct
 
   let pp fmt self =
     let open Format in
+    let pp_sep fmt () = fprintf fmt ";@;<1 2>" in
+    let pp_updated_at = pp_print_list ~pp_sep Time.pp in
     fprintf fmt "@[<hv>{";
     fprintf fmt "@;<1 2>@[uri =@ %a@];" Uri.pp self.uri;
     fprintf fmt "@;<1 2>@[created_at =@ %a@];" Time.pp self.created_at;
-    let pp_sep fmt () = fprintf fmt ";@;<1 2>" in
-    let pp_updated_at = pp_print_list ~pp_sep Time.pp in
     fprintf fmt "@;<1 2>@[updated_at =@ @[<hv>[@;<0 2>%a@;<0 0>]@]@];" pp_updated_at self.updated_at;
     fprintf fmt "@;<1 2>@[names =@ %a@];" Name_set.pp self.names;
     fprintf fmt "@;<1 2>@[labels =@ %a@];" Label_set.pp self.labels;

@@ -104,9 +104,11 @@ let block m ((c, st) : Collection.t * Fold_state.t) = function
 let save_entity c st =
   let entity = Fold_state.to_entity st |> Option.get in
   let id = Collection.upsert c entity in
-  (match st.parents with
-  | parent :: _ -> Collection.add_edges c parent id
-  | [] -> ());
+  begin
+    match st.parents with
+    | parent :: _ -> Collection.add_edges c parent id
+    | [] -> ()
+  end;
   let st = { st with uri = None; name = None; maybe_parent = Some id } in
   Folder.ret (c, st)
 

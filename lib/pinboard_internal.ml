@@ -14,51 +14,49 @@ type t = {
 let make ~href ~time ~description ~extended ~tag ~hash ~shared ~toread =
   { href; time; description; extended; tag; hash; shared; toread }
 
-let equal a b =
-  String.equal a.href b.href
-  && String.equal a.time b.time
-  && Option.equal String.equal a.description b.description
-  && Option.equal String.equal a.extended b.extended
-  && List.equal String.equal a.tag b.tag
-  && Option.equal String.equal a.hash b.hash
-  && Bool.equal a.shared b.shared
-  && Bool.equal a.toread b.toread
-
 let href self = self.href
 
-let pp fmt a =
+let equal x y =
+  String.equal x.href y.href
+  && String.equal x.time y.time
+  && Option.equal String.equal x.description y.description
+  && Option.equal String.equal x.extended y.extended
+  && List.equal String.equal x.tag y.tag
+  && Option.equal String.equal x.hash y.hash
+  && Bool.equal x.shared y.shared
+  && Bool.equal x.toread y.toread
+
+let pp fmt self =
   let open Format in
-  fprintf fmt "@[<2>{@ ";
-  fprintf fmt "@[href =@ %S@];@ " a.href;
-  fprintf fmt "@[time =@ %S@];@ " a.time;
   let none fmt () = fprintf fmt "None" in
-  let some fmt elem = fprintf fmt "(Some %S)" elem in
+  let some fmt elem = fprintf fmt "%S" elem in
   let pp_string_option = pp_print_option ~none some in
-  fprintf fmt "@[description =@ %a@];@ " pp_string_option a.description;
-  fprintf fmt "@[extended =@ %a@];@ " pp_string_option a.extended;
-  let pp_sep fmt () = fprintf fmt ";@ " in
+  let pp_sep fmt () = fprintf fmt ";@;<1 2>" in
   let pp_elem fmt elem = fprintf fmt "%S" elem in
   let pp_tag = pp_print_list ~pp_sep pp_elem in
-  fprintf fmt "@[tag =@ @[[@ %a@,@ ]@]@];@ " pp_tag a.tag;
-  fprintf fmt "@[hash =@ %a@];@ " pp_string_option a.hash;
-  fprintf fmt "@[shared =@ %B@];@ " a.shared;
-  fprintf fmt "@[toread =@ %B@];@ " a.toread;
-  fprintf fmt "}@]@;"
+  fprintf fmt "@[<hv>{";
+  fprintf fmt "@;<1 2>@[href =@ %S@];" self.href;
+  fprintf fmt "@;<1 2>@[time =@ %S@];" self.time;
+  fprintf fmt "@;<1 2>@[description =@ %a@];" pp_string_option self.description;
+  fprintf fmt "@;<1 2>@[extended =@ %a@];" pp_string_option self.extended;
+  fprintf fmt "@;<1 2>@[tag =@ @[<hv>[@;<0 2>%a@;<0 0>]@]@];" pp_tag self.tag;
+  fprintf fmt "@;<1 2>@[hash =@ %a@];" pp_string_option self.hash;
+  fprintf fmt "@;<1 2>@[shared =@ %B@];" self.shared;
+  fprintf fmt "@;<1 2>@[toread =@ %B@];" self.toread;
+  fprintf fmt "@;<1 0>}@]"
 
-let show = Format.asprintf "%a" pp
-let to_string = show
+let to_string = Format.asprintf "%a" pp
 
 module Tags = struct
   include Set.Make (String)
 
-  let pp fmt a =
+  let pp fmt tags =
     let open Format in
     let pp_sep fmt () = fprintf fmt ";@ " in
     let pp_elem fmt elem = fprintf fmt "%S" elem in
-    fprintf fmt "@[<2>{@ %a@ }@]" (pp_print_list ~pp_sep pp_elem) (elements a)
+    fprintf fmt "@[<2>{@ %a@ }@]" (pp_print_list ~pp_sep pp_elem) (elements tags)
 
-  let show = Format.asprintf "%a" pp
-  let to_string = show
+  let to_string = Format.asprintf "%a" pp
 end
 
 let tags = List.fold_left (fun acc post -> Tags.of_list post.tag |> Tags.union acc) Tags.empty
@@ -144,8 +142,8 @@ let from_html file =
   let channel = Markup.channel ic in
   let html = Markup.parse_html channel in
   let signals = Markup.signals html in
-  let on_failure _ = failwith "parse error" in
   let parse_dd () =
+    let on_failure _ = failwith "malformed <dd>" in
     let@ _ = maybe_start signals "dd" (fun _ -> None) in
     let@ xs = next_text signals on_failure in
     let@ () = next_end signals on_failure in
@@ -153,6 +151,7 @@ let from_html file =
   in
   let to_t () =
     skip signals (`Start_element (tag "p"));
+    let on_failure _ = failwith "expected <a>" in
     let attrs = next_start signals "a" on_failure Fun.id in
     let description =
       maybe_text
