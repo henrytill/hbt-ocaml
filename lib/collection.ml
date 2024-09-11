@@ -173,3 +173,27 @@ let add_edges self from target =
 let entity self id = Dynarray.get self.nodes id
 let edges self id = Dynarray.get self.edges id |> Dynarray.to_array
 let entities self = Dynarray.to_array self.nodes
+
+let to_html self =
+  let top =
+    [
+      {|<!DOCTYPE NETSCAPE-Bookmark-file-1>|};
+      {|<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">|};
+      {|<TITLE>Bookmarks</TITLE>|};
+    ]
+  in
+  let open Tyxml in
+  let create_dt et =
+    let href = Entity.uri et |> Uri.to_string |> Html.a_href in
+    let tagstr =
+      Entity.labels et |> Label_set.to_list |> List.map Label.to_string |> String.concat ","
+    in
+    let tags = Html.Unsafe.string_attrib "tags" tagstr in
+    let namestr = Entity.names et |> Name_set.to_list |> List.hd |> Name.to_string in
+    let name = Html.txt namestr in
+    Html.(dt [ a ~a:[ href; tags ] [ name ] ])
+  in
+  let ets = entities self in
+  let dts = Array.fold_right (fun et acc -> create_dt et :: acc) ets [] in
+  let indent = true in
+  Format.asprintf "%s\n@[<hv>%a@]\n" (String.concat "\n" top) (Html.pp_elt ~indent ()) (Html.dl dts)

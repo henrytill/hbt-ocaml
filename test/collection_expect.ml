@@ -87,3 +87,64 @@ module Entity_construction = struct
       ]
       |}]
 end
+
+module To_html = struct
+  let%expect_test "to_html empty" =
+    let collection = make () in
+    let actual = to_html collection in
+    print_endline actual;
+    [%expect
+      {|
+      <!DOCTYPE NETSCAPE-Bookmark-file-1>
+      <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+      <TITLE>Bookmarks</TITLE>
+
+      <dl></dl>
+      |}]
+
+  let%expect_test "to_html basic" =
+    let labels_foo = Label_set.(empty |> add (Label.of_string "Foo")) in
+    let foo =
+      Entity.make
+        (Uri.of_string "https://foo.com")
+        (Time.of_string "November 15, 2023")
+        (Some (Name.of_string "Foo"))
+        labels_foo
+    in
+    let labels_bar = Label_set.add (Label.of_string "Bar") labels_foo in
+    let bar =
+      Entity.make
+        (Uri.of_string "https://bar.com")
+        (Time.of_string "November 15, 2023")
+        (Some (Name.of_string "Bar"))
+        labels_bar
+    in
+    let labels_baz = Label_set.add (Label.of_string "Baz") labels_bar in
+    let baz =
+      Entity.make
+        (Uri.of_string "https://baz.com")
+        (Time.of_string "November 15, 2023")
+        (Some (Name.of_string "Baz"))
+        labels_baz
+    in
+    let collection =
+      let ret = make () in
+      let _id_foo = upsert ret foo in
+      let _id_bar = upsert ret bar in
+      let _id_baz = upsert ret baz in
+      ret
+    in
+    let actual = to_html collection in
+    print_endline actual;
+    [%expect
+      {|
+      <!DOCTYPE NETSCAPE-Bookmark-file-1>
+      <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+      <TITLE>Bookmarks</TITLE>
+
+      <dl><dt><a href="https://foo.com/" tags="Foo">Foo</a></dt>
+       <dt><a href="https://bar.com/" tags="Bar,Foo">Bar</a></dt>
+       <dt><a href="https://baz.com/" tags="Bar,Baz,Foo">Baz</a></dt>
+      </dl>
+      |}]
+end

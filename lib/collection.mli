@@ -77,3 +77,4 @@ val add_edges : t -> Id.t -> Id.t -> unit
 val entity : t -> Id.t -> Entity.t
 val edges : t -> Id.t -> Id.t array
 val entities : t -> Entity.t array
+val to_html : t -> string
