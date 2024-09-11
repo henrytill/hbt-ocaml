@@ -19,7 +19,6 @@ depends: [
   "ptime" {>= "1.1.0"}
   "tyxml" {>= "4.6.0"}
   "uri" {>= "4.4.0"}
-  "xdg" {>= "3.10.0"}
   "yojson" {>= "2.1.0"}
   "odoc" {with-doc}
 ]
