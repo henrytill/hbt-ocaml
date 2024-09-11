@@ -1,6 +1,6 @@
 open Hbt.Collection
 
-module Entity_construction = struct
+module Pretty_printing = struct
   let pp_list pp_item ppf list =
     let open Format in
     let pp_sep fmt () = fprintf fmt ";@;<1 2>" in
