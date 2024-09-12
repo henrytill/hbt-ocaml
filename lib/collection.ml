@@ -142,6 +142,15 @@ module Entity = struct
   let uri self = self.uri
   let created_at self = self.created_at
   let updated_at self = self.updated_at
+
+  let last_updated_at self =
+    match self.updated_at with
+    | [] -> None
+    | hd :: tl ->
+        let max x y = if Time.compare x y < 0 then y else x in
+        let ret = List.fold_left max hd tl in
+        Some ret
+
   let names self = self.names
   let labels self = self.labels
 end
@@ -222,7 +231,14 @@ let to_html self =
   let open Tyxml in
   let create_dt et =
     let href = Entity.uri et |> Uri.to_string |> Html.a_href in
-    let add_date = Entity.created_at et |> Time.to_string |> Html.Unsafe.string_attrib "add_date" in
+    let created_at = Entity.created_at et in
+    let add_date = created_at |> Time.to_string |> Html.Unsafe.string_attrib "add_date" in
+    let last_modified =
+      Entity.last_updated_at et
+      |> Option.value ~default:created_at
+      |> Time.to_string
+      |> Html.Unsafe.string_attrib "last_modified"
+    in
     let tags =
       Entity.labels et
       |> Label_set.to_list
@@ -231,7 +247,7 @@ let to_html self =
       |> Html.Unsafe.string_attrib "tags"
     in
     let name = Entity.names et |> Name_set.to_list |> List.hd |> Name.to_string |> Html.txt in
-    Html.(dt [ a ~a:[ href; add_date; tags ] [ name ] ])
+    Html.(dt [ a ~a:[ href; add_date; last_modified; tags ] [ name ] ])
   in
   let dts = Array.fold_right (fun et acc -> create_dt et :: acc) (entities self) [] in
   Format.asprintf
