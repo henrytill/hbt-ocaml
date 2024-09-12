@@ -88,6 +88,7 @@ module Time = struct
   let to_string self = fst self |> int_of_float |> string_of_int
   let equal x y = Float.equal (fst x) (fst y)
   let compare x y = Float.compare (fst x) (fst y)
+  let max x y = if compare x y < 0 then y else x
   let pp fmt self = Format.fprintf fmt "%S" (to_string self)
 end
 
@@ -146,10 +147,7 @@ module Entity = struct
   let last_updated_at self =
     match self.updated_at with
     | [] -> None
-    | hd :: tl ->
-        let max x y = if Time.compare x y < 0 then y else x in
-        let ret = List.fold_left max hd tl in
-        Some ret
+    | x :: xs -> Some (List.fold_left Time.max x xs)
 
   let names self = self.names
   let labels self = self.labels
@@ -220,6 +218,27 @@ let entity self id = Dynarray.get self.nodes id
 let edges self id = Dynarray.get self.edges id |> Dynarray.to_array
 let entities self = Dynarray.to_array self.nodes
 
+let make_dt et =
+  let open Tyxml in
+  let href = Entity.uri et |> Uri.to_string |> Html.a_href in
+  let created_at = Entity.created_at et in
+  let add_date = created_at |> Time.to_string |> Html.Unsafe.string_attrib "add_date" in
+  let last_modified =
+    Entity.last_updated_at et
+    |> Option.value ~default:created_at
+    |> Time.to_string
+    |> Html.Unsafe.string_attrib "last_modified"
+  in
+  let tags =
+    Entity.labels et
+    |> Label_set.to_list
+    |> List.map Label.to_string
+    |> String.concat ","
+    |> Html.Unsafe.string_attrib "tags"
+  in
+  let name = Entity.names et |> Name_set.to_list |> List.hd |> Name.to_string |> Html.txt in
+  Html.(dt [ a ~a:[ href; add_date; last_modified; tags ] [ name ] ])
+
 let to_html self =
   let top =
     [
@@ -228,28 +247,8 @@ let to_html self =
       {|<TITLE>Bookmarks</TITLE>|};
     ]
   in
+  let dts = Array.fold_right (fun et acc -> make_dt et :: acc) (entities self) [] in
   let open Tyxml in
-  let create_dt et =
-    let href = Entity.uri et |> Uri.to_string |> Html.a_href in
-    let created_at = Entity.created_at et in
-    let add_date = created_at |> Time.to_string |> Html.Unsafe.string_attrib "add_date" in
-    let last_modified =
-      Entity.last_updated_at et
-      |> Option.value ~default:created_at
-      |> Time.to_string
-      |> Html.Unsafe.string_attrib "last_modified"
-    in
-    let tags =
-      Entity.labels et
-      |> Label_set.to_list
-      |> List.map Label.to_string
-      |> String.concat ","
-      |> Html.Unsafe.string_attrib "tags"
-    in
-    let name = Entity.names et |> Name_set.to_list |> List.hd |> Name.to_string |> Html.txt in
-    Html.(dt [ a ~a:[ href; add_date; last_modified; tags ] [ name ] ])
-  in
-  let dts = Array.fold_right (fun et acc -> create_dt et :: acc) (entities self) [] in
   Format.asprintf
     "%s\n@[<hv>%a@]\n"
     (String.concat "\n" top)
