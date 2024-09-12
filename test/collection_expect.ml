@@ -142,9 +142,13 @@ module To_html = struct
       <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
       <TITLE>Bookmarks</TITLE>
 
-      <dl><dt><a href="https://foo.com/" tags="Foo">Foo</a></dt>
-       <dt><a href="https://bar.com/" tags="Bar,Foo">Bar</a></dt>
-       <dt><a href="https://baz.com/" tags="Bar,Baz,Foo">Baz</a></dt>
+      <dl>
+       <dt><a href="https://foo.com/" add_date="1700035200" tags="Foo">Foo</a></dt>
+       <dt><a href="https://bar.com/" add_date="1700035200" tags="Bar,Foo">Bar</a>
+       </dt>
+       <dt>
+        <a href="https://baz.com/" add_date="1700035200" tags="Bar,Baz,Foo">Baz</a>
+       </dt>
       </dl>
       |}]
 end
