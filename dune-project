@@ -35,8 +35,6 @@
    (and
     :with-test
     (>= 0.17.0)))
-  (ptime
-   (>= 1.1.0))
   (tyxml
    (>= 4.6.0))
   (uri
