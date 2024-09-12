@@ -222,17 +222,20 @@ let to_html self =
   let open Tyxml in
   let create_dt et =
     let href = Entity.uri et |> Uri.to_string |> Html.a_href in
-    let datestr = Entity.created_at et |> Time.to_string in
-    let add_date = Html.Unsafe.string_attrib "add_date" datestr in
-    let tagstr =
-      Entity.labels et |> Label_set.to_list |> List.map Label.to_string |> String.concat ","
+    let add_date = Entity.created_at et |> Time.to_string |> Html.Unsafe.string_attrib "add_date" in
+    let tags =
+      Entity.labels et
+      |> Label_set.to_list
+      |> List.map Label.to_string
+      |> String.concat ","
+      |> Html.Unsafe.string_attrib "tags"
     in
-    let tags = Html.Unsafe.string_attrib "tags" tagstr in
-    let namestr = Entity.names et |> Name_set.to_list |> List.hd |> Name.to_string in
-    let name = Html.txt namestr in
+    let name = Entity.names et |> Name_set.to_list |> List.hd |> Name.to_string |> Html.txt in
     Html.(dt [ a ~a:[ href; add_date; tags ] [ name ] ])
   in
-  let ets = entities self in
-  let dts = Array.fold_right (fun et acc -> create_dt et :: acc) ets [] in
-  let indent = true in
-  Format.asprintf "%s\n@[<hv>%a@]\n" (String.concat "\n" top) (Html.pp_elt ~indent ()) (Html.dl dts)
+  let dts = Array.fold_right (fun et acc -> create_dt et :: acc) (entities self) [] in
+  Format.asprintf
+    "%s\n@[<hv>%a@]\n"
+    (String.concat "\n" top)
+    (Html.pp_elt ~indent:true ())
+    (Html.dl dts)
