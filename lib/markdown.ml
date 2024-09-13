@@ -10,7 +10,7 @@ module Fold_state = struct
     parents : Collection.Id.t list;
   }
 
-  let empty =
+  let make () =
     { name = None; time = None; uri = None; labels = []; maybe_parent = None; parents = [] }
 
   let[@warning "-32"] pp fmt self =
@@ -165,7 +165,7 @@ let parse input =
   let folder = Folder.make ~block ~inline () in
   let doc = Doc.of_string input in
   let collection = Collection.make () in
-  let state = Fold_state.empty in
+  let state = Fold_state.make () in
   let ret, _state = Folder.fold_doc folder (collection, state) doc in
   assert (collection = ret);
   ret
