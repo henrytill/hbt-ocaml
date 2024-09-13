@@ -1,8 +1,17 @@
+module Args = struct
+  type t = {
+    mutable dump_entities : bool;
+    mutable dump_tags : bool;
+  }
+
+  let make () = { dump_entities = false; dump_tags = false }
+end
+
 module type FILE_HANDLER = sig
   type t
 
   val parse : string -> t
-  val print : string -> bool -> t -> unit
+  val print : string -> Args.t -> t -> unit
 end
 
 module Markdown : FILE_HANDLER = struct
@@ -16,24 +25,29 @@ module Markdown : FILE_HANDLER = struct
 
   let parse file = read_file file |> Hbt.Markdown.parse
 
-  let print file dump_entities collection =
-    let open Hbt in
-    if dump_entities then
-      let entities = Collection.entities collection in
+  let print (file : string) (args : Args.t) (collection : t) : unit =
+    let open Hbt.Collection in
+    if args.dump_entities then
       Array.iter
-        (fun e -> Collection.Entity.uri e |> Uri.to_string |> Printf.printf "%s\n")
-        entities
+        (fun et -> Entity.uri et |> Uri.to_string |> Printf.printf "%s\n")
+        (entities collection)
+    else if args.dump_tags then
+      entities collection
+      |> Array.fold_left (fun acc et -> Entity.labels et |> Label_set.union acc) Label_set.empty
+      |> Label_set.iter (fun l -> Label.to_string l |> Printf.printf "%s\n")
     else
-      let length = Collection.length collection in
+      let length = length collection in
       Printf.printf "%s: %d entities\n" file length
 end
 
 module Pinboard_shared = struct
   type t = Hbt.Pinboard.t list
 
-  let print file dump_entities posts =
-    if dump_entities then
+  let print (file : string) (args : Args.t) (posts : t) : unit =
+    if Args.(args.dump_entities) then
       List.iter (fun p -> Hbt.Pinboard.href p |> Printf.printf "%s\n") posts
+    else if Args.(args.dump_tags) then
+      ()
     else
       let length = List.length posts in
       Printf.printf "%s: %d entities\n" file length
@@ -79,10 +93,15 @@ let select_file_handler (file : string) : (module FILE_HANDLER) option =
   List.assoc_opt suffix suffix_handlers
 
 let () =
-  let dump_entities = ref false in
+  let args = Args.make () in
   let file = ref None in
   let usage_string = "Usage: " ^ Sys.argv.(0) ^ " [OPTIONS...] <FILE>" in
-  let opt_list = [ ("-dump", Arg.Set dump_entities, "dump entities") ] in
+  let opt_list =
+    [
+      ("-dump", Arg.Unit (fun () -> args.dump_entities <- true), "dump entities");
+      ("-tags", Arg.Unit (fun () -> args.dump_tags <- true), "dump tags");
+    ]
+  in
   let process_arg arg = file := Some arg in
   Arg.parse opt_list process_arg usage_string;
   let file =
@@ -95,7 +114,7 @@ let () =
   in
   match select_file_handler file with
   | Some (module M) ->
-      M.parse file |> M.print file !dump_entities;
+      M.parse file |> M.print file args;
       exit 0
   | _ ->
       Printf.eprintf "No handlers for this file type\n";
