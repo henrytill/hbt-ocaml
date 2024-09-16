@@ -8,10 +8,7 @@ module Args = struct
 end
 
 module type FILE_HANDLER = sig
-  type t
-
-  val parse : string -> t
-  val print : string -> Args.t -> t -> unit
+  val run : string -> Args.t -> unit
 end
 
 module Markdown : FILE_HANDLER = struct
@@ -23,7 +20,7 @@ module Markdown : FILE_HANDLER = struct
     close_in ic;
     ret
 
-  let parse file = read_file file |> Hbt.Markdown.parse
+  let parse (file : string) : t = read_file file |> Hbt.Markdown.parse
 
   let print (file : string) (args : Args.t) (collection : t) : unit =
     let open Hbt.Collection in
@@ -38,6 +35,8 @@ module Markdown : FILE_HANDLER = struct
     else
       let length = length collection in
       Printf.printf "%s: %d entities\n" file length
+
+  let run (file : string) (args : Args.t) : unit = parse file |> print file args
 end
 
 module Pinboard_shared = struct
@@ -56,53 +55,35 @@ end
 module Xml : FILE_HANDLER = struct
   include Pinboard_shared
 
-  let parse = Hbt.Pinboard.from_xml
+  let parse : string -> t = Hbt.Pinboard.from_xml
+  let run (file : string) (args : Args.t) : unit = parse file |> print file args
 end
 
 module Html : FILE_HANDLER = struct
   include Pinboard_shared
 
-  let parse = Hbt.Pinboard.from_html
+  let parse : string -> t = Hbt.Pinboard.from_html
+  let run (file : string) (args : Args.t) : unit = parse file |> print file args
 end
 
 module Json : FILE_HANDLER = struct
   include Pinboard_shared
 
-  let parse = Hbt.Pinboard.from_json
+  let parse : string -> t = Hbt.Pinboard.from_json
+  let run (file : string) (args : Args.t) : unit = parse file |> print file args
 end
-
-module Option_syntax = struct
-  let ( let* ) = Option.bind
-  let[@warning "-32"] return a = Some a
-end
-
-let suffixes = [ (".md", `Markdown); (".xml", `Xml); (".html", `Html); (".json", `Json) ]
-
-let suffix_handlers : (_ * (module FILE_HANDLER)) list =
-  [
-    (`Markdown, (module Markdown));
-    (`Xml, (module Xml));
-    (`Html, (module Html));
-    (`Json, (module Json));
-  ]
-
-let select_file_handler (file : string) : (module FILE_HANDLER) option =
-  let open Option_syntax in
-  let extension = Filename.extension file in
-  let* suffix = List.assoc_opt extension suffixes in
-  List.assoc_opt suffix suffix_handlers
 
 let () =
   let args = Args.make () in
-  let file = ref None in
-  let usage_string = "Usage: " ^ Sys.argv.(0) ^ " [OPTIONS...] <FILE>" in
   let opt_list =
     [
       ("-dump", Arg.Unit (fun () -> args.dump_entities <- true), "dump entities");
       ("-tags", Arg.Unit (fun () -> args.dump_tags <- true), "dump tags");
     ]
   in
+  let file = ref None in
   let process_arg arg = file := Some arg in
+  let usage_string = "Usage: " ^ Sys.argv.(0) ^ " [OPTIONS...] <FILE>" in
   Arg.parse opt_list process_arg usage_string;
   let file =
     match !file with
@@ -112,10 +93,19 @@ let () =
         Arg.usage opt_list usage_string;
         exit 1
   in
-  match select_file_handler file with
-  | Some (module M) ->
-      M.parse file |> M.print file args;
+  match Filename.extension file with
+  | ".md" ->
+      Markdown.run file args;
+      exit 0
+  | ".xml" ->
+      Xml.run file args;
+      exit 0
+  | ".html" ->
+      Html.run file args;
+      exit 0
+  | ".json" ->
+      Json.run file args;
       exit 0
   | _ ->
-      Printf.eprintf "No handlers for this file type\n";
+      Printf.eprintf "No handler for this file type\n";
       exit 1
