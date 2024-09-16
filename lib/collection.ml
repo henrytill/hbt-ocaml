@@ -66,7 +66,7 @@ module Time = struct
   let parse_date date_str =
     Scanf.sscanf date_str "%s %d, %d" (fun month day year -> (int_of_month month, day, year))
 
-  let of_string (date_str : string) =
+  let of_string (date_str : string) : t =
     let open Unix in
     let tm_mon, tm_mday, year = parse_date date_str in
     let tm_year = year - 1900 in
