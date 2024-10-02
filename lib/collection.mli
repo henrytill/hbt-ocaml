@@ -54,8 +54,8 @@ module Entity : sig
   val make : Uri.t -> Time.t -> Name.t option -> Label_set.t -> t
   val equal : t -> t -> bool
   val pp : Format.formatter -> t -> unit
-  val update : t -> Time.t -> Name_set.t -> Label_set.t -> unit
-  val absorb : t -> t -> unit
+  val update : Time.t -> Name_set.t -> Label_set.t -> t -> t
+  val absorb : t -> t -> t
   val uri : t -> Uri.t
   val created_at : t -> Time.t
   val updated_at : t -> Time.t list

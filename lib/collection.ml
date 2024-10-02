@@ -95,10 +95,10 @@ end
 module Entity = struct
   type t = {
     uri : Uri.t;
-    mutable created_at : Time.t;
-    mutable updated_at : Time.t list;
-    mutable names : Name_set.t;
-    mutable labels : Label_set.t;
+    created_at : Time.t;
+    updated_at : Time.t list;
+    names : Name_set.t;
+    labels : Label_set.t;
   }
 
   let make uri created_at maybe_name labels =
@@ -130,16 +130,21 @@ module Entity = struct
     fprintf fmt "@;<1 2>@[labels =@ %a@];" Label_set.pp self.labels;
     fprintf fmt "@;<1 0>}@]"
 
-  let update self updated_at names labels =
-    if updated_at < self.created_at then (
-      self.updated_at <- self.created_at :: self.updated_at;
-      self.created_at <- updated_at)
+  let update updated_at names labels entity =
+    let names = Name_set.union entity.names names in
+    let labels = Label_set.union entity.labels labels in
+    if updated_at < entity.created_at then
+      {
+        entity with
+        updated_at = entity.created_at :: entity.updated_at;
+        created_at = updated_at;
+        names;
+        labels;
+      }
     else
-      self.updated_at <- updated_at :: self.updated_at;
-    self.names <- Name_set.union self.names names;
-    self.labels <- Label_set.union self.labels labels
+      { entity with updated_at = updated_at :: entity.updated_at; names; labels }
 
-  let absorb self other = update self other.created_at other.names other.labels
+  let absorb other = update other.created_at other.names other.labels
   let uri self = self.uri
   let created_at self = self.created_at
   let updated_at self = self.updated_at
@@ -200,8 +205,7 @@ let insert self entity =
 let upsert self other =
   match id self (Entity.uri other) with
   | Some id ->
-      let entity = Dynarray.get self.nodes id in
-      Entity.absorb entity other;
+      Dynarray.(get self.nodes id |> Entity.absorb other |> set self.nodes id);
       id
   | None -> insert self other
 

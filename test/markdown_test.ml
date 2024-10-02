@@ -551,13 +551,10 @@ let test_update () =
       (Time.of_string "December 5, 2023")
       (Some (Name.of_string "Foo"))
       Label_set.(empty |> add (Label.of_string "Foo"))
-  in
-  let () =
-    Entity.update
-      foo
-      (Time.of_string "December 6, 2023")
-      Name_set.(empty |> add (Name.of_string "Bar"))
-      Label_set.(empty |> add (Label.of_string "Bar"))
+    |> Entity.update
+         (Time.of_string "December 6, 2023")
+         Name_set.(empty |> add (Name.of_string "Bar"))
+         Label_set.(empty |> add (Label.of_string "Bar"))
   in
   let expected, id_foo =
     let ret = make () in
@@ -590,13 +587,10 @@ let test_descending_dates () =
       (Time.of_string "December 6, 2023")
       (Some (Name.of_string "Foo"))
       Label_set.(empty |> add (Label.of_string "Foo"))
-  in
-  let () =
-    Entity.update
-      foo
-      (Time.of_string "December 5, 2023")
-      Name_set.(empty |> add (Name.of_string "Bar"))
-      Label_set.(empty |> add (Label.of_string "Bar"))
+    |> Entity.update
+         (Time.of_string "December 5, 2023")
+         Name_set.(empty |> add (Name.of_string "Bar"))
+         Label_set.(empty |> add (Label.of_string "Bar"))
   in
   let expected, id_foo =
     let ret = make () in
@@ -635,20 +629,14 @@ let test_mixed_dates () =
       (Time.of_string "December 6, 2023")
       (Some (Name.of_string "Foo"))
       Label_set.(empty |> add (Label.of_string "Foo"))
-  in
-  let () =
-    Entity.update
-      foo
-      (Time.of_string "December 5, 2023")
-      Name_set.(empty |> add (Name.of_string "Bar"))
-      Label_set.(empty |> add (Label.of_string "Bar"))
-  in
-  let () =
-    Entity.update
-      foo
-      (Time.of_string "December 7, 2023")
-      Name_set.(empty |> add (Name.of_string "Baz"))
-      Label_set.(empty |> add (Label.of_string "Baz"))
+    |> Entity.update
+         (Time.of_string "December 5, 2023")
+         Name_set.(empty |> add (Name.of_string "Bar"))
+         Label_set.(empty |> add (Label.of_string "Bar"))
+    |> Entity.update
+         (Time.of_string "December 7, 2023")
+         Name_set.(empty |> add (Name.of_string "Baz"))
+         Label_set.(empty |> add (Label.of_string "Baz"))
   in
   let expected, id_foo =
     let ret = make () in
