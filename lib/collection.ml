@@ -156,6 +156,7 @@ module Entity = struct
 
   let names self = self.names
   let labels self = self.labels
+  let map_labels f self = { self with labels = f self.labels }
 end
 
 module Uri_hashtbl = Hashtbl.Make (struct
@@ -221,6 +222,10 @@ let add_edges self from target =
 let entity self id = Dynarray.get self.nodes id
 let edges self id = Dynarray.get self.edges id |> Dynarray.to_array
 let entities self = Dynarray.to_array self.nodes
+
+let map_labels (f : Label_set.t -> Label_set.t) (self : t) : t =
+  let nodes = Dynarray.map (Entity.map_labels f) self.nodes in
+  { self with nodes }
 
 let make_dt et =
   let open Tyxml in
