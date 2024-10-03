@@ -13,7 +13,7 @@ module Fold_state = struct
   let make () =
     { name = None; time = None; uri = None; labels = []; maybe_parent = None; parents = [] }
 
-  let[@warning "-32"] pp fmt self =
+  let[@warning "-32"] pp fmt st =
     let open Format in
     let none fmt () = fprintf fmt "None" in
     let pp_sep fmt () = fprintf fmt ";@;<1 2>" in
@@ -24,19 +24,19 @@ module Fold_state = struct
     let pp_print_maybe_parent = pp_print_option ~none Collection.Id.pp in
     let pp_print_parents = pp_print_list ~pp_sep Collection.Id.pp in
     fprintf fmt "@[<hv>{";
-    fprintf fmt "@;<1 2>@[name =@ %a@];" pp_print_name self.name;
-    fprintf fmt "@;<1 2>@[time =@ %a@];" pp_print_time self.time;
-    fprintf fmt "@;<1 2>@[uri =@ %a@];" pp_print_uri self.uri;
-    fprintf fmt "@;<1 2>@[labels =@ @[<hv>[@;<0 2>%a@;<0 0>]@]@];" pp_print_labels self.labels;
-    fprintf fmt "@;<1 2>@[maybe_parent =@ %a@];" pp_print_maybe_parent self.maybe_parent;
-    fprintf fmt "@;<1 2>@[parents =@ @[<hv>[@;<0 2>%a@;<0 0>]@]@];" pp_print_parents self.parents;
+    fprintf fmt "@;<1 2>@[name =@ %a@];" pp_print_name st.name;
+    fprintf fmt "@;<1 2>@[time =@ %a@];" pp_print_time st.time;
+    fprintf fmt "@;<1 2>@[uri =@ %a@];" pp_print_uri st.uri;
+    fprintf fmt "@;<1 2>@[labels =@ @[<hv>[@;<0 2>%a@;<0 0>]@]@];" pp_print_labels st.labels;
+    fprintf fmt "@;<1 2>@[maybe_parent =@ %a@];" pp_print_maybe_parent st.maybe_parent;
+    fprintf fmt "@;<1 2>@[parents =@ @[<hv>[@;<0 2>%a@;<0 0>]@]@];" pp_print_parents st.parents;
     fprintf fmt "@;<1 0>}@]"
 
-  let to_entity self =
-    match (self.uri, self.time) with
+  let to_entity st =
+    match (st.uri, st.time) with
     | Some uri, Some time ->
-        let labels = Collection.Label_set.of_list self.labels in
-        Some (Collection.Entity.make uri time self.name labels)
+        let labels = Collection.Label_set.of_list st.labels in
+        Some (Collection.Entity.make uri time st.name labels)
     | _ -> None
 end
 

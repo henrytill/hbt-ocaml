@@ -14,7 +14,7 @@ type t = {
 let make ~href ~time ~description ~extended ~tag ~hash ~shared ~toread =
   { href; time; description; extended; tag; hash; shared; toread }
 
-let href self = self.href
+let href p = p.href
 
 let equal x y =
   String.equal x.href y.href
@@ -26,7 +26,7 @@ let equal x y =
   && Bool.equal x.shared y.shared
   && Bool.equal x.toread y.toread
 
-let pp fmt self =
+let pp fmt p =
   let open Format in
   let none fmt () = fprintf fmt "None" in
   let some fmt elem = fprintf fmt "%S" elem in
@@ -35,14 +35,14 @@ let pp fmt self =
   let pp_elem fmt elem = fprintf fmt "%S" elem in
   let pp_tag = pp_print_list ~pp_sep pp_elem in
   fprintf fmt "@[<hv>{";
-  fprintf fmt "@;<1 2>@[href =@ %S@];" self.href;
-  fprintf fmt "@;<1 2>@[time =@ %S@];" self.time;
-  fprintf fmt "@;<1 2>@[description =@ %a@];" pp_string_option self.description;
-  fprintf fmt "@;<1 2>@[extended =@ %a@];" pp_string_option self.extended;
-  fprintf fmt "@;<1 2>@[tag =@ @[<hv>[@;<0 2>%a@;<0 0>]@]@];" pp_tag self.tag;
-  fprintf fmt "@;<1 2>@[hash =@ %a@];" pp_string_option self.hash;
-  fprintf fmt "@;<1 2>@[shared =@ %B@];" self.shared;
-  fprintf fmt "@;<1 2>@[toread =@ %B@];" self.toread;
+  fprintf fmt "@;<1 2>@[href =@ %S@];" p.href;
+  fprintf fmt "@;<1 2>@[time =@ %S@];" p.time;
+  fprintf fmt "@;<1 2>@[description =@ %a@];" pp_string_option p.description;
+  fprintf fmt "@;<1 2>@[extended =@ %a@];" pp_string_option p.extended;
+  fprintf fmt "@;<1 2>@[tag =@ @[<hv>[@;<0 2>%a@;<0 0>]@]@];" pp_tag p.tag;
+  fprintf fmt "@;<1 2>@[hash =@ %a@];" pp_string_option p.hash;
+  fprintf fmt "@;<1 2>@[shared =@ %B@];" p.shared;
+  fprintf fmt "@;<1 2>@[toread =@ %B@];" p.toread;
   fprintf fmt "@;<1 0>}@]"
 
 let to_string = Format.asprintf "%a" pp
