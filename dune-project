@@ -34,7 +34,7 @@
   (ppx_expect
    (and
     :with-test
-    (>= 0.17.0)))
+    (>= v0.17.0)))
   (tyxml
    (>= 4.6.0))
   (uri
