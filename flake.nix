@@ -7,6 +7,7 @@
     };
     opam-nix = {
       url = "github:tweag/opam-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
       inputs.opam-repository.follows = "opam-repository";
     };
     flake-utils = {
