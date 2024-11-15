@@ -1,6 +1,6 @@
 module Pinboard = Hbt.Pinboard_internal
 
-let pinboard_testable = Alcotest.testable Pinboard.pp Pinboard.equal
+let testable_pinboard = Alcotest.testable Pinboard.pp Pinboard.equal
 
 let small =
   {|<!DOCTYPE NETSCAPE-Bookmark-file-1>
@@ -51,7 +51,7 @@ let test_small () =
   in
   let expected = List.rev expected in
   let actual = Common.with_temp_file small @@ fun filename -> Pinboard.from_html filename in
-  Alcotest.(check (list pinboard_testable)) "same list" expected actual
+  Alcotest.(check (list testable_pinboard)) "same list" expected actual
 
 let tests = [ ("from_html", [ Alcotest.test_case "test_small" `Quick test_small ]) ]
 let () = Alcotest.run "Pinboard" tests
