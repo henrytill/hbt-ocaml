@@ -1,4 +1,4 @@
-open Base
+open Prelude
 
 module Fold_state = struct
   type t = {
