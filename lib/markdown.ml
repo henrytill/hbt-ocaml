@@ -1,4 +1,5 @@
 open Prelude
+open Cmarkit
 
 module Fold_state = struct
   type t = {
@@ -64,8 +65,6 @@ let option_of_string s =
     None
   else
     Some s
-
-open Cmarkit
 
 let get_heading_text (h : Block.Heading.t) kf ks =
   match Block.Heading.inline h with
