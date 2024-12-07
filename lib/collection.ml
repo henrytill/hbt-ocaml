@@ -133,7 +133,7 @@ module Entity = struct
   let update updated_at names labels e =
     let names = Name_set.union e.names names in
     let labels = Label_set.union e.labels labels in
-    if updated_at < e.created_at then
+    if Time.compare updated_at e.created_at < 0 then
       { e with updated_at = e.created_at :: e.updated_at; created_at = updated_at; names; labels }
     else
       { e with updated_at = updated_at :: e.updated_at; names; labels }
