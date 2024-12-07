@@ -14,7 +14,7 @@ module Fold_state = struct
   let make () =
     { name = None; time = None; uri = None; labels = []; maybe_parent = None; parents = [] }
 
-  let[@warning "-32"] pp fmt st =
+  let pp fmt st =
     let open Format in
     let none fmt () = fprintf fmt "None" in
     let pp_sep fmt () = fprintf fmt ";@;<1 2>" in
