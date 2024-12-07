@@ -166,5 +166,6 @@ let parse input =
   let collection = Collection.make () in
   let state = Fold_state.make () in
   let ret, _state = Folder.fold_doc folder (collection, state) doc in
+  assert (collection == ret);
   assert (collection = ret);
   ret
