@@ -13,12 +13,10 @@
 
 (license ISC)
 
-(documentation https://url/to/documentation)
-
 (package
  (name hbt)
- (synopsis "A short synopsis")
- (description "A longer description")
+ (synopsis "Heterogeneous Bookmark Transformation")
+ (description "A tool for parsing and transforming bookmarks from various sources")
  (depends
   (ocaml
    (>= 5.2.0))
@@ -40,8 +38,4 @@
   (uri
    (>= 4.4.0))
   (yojson
-   (>= 2.1.0)))
- (tags
-  (topics "to describe" your project)))
-
-; See the complete stanza docs at https://dune.readthedocs.io/en/stable/dune-files.html#dune-project
+   (>= 2.1.0))))
