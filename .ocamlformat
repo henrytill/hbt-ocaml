@@ -4,6 +4,7 @@ break-cases = toplevel
 break-infix = fit-or-vertical
 exp-grouping = preserve
 if-then-else = fit-or-vertical
+let-binding-deindent-fun = false
 margin = 100
 type-decl = sparse
 wrap-fun-args = false
