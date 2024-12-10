@@ -252,8 +252,11 @@ let to_html c =
   in
   let dts = Array.fold_right (fun e acc -> make_dt e :: acc) (entities c) [] in
   let open Tyxml in
-  Format.asprintf
-    "%s\n@[<hv>%a@]\n"
+  Format.pp_set_margin Format.str_formatter 200;
+  Format.fprintf
+    Format.str_formatter
+    "%s@[<h>%a@]\n"
     (String.concat "\n" top)
     (Html.pp_elt ~indent:true ())
-    (Html.dl dts)
+    (Html.dl dts);
+  Format.flush_str_formatter ()

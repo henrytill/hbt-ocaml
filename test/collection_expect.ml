@@ -98,7 +98,6 @@ module To_html = struct
       <!DOCTYPE NETSCAPE-Bookmark-file-1>
       <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
       <TITLE>Bookmarks</TITLE>
-
       <dl></dl>
       |}]
 
@@ -141,23 +140,9 @@ module To_html = struct
       <!DOCTYPE NETSCAPE-Bookmark-file-1>
       <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
       <TITLE>Bookmarks</TITLE>
-
-      <dl>
-       <dt>
-        <a href="https://foo.com/" add_date="1700035200" last_modified="1700035200"
-         tags="Foo">Foo
-        </a>
-       </dt>
-       <dt>
-        <a href="https://bar.com/" add_date="1700035200" last_modified="1700035200"
-         tags="Bar,Foo">Bar
-        </a>
-       </dt>
-       <dt>
-        <a href="https://baz.com/" add_date="1700035200" last_modified="1700035200"
-         tags="Bar,Baz,Foo">Baz
-        </a>
-       </dt>
+      <dl><dt><a href="https://foo.com/" add_date="1700035200" last_modified="1700035200" tags="Foo">Foo</a></dt>
+       <dt><a href="https://bar.com/" add_date="1700035200" last_modified="1700035200" tags="Bar,Foo">Bar</a></dt>
+       <dt><a href="https://baz.com/" add_date="1700035200" last_modified="1700035200" tags="Bar,Baz,Foo">Baz</a></dt>
       </dl>
       |}]
 end
