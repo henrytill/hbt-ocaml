@@ -42,12 +42,14 @@ module Fold_state = struct
 end
 
 let _inspect_text text =
-  Format.pp_print_string Format.std_formatter text;
-  Format.pp_print_newline Format.std_formatter ()
+  Format.(
+    pp_print_string std_formatter text;
+    pp_print_newline std_formatter ())
 
 let _inspect_st st =
-  Fold_state.pp Format.std_formatter st;
-  Format.pp_print_newline Format.std_formatter ()
+  Format.(
+    Fold_state.pp std_formatter st;
+    pp_print_newline std_formatter ())
 
 let option_of_string s =
   if Int.equal (String.length s) 0 then
