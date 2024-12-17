@@ -49,17 +49,6 @@ let _inspect_st st =
   Fold_state.pp Format.std_formatter st;
   Format.pp_print_newline Format.std_formatter ()
 
-let ttail l = try List.tl l with _ -> []
-
-let ttake n l =
-  let rec go acc i = function
-    | x :: xs when i > 0 -> go (x :: acc) (i - 1) xs
-    | _ :: _ when i = 0 -> List.rev acc
-    | _ :: _ -> failwith "take"
-    | [] -> List.rev acc
-  in
-  go [] n l
-
 let option_of_string s =
   if Int.equal (String.length s) 0 then
     None
@@ -79,7 +68,7 @@ let block m ((c, st) : Collection.t * Fold_state.t) = function
       Folder.ret (c, st)
   | Block.Heading (heading, _) ->
       let heading_level = Block.Heading.level heading in
-      let labels = ttake (heading_level - 2) st.labels in
+      let labels = List_ext.take (heading_level - 2) st.labels in
       let@ heading_text = get_heading_text heading (fun () -> Folder.default) in
       let labels = Collection.Label.of_string heading_text :: labels in
       let st = { st with labels } in
@@ -96,7 +85,7 @@ let block m ((c, st) : Collection.t * Fold_state.t) = function
           (c, st)
           (Block.List'.items list)
       in
-      let st = { st with maybe_parent = None; parents = ttail st.parents } in
+      let st = { st with maybe_parent = None; parents = List_ext.tail_or_nil st.parents } in
       Folder.ret (c, st)
   | _ -> Folder.default
 
