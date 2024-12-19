@@ -43,9 +43,9 @@ module Pinboard_shared = struct
   type t = Hbt.Pinboard.t list
 
   let print (file : string) (args : Args.t) (posts : t) : unit =
-    if Args.(args.dump_entities) then
+    if args.dump_entities then
       List.iter (fun p -> Hbt.Pinboard.href p |> Printf.printf "%s\n") posts
-    else if Args.(args.dump_tags) then
+    else if args.dump_tags then
       ()
     else
       let length = List.length posts in
