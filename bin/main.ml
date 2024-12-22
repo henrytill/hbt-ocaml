@@ -85,7 +85,7 @@ let () =
   in
   let file = ref None in
   let process_arg arg = file := Some arg in
-  let usage_string = "Usage: " ^ Sys.argv.(0) ^ " [OPTIONS...] <FILE>" in
+  let usage_string = "Usage: " ^ Sys.argv.(0) ^ " <options> <file>" in
   Arg.parse opt_list process_arg usage_string;
   let file =
     match !file with
