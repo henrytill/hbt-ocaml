@@ -1,3 +1,6 @@
+(cram
+ (deps %{bin:hbt}))
+
 (library
  (name collection_expect)
  (modules collection_expect)
