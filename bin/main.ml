@@ -75,10 +75,12 @@ end
 
 let () =
   let args = Args.make () in
+  let set_dump_entities () = args.dump_entities <- true in
+  let set_dump_tags () = args.dump_tags <- true in
   let opt_list =
     [
-      ("-dump", Arg.Unit (fun () -> args.dump_entities <- true), "dump entities");
-      ("-tags", Arg.Unit (fun () -> args.dump_tags <- true), "dump tags");
+      ("-dump", Arg.Unit set_dump_entities, "dump entities");
+      ("-tags", Arg.Unit set_dump_tags, "dump tags");
     ]
   in
   let file = ref None in
