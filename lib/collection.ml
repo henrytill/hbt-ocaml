@@ -45,6 +45,8 @@ module Label_set = struct
   let pp fmt s = pp_print_set Label.pp fmt (elements s)
 end
 
+module Label_map = Map.Make (Label)
+
 module Time = struct
   type t = float * Unix.tm
 

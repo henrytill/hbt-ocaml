@@ -39,6 +39,8 @@ module Label_set : sig
   val pp : Format.formatter -> t -> unit
 end
 
+module Label_map : Map.S with type key = Label.t
+
 module Time : sig
   type t
 
