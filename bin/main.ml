@@ -2,9 +2,10 @@ module Args = struct
   type t = {
     mutable dump_entities : bool;
     mutable dump_tags : bool;
+    mutable mappings_file : string option; [@warning "-69"]
   }
 
-  let make () = { dump_entities = false; dump_tags = false }
+  let make () = { dump_entities = false; dump_tags = false; mappings_file = None }
 end
 
 module type FILE_HANDLER = sig
@@ -77,10 +78,12 @@ let () =
   let args = Args.make () in
   let set_dump_entities () = args.dump_entities <- true in
   let set_dump_tags () = args.dump_tags <- true in
+  let set_mappings_file mappings_file = args.mappings_file <- Some mappings_file in
   let opt_list =
     [
       ("-dump", Arg.Unit set_dump_entities, "dump entities");
       ("-tags", Arg.Unit set_dump_tags, "dump tags");
+      ("-mappings", Arg.String set_mappings_file, "<file> Read tag mappings from <file>");
     ]
   in
   let file = ref None in
