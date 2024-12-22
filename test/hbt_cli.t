@@ -5,10 +5,14 @@ Create a test input file:
   > 
   > ## programming
   > 
+  > ### ocaml
+  > 
   > - [OCaml Website](https://ocaml.org)
   > - <https://discuss.ocaml.org/>
   > 
-  > ## tools/editor
+  > ### tools
+  > 
+  > #### editor
   > 
   > - [Emacs](https://www.gnu.org/software/emacs/)
   > EOF
@@ -28,23 +32,28 @@ Test dumping entities:
 Test dumping tags:
 
   $ hbt -tags input.md
+  editor
+  ocaml
   programming
-  tools/editor
+  tools
 
 Now create a mappings file to transform some tags:
 
   $ cat >mappings.json <<EOF
   > {
-  >   "tools/editor": "editors",
-  >   "programming": "ocaml"
+  >   "editor": "editors",
+  >   "programming": "dev",
+  >   "ocaml": "languages"
   > }
   > EOF
 
 Test the tag mapping functionality:
 
   $ hbt -tags -mappings mappings.json input.md
+  dev
   editors
-  ocaml
+  languages
+  tools
 
 Verify that entities are preserved while tags are transformed:
 
@@ -59,14 +68,16 @@ Test with an empty mappings file:
   > {}
   > EOF
   $ hbt -tags -mappings empty-mappings.json input.md
+  editor
+  ocaml
   programming
-  tools/editor
+  tools
 
 Test with invalid JSON mappings file:
 
   $ cat >invalid.json <<EOF
   > {
-  >   "tools/editor": 123,
+  >   "editor": 123,
   >   "programming": ["foo"]
   > }
   > EOF
