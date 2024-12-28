@@ -21,30 +21,9 @@ module Markdown : FILE_HANDLER = struct
     close_in ic;
     ret
 
-  let json_to_map (json : Yojson.Basic.t) : Hbt.Collection.Label.t Hbt.Collection.Label_map.t =
-    match json with
-    | `Assoc fields ->
-        let f acc (key, value) =
-          match value with
-          | `String s ->
-              let k = Hbt.Collection.Label.of_string key in
-              let v = Hbt.Collection.Label.of_string s in
-              Hbt.Collection.Label_map.add k v acc
-          | _ -> invalid_arg "All values must be strings"
-        in
-        List.fold_left f Hbt.Collection.Label_map.empty fields
-    | _ -> invalid_arg "Expected a JSON object"
-
-  let update_labels (args : Args.t) : Hbt.Collection.t -> Hbt.Collection.t =
+  let update (args : Args.t) : Hbt.Collection.t -> Hbt.Collection.t =
     match args.mappings_file with
-    | Some file ->
-        let json_str = read_file file in
-        let json = Yojson.Basic.from_string json_str in
-        let mapping = json_to_map json in
-        let open Hbt.Collection in
-        map_labels
-          (Label_set.map (fun label ->
-               Label_map.find_opt label mapping |> Option.value ~default:label))
+    | Some file -> read_file file |> Yojson.Basic.from_string |> Hbt.Collection.update_labels
     | None -> Fun.id
 
   let parse (file : string) : t = read_file file |> Hbt.Markdown.parse
@@ -63,8 +42,7 @@ module Markdown : FILE_HANDLER = struct
       let length = length collection in
       Printf.printf "%s: %d entities\n" file length
 
-  let run (file : string) (args : Args.t) : unit =
-    parse file |> update_labels args |> print file args
+  let run (file : string) (args : Args.t) : unit = parse file |> update args |> print file args
 end
 
 module Pinboard_shared = struct

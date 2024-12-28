@@ -223,6 +223,25 @@ let map_labels (f : Label_set.t -> Label_set.t) (c : t) : t =
   let nodes = Dynarray.map (Entity.map_labels f) c.nodes in
   { c with nodes }
 
+let json_to_map (json : Yojson.Basic.t) : Label.t Label_map.t =
+  match json with
+  | `Assoc fields ->
+      let f acc (key, value) =
+        match value with
+        | `String s ->
+            let k = Label.of_string key in
+            let v = Label.of_string s in
+            Label_map.add k v acc
+        | _ -> invalid_arg "All values must be strings"
+      in
+      List.fold_left f Label_map.empty fields
+  | _ -> invalid_arg "Expected a JSON object"
+
+let update_labels (json : Yojson.Basic.t) : t -> t =
+  let mapping = json_to_map json in
+  let f label = Label_map.find_opt label mapping |> Option.value ~default:label in
+  map_labels (Label_set.map f)
+
 let make_dt e =
   let open Tyxml in
   let href = Entity.uri e |> Uri.to_string |> Html.a_href in

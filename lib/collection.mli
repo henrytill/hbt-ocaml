@@ -80,4 +80,5 @@ val entity : t -> Id.t -> Entity.t
 val edges : t -> Id.t -> Id.t array
 val entities : t -> Entity.t array
 val map_labels : (Label_set.t -> Label_set.t) -> t -> t
+val update_labels : Yojson.Basic.t -> t -> t
 val to_html : t -> string
