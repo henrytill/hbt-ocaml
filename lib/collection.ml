@@ -11,6 +11,8 @@ module Id = struct
   let equal = Int.equal
   let compare = Int.compare
   let pp = Format.pp_print_int
+  let t_of_yojson _ = assert false
+  let yojson_of_t _ = assert false
 end
 
 module Name = struct
@@ -21,12 +23,16 @@ module Name = struct
   let equal = String.equal
   let compare = String.compare
   let pp fmt = Format.fprintf fmt "%S"
+  let t_of_yojson _ = assert false
+  let yojson_of_t _ = assert false
 end
 
 module Name_set = struct
   include Set.Make (Name)
 
   let pp fmt s = pp_print_set Name.pp fmt (elements s)
+  let t_of_yojson _ = assert false
+  let yojson_of_t _ = assert false
 end
 
 module Label = struct
@@ -37,12 +43,16 @@ module Label = struct
   let equal = String.equal
   let compare = String.compare
   let pp fmt = Format.fprintf fmt "%S"
+  let t_of_yojson _ = assert false
+  let yojson_of_t _ = assert false
 end
 
 module Label_set = struct
   include Set.Make (Label)
 
   let pp fmt s = pp_print_set Label.pp fmt (elements s)
+  let t_of_yojson _ = assert false
+  let yojson_of_t _ = assert false
 end
 
 module Label_map = Map.Make (Label)
@@ -92,6 +102,8 @@ module Time = struct
   let compare x y = Float.compare (fst x) (fst y)
   let max x y = if compare x y < 0 then y else x
   let pp fmt t = Format.fprintf fmt "%S" (to_string t)
+  let t_of_yojson _ = assert false
+  let yojson_of_t _ = assert false
 end
 
 module Entity = struct
@@ -131,6 +143,9 @@ module Entity = struct
     fprintf fmt "@;<1 2>@[names =@ %a@];" Name_set.pp e.names;
     fprintf fmt "@;<1 2>@[labels =@ %a@];" Label_set.pp e.labels;
     fprintf fmt "@;<1 0>}@]"
+
+  let t_of_yojson _ = assert false
+  let yojson_of_t _ = assert false
 
   let update updated_at names labels e =
     let names = Name_set.union e.names names in
@@ -218,6 +233,8 @@ let add_edges c from target =
 let entity c id = Dynarray.get c.nodes id
 let edges c id = Dynarray.get c.edges id |> Dynarray.to_array
 let entities c = Dynarray.to_array c.nodes
+let t_of_yojson _ = assert false
+let yojson_of_t _ = assert false
 
 let map_labels (f : Label_set.t -> Label_set.t) (c : t) : t =
   let nodes = Dynarray.map (Entity.map_labels f) c.nodes in
