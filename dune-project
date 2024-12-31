@@ -1,5 +1,7 @@
 (lang dune 3.10)
 
+(using mdx 0.4)
+
 (name hbt)
 
 (generate_opam_files true)
@@ -29,10 +31,10 @@
    (>= 0.3.0))
   (markup
    (>= 1.0.3))
-  (ppx_expect
+  (mdx
    (and
     :with-test
-    (>= v0.17.0)))
+    (>= 2.4.1)))
   (tyxml
    (>= 4.6.0))
   (uri

@@ -1,13 +1,9 @@
 (cram
  (deps %{bin:hbt}))
 
-(library
- (name collection_expect)
- (modules collection_expect)
- (libraries hbt uri)
- (inline_tests)
- (preprocess
-  (pps ppx_expect)))
+(mdx
+ (deps
+  (package hbt)))
 
 (test
  (name collection_test)

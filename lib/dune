@@ -1,3 +1,4 @@
 (library
  (name hbt)
+ (public_name hbt)
  (libraries cmarkit markup str tyxml unix uri yojson))
