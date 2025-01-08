@@ -81,7 +81,8 @@ end
 
 type t
 
-val make : unit -> t
+val create : unit -> t
+val make : int -> t
 val length : t -> int
 val is_empty : t -> bool
 val contains : t -> Uri.t -> bool

@@ -11,8 +11,8 @@ module Id = struct
   let equal = Int.equal
   let compare = Int.compare
   let pp = Format.pp_print_int
-  let t_of_yojson _ = assert false
-  let yojson_of_t _ = assert false
+  let t_of_yojson json = Yojson.Safe.Util.to_int json
+  let yojson_of_t id = `Int (to_int id)
 end
 
 module Name = struct
@@ -23,16 +23,21 @@ module Name = struct
   let equal = String.equal
   let compare = String.compare
   let pp fmt = Format.fprintf fmt "%S"
-  let t_of_yojson _ = assert false
-  let yojson_of_t _ = assert false
+  let t_of_yojson json = Yojson.Safe.Util.to_string json
+  let yojson_of_t name = `String (to_string name)
 end
 
 module Name_set = struct
   include Set.Make (Name)
 
   let pp fmt s = pp_print_set Name.pp fmt (elements s)
-  let t_of_yojson _ = assert false
-  let yojson_of_t _ = assert false
+
+  let t_of_yojson json =
+    Yojson.Safe.Util.to_list json
+    |> List.map Name.t_of_yojson
+    |> List.fold_left (fun acc name -> add name acc) empty
+
+  let yojson_of_t set = `List (elements set |> List.map Name.yojson_of_t)
 end
 
 module Label = struct
@@ -43,22 +48,29 @@ module Label = struct
   let equal = String.equal
   let compare = String.compare
   let pp fmt = Format.fprintf fmt "%S"
-  let t_of_yojson _ = assert false
-  let yojson_of_t _ = assert false
+  let t_of_yojson json = Yojson.Safe.Util.to_string json
+  let yojson_of_t label = `String (to_string label)
 end
 
 module Label_set = struct
   include Set.Make (Label)
 
   let pp fmt s = pp_print_set Label.pp fmt (elements s)
-  let t_of_yojson _ = assert false
-  let yojson_of_t _ = assert false
+
+  let t_of_yojson json =
+    Yojson.Safe.Util.to_list json
+    |> List.map Label.t_of_yojson
+    |> List.fold_left (fun acc label -> add label acc) empty
+
+  let yojson_of_t set = `List (elements set |> List.map Label.yojson_of_t)
 end
 
 module Label_map = Map.Make (Label)
 
 module Time = struct
   type t = float * Unix.tm
+
+  let empty = (0.0, Unix.gmtime 0.0)
 
   let int_of_month = function
     | "January" -> 0
@@ -102,8 +114,12 @@ module Time = struct
   let compare x y = Float.compare (fst x) (fst y)
   let max x y = if compare x y < 0 then y else x
   let pp fmt t = Format.fprintf fmt "%S" (to_string t)
-  let t_of_yojson _ = assert false
-  let yojson_of_t _ = assert false
+
+  let t_of_yojson json =
+    let f = Yojson.Safe.Util.to_float json in
+    (f, Unix.gmtime f)
+
+  let yojson_of_t time = `Float (fst time)
 end
 
 module Entity = struct
@@ -125,6 +141,14 @@ module Entity = struct
     in
     { uri; created_at; updated_at; names; labels }
 
+  let empty =
+    let uri = Uri.empty in
+    let created_at = Time.empty in
+    let updated_at = [] in
+    let names = Name_set.empty in
+    let labels = Label_set.empty in
+    { uri; created_at; updated_at; names; labels }
+
   let equal x y =
     Uri.equal x.uri y.uri
     && Time.equal x.created_at y.created_at
@@ -144,8 +168,25 @@ module Entity = struct
     fprintf fmt "@;<1 2>@[labels =@ %a@];" Label_set.pp e.labels;
     fprintf fmt "@;<1 0>}@]"
 
-  let t_of_yojson _ = assert false
-  let yojson_of_t _ = assert false
+  let t_of_yojson json =
+    let open Yojson.Safe.Util in
+    {
+      uri = member "uri" json |> to_string |> Uri.of_string;
+      created_at = member "created_at" json |> Time.t_of_yojson;
+      updated_at = member "updated_at" json |> to_list |> List.map Time.t_of_yojson;
+      names = member "names" json |> Name_set.t_of_yojson;
+      labels = member "labels" json |> Label_set.t_of_yojson;
+    }
+
+  let yojson_of_t entity =
+    `Assoc
+      [
+        ("uri", `String (Uri.to_string entity.uri));
+        ("created_at", Time.yojson_of_t entity.created_at);
+        ("updated_at", `List (List.map Time.yojson_of_t entity.updated_at));
+        ("names", Name_set.yojson_of_t entity.names);
+        ("labels", Label_set.yojson_of_t entity.labels);
+      ]
 
   let update updated_at names labels e =
     let names = Name_set.union e.names names in
@@ -187,10 +228,16 @@ type t = {
   uris : Id.t Uri_hashtbl.t;
 }
 
-let make () =
+let create () =
   let nodes = Dynarray.create () in
   let edges = Dynarray.create () in
   let uris = Uri_hashtbl.create 1024 in
+  { nodes; edges; uris }
+
+let make n =
+  let nodes = Dynarray.make n Entity.empty in
+  let edges = Dynarray.make n (Dynarray.create ()) in
+  let uris = Uri_hashtbl.create n in
   { nodes; edges; uris }
 
 let length c =
@@ -233,8 +280,35 @@ let add_edges c from target =
 let entity c id = Dynarray.get c.nodes id
 let edges c id = Dynarray.get c.edges id |> Dynarray.to_array
 let entities c = Dynarray.to_array c.nodes
-let t_of_yojson _ = assert false
-let yojson_of_t _ = assert false
+
+let t_of_yojson json =
+  let open Yojson.Safe.Util in
+  let length = json |> member "length" |> to_int in
+  let c = make length in
+  let f item =
+    let i = item |> member "id" |> to_int in
+    let entity = item |> member "entity" |> Entity.t_of_yojson in
+    let edges = item |> member "edges" |> to_list |> List.map to_int |> Dynarray.of_list in
+    let uri = Entity.uri entity in
+    Dynarray.set c.nodes i entity;
+    Dynarray.set c.edges i edges;
+    Uri_hashtbl.add c.uris uri i
+  in
+  let items = json |> member "value" |> to_list in
+  List.iter f items;
+  c
+
+let yojson_of_t c =
+  let ret = ref [] in
+  let f i entity =
+    assert (Option.equal Id.equal (id c (Entity.uri entity)) (Some (Id.of_int i)));
+    let entity_json = Entity.yojson_of_t entity in
+    let edges_json = `List Dynarray.(fold_right (fun e acc -> `Int e :: acc) (get c.edges i) []) in
+    let item = `Assoc [ ("id", `Int i); ("entity", entity_json); ("edges", edges_json) ] in
+    ret := item :: !ret
+  in
+  Dynarray.iteri f c.nodes;
+  `Assoc [ ("length", `Int (length c)); ("value", `List !ret) ]
 
 let map_labels (f : Label_set.t -> Label_set.t) (c : t) : t =
   let nodes = Dynarray.map (Entity.map_labels f) c.nodes in

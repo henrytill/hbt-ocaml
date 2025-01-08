@@ -36,7 +36,7 @@ let test_no_labels () =
       Label_set.empty
   in
   let expected, id_foo, id_bar =
-    let ret = make () in
+    let ret = create () in
     let id_foo = upsert ret foo in
     let id_bar = upsert ret bar in
     (ret, id_foo, id_bar)
@@ -70,7 +70,7 @@ let test_no_title () =
       Label_set.empty
   in
   let expected, id_foo =
-    let ret = make () in
+    let ret = create () in
     let id_foo = upsert ret foo in
     (ret, id_foo)
   in
@@ -93,7 +93,7 @@ let test_indented () =
       Label_set.empty
   in
   let expected, id_foo =
-    let ret = make () in
+    let ret = create () in
     let id_foo = upsert ret foo in
     (ret, id_foo)
   in
@@ -133,7 +133,7 @@ let test_parent () =
       Label_set.empty
   in
   let expected, id_foo, id_bar =
-    let ret = make () in
+    let ret = create () in
     let id_foo = upsert ret foo in
     let id_bar = upsert ret bar in
     (ret, id_foo, id_bar)
@@ -177,7 +177,7 @@ let test_parents () =
       Label_set.empty
   in
   let expected, id_foo, id_bar, id_baz =
-    let ret = make () in
+    let ret = create () in
     let id_foo = upsert ret foo in
     let id_bar = upsert ret bar in
     let id_baz = upsert ret baz in
@@ -224,7 +224,7 @@ let test_parents_indented () =
       Label_set.empty
   in
   let expected, id_foo, id_bar, id_baz =
-    let ret = make () in
+    let ret = create () in
     let id_foo = upsert ret foo in
     let id_bar = upsert ret bar in
     let id_baz = upsert ret baz in
@@ -279,7 +279,7 @@ let test_single_parent () =
       Label_set.empty
   in
   let expected, id_foo, id_bar, id_baz, id_quux =
-    let ret = make () in
+    let ret = create () in
     let id_foo = upsert ret foo in
     let id_bar = upsert ret bar in
     let id_baz = upsert ret baz in
@@ -323,7 +323,7 @@ let test_inverted_parent () =
       Label_set.empty
   in
   let expected, id_foo, id_bar =
-    let ret = make () in
+    let ret = create () in
     let id_foo = upsert ret foo in
     let id_bar = upsert ret bar in
     (ret, id_foo, id_bar)
@@ -365,7 +365,7 @@ let test_inverted_single_parent () =
       Label_set.empty
   in
   let expected, id_foo, id_bar, id_baz =
-    let ret = make () in
+    let ret = create () in
     let id_foo = upsert ret foo in
     let id_bar = upsert ret bar in
     let id_baz = upsert ret baz in
@@ -403,7 +403,7 @@ let test_label () =
       labels
   in
   let expected, id_foo, id_bar =
-    let ret = make () in
+    let ret = create () in
     let id_foo = upsert ret foo in
     let id_bar = upsert ret bar in
     (ret, id_foo, id_bar)
@@ -460,7 +460,7 @@ let test_labels () =
       labels_baz
   in
   let expected, id_foo, id_bar, id_baz, id_quux =
-    let ret = make () in
+    let ret = create () in
     let id_foo = upsert ret foo in
     let id_bar = upsert ret bar in
     let id_baz = upsert ret baz in
@@ -517,7 +517,7 @@ let test_multiple_labels () =
       labels_baz
   in
   let expected, id_foo, id_bar, id_baz =
-    let ret = make () in
+    let ret = create () in
     let id_foo = upsert ret foo in
     let id_bar = upsert ret bar in
     let id_baz = upsert ret baz in
@@ -557,7 +557,7 @@ let test_update () =
          Label_set.(empty |> add (Label.of_string "Bar"))
   in
   let expected, id_foo =
-    let ret = make () in
+    let ret = create () in
     let id_foo = upsert ret foo in
     (ret, id_foo)
   in
@@ -593,7 +593,7 @@ let test_descending_dates () =
          Label_set.(empty |> add (Label.of_string "Bar"))
   in
   let expected, id_foo =
-    let ret = make () in
+    let ret = create () in
     let id_foo = upsert ret foo in
     (ret, id_foo)
   in
@@ -639,7 +639,7 @@ let test_mixed_dates () =
          Label_set.(empty |> add (Label.of_string "Baz"))
   in
   let expected, id_foo =
-    let ret = make () in
+    let ret = create () in
     let id_foo = upsert ret foo in
     (ret, id_foo)
   in
@@ -685,7 +685,7 @@ let test_basic () =
       Label_set.(empty |> add (Label.of_string "Misc"))
   in
   let expected, id_foo, id_bar, id_ex =
-    let ret = make () in
+    let ret = create () in
     let id_foo = upsert ret foo in
     let id_bar = upsert ret bar in
     let id_ex = upsert ret ex in
@@ -729,7 +729,7 @@ let test_nested () =
   in
   let baz = Entity.make (Uri.of_string "https://baz.com") time None labels in
   let expected, id_foo, id_bar, id_ex, id_quux, id_baz =
-    let ret = make () in
+    let ret = create () in
     let id_foo = upsert ret foo in
     let id_bar = upsert ret bar in
     let () = add_edges ret id_foo id_bar in
@@ -764,7 +764,7 @@ let test_empty_link () =
       Label_set.empty
   in
   let expected, id_foo =
-    let ret = make () in
+    let ret = create () in
     let id_foo = upsert ret foo in
     (ret, id_foo)
   in
@@ -787,7 +787,7 @@ let test_link_text_with_backticks () =
       Label_set.empty
   in
   let expected, id_foo =
-    let ret = make () in
+    let ret = create () in
     let id_foo = upsert ret foo in
     (ret, id_foo)
   in
@@ -811,7 +811,7 @@ let test_mixed_link_text_with_backticks () =
       Label_set.empty
   in
   let expected, id_foo =
-    let ret = make () in
+    let ret = create () in
     let id_foo = upsert ret foo in
     (ret, id_foo)
   in

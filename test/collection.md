@@ -102,7 +102,7 @@ val entities : Entity.t list =
 Empty collection
 
 ```ocaml
-# let collection = make () in
+# let collection = create () in
   let actual = to_html collection in
   print_endline actual;;
 <!DOCTYPE NETSCAPE-Bookmark-file-1>
@@ -116,39 +116,40 @@ Empty collection
 Basic
 
 ```ocaml
-# let labels_foo = Label_set.(empty |> add (Label.of_string "Foo")) in
-  let foo =
-    Entity.make
-      (Uri.of_string "https://foo.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Foo"))
-      labels_foo
-  in
-  let labels_bar = Label_set.add (Label.of_string "Bar") labels_foo in
-  let bar =
-    Entity.make
-      (Uri.of_string "https://bar.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Bar"))
-      labels_bar
-  in
-  let labels_baz = Label_set.add (Label.of_string "Baz") labels_bar in
-  let baz =
-    Entity.make
-      (Uri.of_string "https://baz.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Baz"))
-      labels_baz
-  in
-  let collection =
-    let ret = make () in
-    let _id_foo = upsert ret foo in
-    let _id_bar = upsert ret bar in
-    let _id_baz = upsert ret baz in
-    ret
-  in
-  let actual = to_html collection in
-  print_endline actual;;
+# let collection =
+    let labels_foo = Label_set.(empty |> add (Label.of_string "Foo")) in
+    let foo =
+      Entity.make
+        (Uri.of_string "https://foo.com")
+        (Time.of_string "November 15, 2023")
+        (Some (Name.of_string "Foo"))
+        labels_foo
+    in
+    let labels_bar = Label_set.add (Label.of_string "Bar") labels_foo in
+    let bar =
+      Entity.make
+        (Uri.of_string "https://bar.com")
+        (Time.of_string "November 15, 2023")
+        (Some (Name.of_string "Bar"))
+        labels_bar
+    in
+    let labels_baz = Label_set.add (Label.of_string "Baz") labels_bar in
+    let baz =
+      Entity.make
+        (Uri.of_string "https://baz.com")
+        (Time.of_string "November 15, 2023")
+        (Some (Name.of_string "Baz"))
+        labels_baz
+    in
+    let ret = create () in
+    let id_foo = upsert ret foo in
+    let id_bar = upsert ret bar in
+    let id_baz = upsert ret baz in
+    let () = add_edges ret id_foo id_bar in
+    let () = add_edges ret id_foo id_baz in
+    ret;;
+val collection : t = <abstr>
+# to_html collection |> print_endline;;
 <!DOCTYPE NETSCAPE-Bookmark-file-1>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <TITLE>Bookmarks</TITLE>
@@ -157,5 +158,95 @@ Basic
  <dt><a href="https://baz.com/" add_date="1700035200" last_modified="1700035200" tags="Bar,Baz,Foo">Baz</a></dt>
 </dl>
 
+- : unit = ()
+```
+
+### JSON
+
+```ocaml
+# yojson_of_t collection |> Yojson.Safe.pretty_to_string |> print_endline;;
+{
+  "length": 3,
+  "value": [
+    {
+      "id": 2,
+      "entity": {
+        "uri": "https://baz.com/",
+        "created_at": 1700035200.0,
+        "updated_at": [],
+        "names": [ "Baz" ],
+        "labels": [ "Bar", "Baz", "Foo" ]
+      },
+      "edges": [ 0 ]
+    },
+    {
+      "id": 1,
+      "entity": {
+        "uri": "https://bar.com/",
+        "created_at": 1700035200.0,
+        "updated_at": [],
+        "names": [ "Bar" ],
+        "labels": [ "Bar", "Foo" ]
+      },
+      "edges": [ 0 ]
+    },
+    {
+      "id": 0,
+      "entity": {
+        "uri": "https://foo.com/",
+        "created_at": 1700035200.0,
+        "updated_at": [],
+        "names": [ "Foo" ],
+        "labels": [ "Foo" ]
+      },
+      "edges": [ 1, 2 ]
+    }
+  ]
+}
+- : unit = ()
+```
+
+```ocaml
+# let roundtripped = yojson_of_t collection |> Yojson.Safe.pretty_to_string |> Yojson.Safe.from_string |> t_of_yojson;;
+val roundtripped : t = <abstr>
+# yojson_of_t roundtripped |> Yojson.Safe.pretty_to_string |> print_endline;;
+{
+  "length": 3,
+  "value": [
+    {
+      "id": 2,
+      "entity": {
+        "uri": "https://baz.com/",
+        "created_at": 1700035200.0,
+        "updated_at": [],
+        "names": [ "Baz" ],
+        "labels": [ "Bar", "Baz", "Foo" ]
+      },
+      "edges": [ 0 ]
+    },
+    {
+      "id": 1,
+      "entity": {
+        "uri": "https://bar.com/",
+        "created_at": 1700035200.0,
+        "updated_at": [],
+        "names": [ "Bar" ],
+        "labels": [ "Bar", "Foo" ]
+      },
+      "edges": [ 0 ]
+    },
+    {
+      "id": 0,
+      "entity": {
+        "uri": "https://foo.com/",
+        "created_at": 1700035200.0,
+        "updated_at": [],
+        "names": [ "Foo" ],
+        "labels": [ "Foo" ]
+      },
+      "edges": [ 1, 2 ]
+    }
+  ]
+}
 - : unit = ()
 ```
