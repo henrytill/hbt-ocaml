@@ -12,6 +12,7 @@ let same_updated_at = "same updated_at"
 let same_names = "same names"
 let same_labels = "same labels"
 let same_length = "same length"
+let same_entity = "same entity"
 let same_edges = "same edges"
 
 let test_entity_equal () =
@@ -21,7 +22,7 @@ let test_entity_equal () =
   let labels = Label_set.of_list [ Label.of_string "foo" ] in
   let a = Entity.make uri created (Some name) labels in
   let b = Entity.make uri created (Some name) labels in
-  Alcotest.(check testable_entity) "same_entity" a b
+  Alcotest.(check testable_entity) same_entity a b
 
 let test_entity_update () =
   let uri = Uri.of_string "https://foo.org" in
