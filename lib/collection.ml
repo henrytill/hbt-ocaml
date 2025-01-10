@@ -171,11 +171,11 @@ module Entity = struct
   let t_of_yojson json =
     let open Yojson.Safe.Util in
     {
-      uri = member "uri" json |> to_string |> Uri.of_string;
-      created_at = member "created_at" json |> Time.t_of_yojson;
-      updated_at = member "updated_at" json |> to_list |> List.map Time.t_of_yojson;
-      names = member "names" json |> Name_set.t_of_yojson;
-      labels = member "labels" json |> Label_set.t_of_yojson;
+      uri = json |> member "uri" |> to_string |> Uri.of_string;
+      created_at = json |> member "created_at" |> Time.t_of_yojson;
+      updated_at = json |> member "updated_at" |> to_list |> List.map Time.t_of_yojson;
+      names = json |> member "names" |> Name_set.t_of_yojson;
+      labels = json |> member "labels" |> Label_set.t_of_yojson;
     }
 
   let yojson_of_t entity =
@@ -294,8 +294,7 @@ let t_of_yojson json =
     Dynarray.set c.edges i edges;
     Uri_hashtbl.add c.uris uri i
   in
-  let items = json |> member "value" |> to_list in
-  List.iter f items;
+  json |> member "value" |> to_list |> List.iter f;
   c
 
 let yojson_of_t c =
