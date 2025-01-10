@@ -5,7 +5,7 @@ module Args = struct
     mutable mappings_file : string option; [@warning "-69"]
   }
 
-  let make () = { dump_entities = false; dump_tags = false; mappings_file = None }
+  let empty = { dump_entities = false; dump_tags = false; mappings_file = None }
 end
 
 module type FILE_HANDLER = sig
@@ -80,7 +80,7 @@ module Json : FILE_HANDLER = struct
 end
 
 let () =
-  let args = Args.make () in
+  let args = Args.empty in
   let set_dump_entities () = args.dump_entities <- true in
   let set_dump_tags () = args.dump_tags <- true in
   let set_mappings_file mappings_file = args.mappings_file <- Some mappings_file in
