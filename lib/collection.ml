@@ -305,32 +305,34 @@ let t_of_yojson json =
     | None -> raise (Invalid_argument "Unable to parse version")
   end;
   let length = json |> member "length" |> to_int in
-  let c = make length in
+  let ret = make length in
   let f item =
     let i = item |> member "id" |> to_int in
     let entity = item |> member "entity" |> Entity.t_of_yojson in
     let edges = item |> member "edges" |> to_list |> List.map to_int |> Dynarray.of_list in
     let uri = Entity.uri entity in
-    Dynarray.set c.nodes i entity;
-    Dynarray.set c.edges i edges;
-    Uri_hashtbl.add c.uris uri i
+    Dynarray.set ret.nodes i entity;
+    Dynarray.set ret.edges i edges;
+    Uri_hashtbl.add ret.uris uri i
   in
   json |> member "value" |> to_list |> List.iter f;
-  c
+  ret
 
 let yojson_of_t c =
-  let ret = ref [] in
+  let items = ref [] in
   let f i entity =
     assert (Option.equal Id.equal (id c (Entity.uri entity)) (Some (Id.of_int i)));
     let entity_json = Entity.yojson_of_t entity in
     let edges_json = `List Dynarray.(fold_right (fun e acc -> `Int e :: acc) (get c.edges i) []) in
     let item = `Assoc [ ("id", `Int i); ("entity", entity_json); ("edges", edges_json) ] in
-    ret := item :: !ret
+    items := item :: !items
   in
   Dynarray.iteri f c.nodes;
   `Assoc
     [
-      ("version", Version.(yojson_of_t expected)); ("length", `Int (length c)); ("value", `List !ret);
+      ("version", Version.(yojson_of_t expected));
+      ("length", `Int (length c));
+      ("value", `List !items);
     ]
 
 let map_labels (f : Label_set.t -> Label_set.t) (c : t) : t =
