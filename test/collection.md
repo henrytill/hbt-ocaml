@@ -173,8 +173,8 @@ val collection : t = <abstr>
       "id": 2,
       "entity": {
         "uri": "https://baz.com/",
-        "created_at": 1700035200.0,
-        "updated_at": [],
+        "createdAt": 1700035200.0,
+        "updatedAt": [],
         "names": [ "Baz" ],
         "labels": [ "Bar", "Baz", "Foo" ]
       },
@@ -184,8 +184,8 @@ val collection : t = <abstr>
       "id": 1,
       "entity": {
         "uri": "https://bar.com/",
-        "created_at": 1700035200.0,
-        "updated_at": [],
+        "createdAt": 1700035200.0,
+        "updatedAt": [],
         "names": [ "Bar" ],
         "labels": [ "Bar", "Foo" ]
       },
@@ -195,8 +195,8 @@ val collection : t = <abstr>
       "id": 0,
       "entity": {
         "uri": "https://foo.com/",
-        "created_at": 1700035200.0,
-        "updated_at": [],
+        "createdAt": 1700035200.0,
+        "updatedAt": [],
         "names": [ "Foo" ],
         "labels": [ "Foo" ]
       },
@@ -219,8 +219,8 @@ val roundtripped : t = <abstr>
       "id": 2,
       "entity": {
         "uri": "https://baz.com/",
-        "created_at": 1700035200.0,
-        "updated_at": [],
+        "createdAt": 1700035200.0,
+        "updatedAt": [],
         "names": [ "Baz" ],
         "labels": [ "Bar", "Baz", "Foo" ]
       },
@@ -230,8 +230,8 @@ val roundtripped : t = <abstr>
       "id": 1,
       "entity": {
         "uri": "https://bar.com/",
-        "created_at": 1700035200.0,
-        "updated_at": [],
+        "createdAt": 1700035200.0,
+        "updatedAt": [],
         "names": [ "Bar" ],
         "labels": [ "Bar", "Foo" ]
       },
@@ -241,8 +241,8 @@ val roundtripped : t = <abstr>
       "id": 0,
       "entity": {
         "uri": "https://foo.com/",
-        "created_at": 1700035200.0,
-        "updated_at": [],
+        "createdAt": 1700035200.0,
+        "updatedAt": [],
         "names": [ "Foo" ],
         "labels": [ "Foo" ]
       },

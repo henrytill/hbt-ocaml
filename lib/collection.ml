@@ -188,8 +188,8 @@ module Entity = struct
     let open Yojson.Safe.Util in
     {
       uri = json |> member "uri" |> to_string |> Uri.of_string;
-      created_at = json |> member "created_at" |> Time.t_of_yojson;
-      updated_at = json |> member "updated_at" |> to_list |> List.map Time.t_of_yojson;
+      created_at = json |> member "createdAt" |> Time.t_of_yojson;
+      updated_at = json |> member "updatedAt" |> to_list |> List.map Time.t_of_yojson;
       names = json |> member "names" |> Name_set.t_of_yojson;
       labels = json |> member "labels" |> Label_set.t_of_yojson;
     }
@@ -198,8 +198,8 @@ module Entity = struct
     `Assoc
       [
         ("uri", `String (Uri.to_string entity.uri));
-        ("created_at", Time.yojson_of_t entity.created_at);
-        ("updated_at", `List (List.map Time.yojson_of_t entity.updated_at));
+        ("createdAt", Time.yojson_of_t entity.created_at);
+        ("updatedAt", `List (List.map Time.yojson_of_t entity.updated_at));
         ("names", Name_set.yojson_of_t entity.names);
         ("labels", Label_set.yojson_of_t entity.labels);
       ]
