@@ -3,6 +3,22 @@ let pp_print_set pp_item fmt items =
   let pp_sep fmt () = fprintf fmt ";@ " in
   fprintf fmt "@[<h>{%a}@]" (pp_print_list ~pp_sep pp_item) items
 
+module Version = struct
+  include Semver
+
+  exception Unsupported
+
+  let t_of_yojson json = Yojson.Safe.Util.to_string json |> of_string
+  let yojson_of_t version = `String (to_string version)
+
+  (* current version *)
+  let expected : t = (0, 1, 0)
+
+  let check version =
+    if not (equal version expected) then
+      raise Unsupported
+end
+
 module Id = struct
   type t = int
 
@@ -283,6 +299,12 @@ let entities c = Dynarray.to_array c.nodes
 
 let t_of_yojson json =
   let open Yojson.Safe.Util in
+  begin
+    let maybe_version = json |> member "version" |> Version.t_of_yojson in
+    match maybe_version with
+    | Some version -> Version.check version
+    | None -> raise (Invalid_argument "Unable to parse version")
+  end;
   let length = json |> member "length" |> to_int in
   let c = make length in
   let f item =
@@ -307,7 +329,10 @@ let yojson_of_t c =
     ret := item :: !ret
   in
   Dynarray.iteri f c.nodes;
-  `Assoc [ ("length", `Int (length c)); ("value", `List !ret) ]
+  `Assoc
+    [
+      ("version", Version.(yojson_of_t expected)); ("length", `Int (length c)); ("value", `List !ret);
+    ]
 
 let map_labels (f : Label_set.t -> Label_set.t) (c : t) : t =
   let nodes = Dynarray.map (Entity.map_labels f) c.nodes in

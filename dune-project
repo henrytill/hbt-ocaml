@@ -35,6 +35,8 @@
    (and
     :with-test
     (>= 2.4.1)))
+  (semver
+   (>= 0.2.1))
   (tyxml
    (>= 4.6.0))
   (uri

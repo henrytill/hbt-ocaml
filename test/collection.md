@@ -166,6 +166,7 @@ val collection : t = <abstr>
 ```ocaml
 # yojson_of_t collection |> Yojson.Safe.pretty_to_string |> print_endline;;
 {
+  "version": "0.1.0",
   "length": 3,
   "value": [
     {
@@ -211,6 +212,7 @@ val collection : t = <abstr>
 val roundtripped : t = <abstr>
 # yojson_of_t roundtripped |> Yojson.Safe.pretty_to_string |> print_endline;;
 {
+  "version": "0.1.0",
   "length": 3,
   "value": [
     {
