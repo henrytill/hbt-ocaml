@@ -4,19 +4,18 @@ let pp_print_set pp_item fmt items =
   fprintf fmt "@[<h>{%a}@]" (pp_print_list ~pp_sep pp_item) items
 
 module Version = struct
-  include Semver
+  type t = Semver.t
 
   exception Unsupported
 
-  let t_of_yojson json = Yojson.Safe.Util.to_string json |> of_string
-  let yojson_of_t version = `String (to_string version)
-
-  (* current version *)
   let expected : t = (0, 1, 0)
 
   let check version =
-    if not (equal version expected) then
+    if not (Semver.equal version expected) then
       raise Unsupported
+
+  let t_of_yojson json = Yojson.Safe.Util.to_string json |> Semver.of_string
+  let yojson_of_t version = `String (Semver.to_string version)
 end
 
 module Id = struct
