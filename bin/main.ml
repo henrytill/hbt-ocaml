@@ -2,7 +2,7 @@ module Args = struct
   type t = {
     mutable dump_entities : bool;
     mutable dump_tags : bool;
-    mutable mappings_file : string option; [@warning "-69"]
+    mutable mappings_file : string option;
   }
 
   let empty = { dump_entities = false; dump_tags = false; mappings_file = None }
