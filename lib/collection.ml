@@ -293,7 +293,7 @@ let add_edges c from target =
   add_edge c target from
 
 let entity c id = Dynarray.get c.nodes id
-let edges c id = Dynarray.get c.edges id |> Dynarray.to_array
+let edges c id = Dynarray.(get c.edges id |> to_array)
 let entities c = Dynarray.to_array c.nodes
 
 let t_of_yojson json =
