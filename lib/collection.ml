@@ -302,7 +302,7 @@ let t_of_yojson json =
     let maybe_version = json |> member "version" |> Version.t_of_yojson in
     match maybe_version with
     | Some version -> Version.check version
-    | None -> raise (Invalid_argument "Unable to parse version")
+    | None -> invalid_arg "Collection.t_of_yojson: unable to parse version"
   end;
   let length = json |> member "length" |> to_int in
   let ret = make length in
