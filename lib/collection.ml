@@ -340,18 +340,20 @@ let map_labels (f : Label_set.t -> Label_set.t) (c : t) : t =
   { c with nodes }
 
 let json_to_map (json : Yojson.Basic.t) : Label.t Label_map.t =
-  match json with
-  | `Assoc fields ->
-      let f acc (key, value) =
-        match value with
-        | `String s ->
-            let k = Label.of_string key in
-            let v = Label.of_string s in
-            Label_map.add k v acc
-        | _ -> invalid_arg "All values must be strings"
-      in
-      List.fold_left f Label_map.empty fields
-  | _ -> invalid_arg "Expected a JSON object"
+  let pairs =
+    match json with
+    | `Assoc pairs -> pairs
+    | _ -> invalid_arg "Collection.json_to_map: expected a JSON object"
+  in
+  let f acc (k, v) =
+    match v with
+    | `String s ->
+        let k = Label.of_string k in
+        let v = Label.of_string s in
+        Label_map.add k v acc
+    | _ -> invalid_arg "Collection.json_to_map: all values must be strings"
+  in
+  List.fold_left f Label_map.empty pairs
 
 let update_labels (json : Yojson.Basic.t) : t -> t =
   let mapping = json_to_map json in

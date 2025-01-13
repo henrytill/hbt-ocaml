@@ -82,7 +82,7 @@ Test with invalid JSON mappings file:
   > }
   > EOF
   $ hbt -mappings invalid.json input.md
-  Fatal error: exception Invalid_argument("All values must be strings")
+  Fatal error: exception Invalid_argument("Collection.json_to_map: all values must be strings")
   [2]
 
 Test with missing mappings file:
