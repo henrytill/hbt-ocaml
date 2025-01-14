@@ -1,11 +1,11 @@
+open Cmdliner
+
 module Args = struct
   type t = {
-    mutable dump_entities : bool;
-    mutable dump_tags : bool;
-    mutable mappings_file : string option;
+    dump_entities : bool;
+    dump_tags : bool;
+    mappings_file : string option;
   }
-
-  let empty = { dump_entities = false; dump_tags = false; mappings_file = None }
 end
 
 module type FILE_HANDLER = sig
@@ -79,43 +79,38 @@ module Json : FILE_HANDLER = struct
   let run (file : string) (args : Args.t) : unit = parse file |> print file args
 end
 
-let () =
-  let args = Args.empty in
-  let set_dump_entities () = args.dump_entities <- true in
-  let set_dump_tags () = args.dump_tags <- true in
-  let set_mappings_file mappings_file = args.mappings_file <- Some mappings_file in
-  let opt_list =
-    [
-      ("-dump", Arg.Unit set_dump_entities, "dump entities");
-      ("-tags", Arg.Unit set_dump_tags, "dump tags");
-      ("-mappings", Arg.String set_mappings_file, "<file> Read tag mappings from <file>");
-    ]
-  in
-  let file = ref None in
-  let process_arg arg = file := Some arg in
-  let usage_string = "Usage: " ^ Sys.argv.(0) ^ " <options> <file>" in
-  Arg.parse opt_list process_arg usage_string;
-  let file =
-    match !file with
-    | Some file -> file
-    | None ->
-        Printf.eprintf "Error: missing file argument\n";
-        Arg.usage opt_list usage_string;
-        exit 1
-  in
+let dump_entities =
+  let doc = "Dump entities" in
+  Arg.(value & flag & info [ "dump" ] ~doc)
+
+let dump_tags =
+  let doc = "Dump tags" in
+  Arg.(value & flag & info [ "tags" ] ~doc)
+
+let mappings_file =
+  let doc = "Read tag mappings from $(docv)" in
+  Arg.(value & opt (some string) None & info [ "mappings" ] ~docv:"FILE" ~doc)
+
+let file =
+  let doc = "Input file to process" in
+  Arg.(required & pos 0 (some string) None & info [] ~docv:"FILE" ~doc)
+
+let process_file dump_entities dump_tags mappings_file file =
+  let args = Args.{ dump_entities; dump_tags; mappings_file } in
   match Filename.extension file with
-  | ".md" ->
-      Markdown.run file args;
-      exit 0
-  | ".xml" ->
-      Xml.run file args;
-      exit 0
-  | ".html" ->
-      Html.run file args;
-      exit 0
-  | ".json" ->
-      Json.run file args;
-      exit 0
-  | _ ->
-      Printf.eprintf "No handler for this file type\n";
+  | ".md" -> Markdown.run file args
+  | ".xml" -> Xml.run file args
+  | ".html" -> Html.run file args
+  | ".json" -> Json.run file args
+  | ext ->
+      Printf.eprintf "Error: no handler for files with extension '%s'\n" ext;
       exit 1
+
+let process_file_t = Term.(const process_file $ dump_entities $ dump_tags $ mappings_file $ file)
+
+let cmd =
+  let doc = "Process bookmark files in various formats" in
+  let info = Cmd.info "hbt" ~doc in
+  Cmd.v info process_file_t
+
+let () = exit (Cmd.eval cmd)

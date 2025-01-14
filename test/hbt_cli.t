@@ -24,14 +24,14 @@ Test basic functionality first - counting entities:
 
 Test dumping entities:
 
-  $ hbt -dump input.md
+  $ hbt --dump input.md
   https://ocaml.org/
   https://discuss.ocaml.org/
   https://www.gnu.org/software/emacs/
 
 Test dumping tags:
 
-  $ hbt -tags input.md
+  $ hbt --tags input.md
   editor
   ocaml
   programming
@@ -49,7 +49,7 @@ Now create a mappings file to transform some tags:
 
 Test the tag mapping functionality:
 
-  $ hbt -tags -mappings mappings.json input.md
+  $ hbt --tags --mappings mappings.json input.md
   dev
   editors
   languages
@@ -57,7 +57,7 @@ Test the tag mapping functionality:
 
 Verify that entities are preserved while tags are transformed:
 
-  $ hbt -dump -mappings mappings.json input.md
+  $ hbt --dump --mappings mappings.json input.md
   https://ocaml.org/
   https://discuss.ocaml.org/
   https://www.gnu.org/software/emacs/
@@ -67,7 +67,7 @@ Test with an empty mappings file:
   $ cat >empty-mappings.json <<EOF
   > {}
   > EOF
-  $ hbt -tags -mappings empty-mappings.json input.md
+  $ hbt --tags --mappings empty-mappings.json input.md
   editor
   ocaml
   programming
@@ -81,15 +81,19 @@ Test with invalid JSON mappings file:
   >   "programming": ["foo"]
   > }
   > EOF
-  $ hbt -mappings invalid.json input.md
-  Fatal error: exception Invalid_argument("Collection.json_to_map: all values must be strings")
-  [2]
+  $ hbt --mappings invalid.json input.md
+  hbt: internal error, uncaught exception:
+       Invalid_argument("Collection.json_to_map: all values must be strings")
+       
+  [125]
 
 Test with missing mappings file:
 
-  $ hbt -mappings nonexistent.json input.md
-  Fatal error: exception Sys_error("nonexistent.json: No such file or directory")
-  [2]
+  $ hbt --mappings nonexistent.json input.md
+  hbt: internal error, uncaught exception:
+       Sys_error("nonexistent.json: No such file or directory")
+       
+  [125]
 
 # Local Variables:
 # mode: prog
