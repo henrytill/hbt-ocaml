@@ -64,7 +64,7 @@ Verify that entities are preserved while tags are transformed:
 
 Test with an empty mappings file:
 
-  $ cat > empty-mappings.json <<EOF
+  $ cat >empty-mappings.json <<EOF
   > {}
   > EOF
   $ hbt -tags -mappings empty-mappings.json input.md
