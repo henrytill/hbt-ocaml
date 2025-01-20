@@ -237,9 +237,11 @@ module Uri_hashtbl = Hashtbl.Make (struct
     Hashtbl.hash uri
 end)
 
+type edges = Id.t Dynarray.t
+
 type t = {
   nodes : Entity.t Dynarray.t;
-  edges : Id.t Dynarray.t Dynarray.t;
+  edges : edges Dynarray.t;
   uris : Id.t Uri_hashtbl.t;
 }
 
