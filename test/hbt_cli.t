@@ -25,9 +25,45 @@ Test basic functionality first - counting entities:
 Test dumping entities:
 
   $ hbt --dump input.md
-  https://ocaml.org/
-  https://discuss.ocaml.org/
-  https://www.gnu.org/software/emacs/
+  {
+    "version": "0.1.0",
+    "length": 3,
+    "value": [
+      {
+        "id": 2,
+        "entity": {
+          "uri": "https://www.gnu.org/software/emacs/",
+          "createdAt": 1700035200.0,
+          "updatedAt": [],
+          "names": [ "Emacs" ],
+          "labels": [ "editor", "ocaml", "tools" ]
+        },
+        "edges": []
+      },
+      {
+        "id": 1,
+        "entity": {
+          "uri": "https://discuss.ocaml.org/",
+          "createdAt": 1700035200.0,
+          "updatedAt": [],
+          "names": [],
+          "labels": [ "ocaml", "programming" ]
+        },
+        "edges": []
+      },
+      {
+        "id": 0,
+        "entity": {
+          "uri": "https://ocaml.org/",
+          "createdAt": 1700035200.0,
+          "updatedAt": [],
+          "names": [ "OCaml Website" ],
+          "labels": [ "ocaml", "programming" ]
+        },
+        "edges": []
+      }
+    ]
+  }
 
 Test dumping tags:
 
@@ -58,9 +94,45 @@ Test the tag mapping functionality:
 Verify that entities are preserved while tags are transformed:
 
   $ hbt --dump --mappings mappings.json input.md
-  https://ocaml.org/
-  https://discuss.ocaml.org/
-  https://www.gnu.org/software/emacs/
+  {
+    "version": "0.1.0",
+    "length": 3,
+    "value": [
+      {
+        "id": 2,
+        "entity": {
+          "uri": "https://www.gnu.org/software/emacs/",
+          "createdAt": 1700035200.0,
+          "updatedAt": [],
+          "names": [ "Emacs" ],
+          "labels": [ "editors", "languages", "tools" ]
+        },
+        "edges": []
+      },
+      {
+        "id": 1,
+        "entity": {
+          "uri": "https://discuss.ocaml.org/",
+          "createdAt": 1700035200.0,
+          "updatedAt": [],
+          "names": [],
+          "labels": [ "dev", "languages" ]
+        },
+        "edges": []
+      },
+      {
+        "id": 0,
+        "entity": {
+          "uri": "https://ocaml.org/",
+          "createdAt": 1700035200.0,
+          "updatedAt": [],
+          "names": [ "OCaml Website" ],
+          "labels": [ "dev", "languages" ]
+        },
+        "edges": []
+      }
+    ]
+  }
 
 Test with an empty mappings file:
 

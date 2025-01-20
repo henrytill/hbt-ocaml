@@ -31,9 +31,7 @@ module Markdown : FILE_HANDLER = struct
   let print (file : string) (args : Args.t) (collection : t) : unit =
     let open Hbt.Collection in
     if args.dump_entities then
-      Array.iter
-        (fun et -> Entity.uri et |> Uri.to_string |> Printf.printf "%s\n")
-        (entities collection)
+      yojson_of_t collection |> Yojson.Safe.pretty_print Format.std_formatter
     else if args.dump_tags then
       entities collection
       |> Array.fold_left (fun acc et -> Entity.labels et |> Label_set.union acc) Label_set.empty
