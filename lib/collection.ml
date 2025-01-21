@@ -85,7 +85,9 @@ module Label_map = Map.Make (Label)
 module Time = struct
   type t = float * Unix.tm
 
-  let empty = (0.0, Unix.gmtime 0.0)
+  let empty =
+    let t = 0.0 in
+    (t, Unix.gmtime t)
 
   let int_of_month = function
     | "January" -> 0
@@ -100,7 +102,7 @@ module Time = struct
     | "October" -> 9
     | "November" -> 10
     | "December" -> 11
-    | _ -> failwith "Invalid month name"
+    | _ -> invalid_arg "Time.int_of_month: invalid month name"
 
   let parse_date s =
     Scanf.sscanf s "%s %d, %d" (fun month day year -> (int_of_month month, day, year))
@@ -131,8 +133,8 @@ module Time = struct
   let pp fmt t = Format.fprintf fmt "%S" (to_string t)
 
   let t_of_yojson json =
-    let f = Yojson.Safe.Util.to_float json in
-    (f, Unix.gmtime f)
+    let t = Yojson.Safe.Util.to_float json in
+    (t, Unix.gmtime t)
 
   let yojson_of_t time = `Float (fst time)
 end
