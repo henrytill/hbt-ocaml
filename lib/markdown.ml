@@ -52,7 +52,7 @@ let _inspect_st st =
     pp_print_newline std_formatter ())
 
 let option_of_string s =
-  if Int.equal (String.length s) 0 then
+  if String.length s = 0 then
     None
   else
     Some s
@@ -63,7 +63,7 @@ let get_heading_text (h : Block.Heading.t) kf ks =
   | _ -> kf ()
 
 let block m ((c, st) : Collection.t * Fold_state.t) = function
-  | Block.Heading (heading, _) when Int.equal (Block.Heading.level heading) 1 ->
+  | Block.Heading (heading, _) when Block.Heading.level heading = 1 ->
       let@ heading_text = get_heading_text heading (fun () -> Folder.default) in
       let time = Some (Collection.Time.of_string heading_text) in
       let st = { st with time; maybe_parent = None; labels = [] } in

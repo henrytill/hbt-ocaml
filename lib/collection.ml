@@ -263,12 +263,12 @@ let make n =
 
 let length c =
   let ret = Dynarray.length c.nodes in
-  assert (Int.equal ret (Dynarray.length c.edges));
+  assert (ret = Dynarray.length c.edges);
   ret
 
 let is_empty c =
   let ret = Dynarray.is_empty c.nodes in
-  assert (Bool.equal ret (Dynarray.is_empty c.edges));
+  assert (ret = Dynarray.is_empty c.edges);
   ret
 
 let contains c uri = Uri_hashtbl.find_opt c.uris uri |> Option.is_some
