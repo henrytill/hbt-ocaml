@@ -190,8 +190,7 @@ let from_html file =
   close_in ic;
   ret
 
-let from_json file =
-  let json = Yojson.Basic.from_file file in
+let t_of_yojson json =
   let open Yojson.Basic.Util in
   let to_t j =
     let href = j |> member "href" |> to_string in
@@ -206,3 +205,7 @@ let from_json file =
     { href; time; description; extended; tag; hash; shared; toread }
   in
   convert_each to_t json
+
+let from_json file =
+  let json = Yojson.Basic.from_file file in
+  t_of_yojson json
