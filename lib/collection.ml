@@ -48,9 +48,10 @@ module Name_set = struct
   let pp fmt s = pp_print_set Name.pp fmt (elements s)
 
   let t_of_yojson json =
-    Yojson.Safe.Util.to_list json
-    |> List.map Name.t_of_yojson
-    |> List.fold_left (fun acc name -> add name acc) empty
+    List.fold_left
+      (fun acc name -> add (Name.t_of_yojson name) acc)
+      empty
+      (Yojson.Safe.Util.to_list json)
 
   let yojson_of_t set = `List (elements set |> List.map Name.yojson_of_t)
 end
@@ -73,9 +74,10 @@ module Label_set = struct
   let pp fmt s = pp_print_set Label.pp fmt (elements s)
 
   let t_of_yojson json =
-    Yojson.Safe.Util.to_list json
-    |> List.map Label.t_of_yojson
-    |> List.fold_left (fun acc label -> add label acc) empty
+    List.fold_left
+      (fun acc label -> add (Label.t_of_yojson label) acc)
+      empty
+      (Yojson.Safe.Util.to_list json)
 
   let yojson_of_t set = `List (elements set |> List.map Label.yojson_of_t)
 end
