@@ -141,6 +141,18 @@ module Time = struct
   let yojson_of_t time = `Float (fst time)
 end
 
+module Extended = struct
+  type t = string
+
+  let of_string (s : string) : t = s
+  let to_string = Fun.id
+  let equal = String.equal
+  let compare = String.compare
+  let pp fmt = Format.fprintf fmt "%S"
+  let t_of_yojson json = Yojson.Safe.Util.to_string json
+  let yojson_of_t extended = `String (to_string extended)
+end
+
 module Entity = struct
   type t = {
     uri : Uri.t;
@@ -148,6 +160,9 @@ module Entity = struct
     updated_at : Time.t list;
     names : Name_set.t;
     labels : Label_set.t;
+    extended : Extended.t option;
+    shared : bool;
+    toread : bool;
   }
 
   let make uri created_at maybe_name labels =
@@ -158,7 +173,10 @@ module Entity = struct
       | Some name -> Name_set.(empty |> add name)
       | None -> Name_set.empty
     in
-    { uri; created_at; updated_at; names; labels }
+    let extended = None in
+    let shared = false in
+    let toread = false in
+    { uri; created_at; updated_at; names; labels; extended; shared; toread }
 
   let empty =
     let uri = Uri.empty in
@@ -166,7 +184,26 @@ module Entity = struct
     let updated_at = [] in
     let names = Name_set.empty in
     let labels = Label_set.empty in
-    { uri; created_at; updated_at; names; labels }
+    let extended = None in
+    let shared = false in
+    let toread = false in
+    { uri; created_at; updated_at; names; labels; extended; shared; toread }
+
+  let of_pinboard (p : Pinboard.t) : t =
+    let open Pinboard in
+    let uri = Uri.of_string (href p) in
+    let created_at = Time.of_string (time p) in
+    let updated_at = [] in
+    let names =
+      match description p with
+      | Some name -> Name_set.(empty |> add name)
+      | None -> Name_set.empty
+    in
+    let labels = Label_set.of_list (tag p) in
+    let extended = Option.map Extended.of_string (extended p) in
+    let shared = shared p in
+    let toread = toread p in
+    { uri; created_at; updated_at; names; labels; extended; shared; toread }
 
   let equal x y =
     Uri.equal x.uri y.uri
@@ -179,12 +216,18 @@ module Entity = struct
     let open Format in
     let pp_sep fmt () = fprintf fmt ";@;<1 2>" in
     let pp_updated_at = pp_print_list ~pp_sep Time.pp in
+    let none fmt () = fprintf fmt "None" in
+    let some fmt = fprintf fmt "Some %a" Extended.pp in
+    let pp_extended_opt = pp_print_option ~none some in
     fprintf fmt "@[<hv>{";
     fprintf fmt "@;<1 2>@[uri =@ %a@];" Uri.pp e.uri;
     fprintf fmt "@;<1 2>@[created_at =@ %a@];" Time.pp e.created_at;
     fprintf fmt "@;<1 2>@[updated_at =@ @[<hv>[@;<0 2>%a@;<0 0>]@]@];" pp_updated_at e.updated_at;
     fprintf fmt "@;<1 2>@[names =@ %a@];" Name_set.pp e.names;
     fprintf fmt "@;<1 2>@[labels =@ %a@];" Label_set.pp e.labels;
+    fprintf fmt "@;<1 2>@[extended =@ %a@];" pp_extended_opt e.extended;
+    fprintf fmt "@;<1 2>@[shared =@ %a@];" pp_print_bool e.shared;
+    fprintf fmt "@;<1 2>@[toread =@ %a@];" pp_print_bool e.toread;
     fprintf fmt "@;<1 0>}@]"
 
   let t_of_yojson json =
@@ -195,17 +238,28 @@ module Entity = struct
       updated_at = json |> member "updatedAt" |> to_list |> List.map Time.t_of_yojson;
       names = json |> member "names" |> Name_set.t_of_yojson;
       labels = json |> member "labels" |> Label_set.t_of_yojson;
+      extended = json |> member "extended" |> to_option Extended.t_of_yojson;
+      shared = json |> member "shared" |> to_bool;
+      toread = json |> member "toread" |> to_bool;
     }
 
   let yojson_of_t entity =
+    let maybe_extended =
+      match entity.extended with
+      | Some extended -> [ ("extended", Extended.yojson_of_t extended) ]
+      | None -> []
+    in
     `Assoc
-      [
-        ("uri", `String (Uri.to_string entity.uri));
-        ("createdAt", Time.yojson_of_t entity.created_at);
-        ("updatedAt", `List (List.map Time.yojson_of_t entity.updated_at));
-        ("names", Name_set.yojson_of_t entity.names);
-        ("labels", Label_set.yojson_of_t entity.labels);
-      ]
+      ([
+         ("uri", `String (Uri.to_string entity.uri));
+         ("createdAt", Time.yojson_of_t entity.created_at);
+         ("updatedAt", `List (List.map Time.yojson_of_t entity.updated_at));
+         ("names", Name_set.yojson_of_t entity.names);
+         ("labels", Label_set.yojson_of_t entity.labels);
+         ("shared", `Bool entity.shared);
+         ("toread", `Bool entity.toread);
+       ]
+      @ maybe_extended)
 
   let update updated_at names labels e =
     let names = Name_set.union e.names names in

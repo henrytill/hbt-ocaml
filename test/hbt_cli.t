@@ -36,7 +36,9 @@ Test dumping entities:
           "createdAt": 1700035200.0,
           "updatedAt": [],
           "names": [ "Emacs" ],
-          "labels": [ "editor", "ocaml", "tools" ]
+          "labels": [ "editor", "ocaml", "tools" ],
+          "shared": false,
+          "toread": false
         },
         "edges": []
       },
@@ -47,7 +49,9 @@ Test dumping entities:
           "createdAt": 1700035200.0,
           "updatedAt": [],
           "names": [],
-          "labels": [ "ocaml", "programming" ]
+          "labels": [ "ocaml", "programming" ],
+          "shared": false,
+          "toread": false
         },
         "edges": []
       },
@@ -58,7 +62,9 @@ Test dumping entities:
           "createdAt": 1700035200.0,
           "updatedAt": [],
           "names": [ "OCaml Website" ],
-          "labels": [ "ocaml", "programming" ]
+          "labels": [ "ocaml", "programming" ],
+          "shared": false,
+          "toread": false
         },
         "edges": []
       }
@@ -105,7 +111,9 @@ Verify that entities are preserved while tags are transformed:
           "createdAt": 1700035200.0,
           "updatedAt": [],
           "names": [ "Emacs" ],
-          "labels": [ "editors", "languages", "tools" ]
+          "labels": [ "editors", "languages", "tools" ],
+          "shared": false,
+          "toread": false
         },
         "edges": []
       },
@@ -116,7 +124,9 @@ Verify that entities are preserved while tags are transformed:
           "createdAt": 1700035200.0,
           "updatedAt": [],
           "names": [],
-          "labels": [ "dev", "languages" ]
+          "labels": [ "dev", "languages" ],
+          "shared": false,
+          "toread": false
         },
         "edges": []
       },
@@ -127,7 +137,9 @@ Verify that entities are preserved while tags are transformed:
           "createdAt": 1700035200.0,
           "updatedAt": [],
           "names": [ "OCaml Website" ],
-          "labels": [ "dev", "languages" ]
+          "labels": [ "dev", "languages" ],
+          "shared": false,
+          "toread": false
         },
         "edges": []
       }

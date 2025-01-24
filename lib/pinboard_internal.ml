@@ -15,6 +15,13 @@ let make ~href ~time ~description ~extended ~tag ~hash ~shared ~toread =
   { href; time; description; extended; tag; hash; shared; toread }
 
 let href p = p.href
+let time p = p.time
+let description p = p.description
+let extended p = p.extended
+let tag p = p.tag
+let hash p = p.hash
+let shared p = p.shared
+let toread p = p.toread
 
 let equal x y =
   String.equal x.href y.href
@@ -134,7 +141,7 @@ let is_newline (xs : string list) : bool =
   Str.string_match (Str.regexp "[\n\r]*") s 0
 
 let skip_newlines stream () = maybe_text stream is_newline ignore ignore
-let tag s = ((String.empty, s), [])
+let mk_tag s = ((String.empty, s), [])
 let skip stream t = if Markup.peek stream = Some t then ignore (Markup.next stream) else ()
 
 let from_html file =
@@ -150,7 +157,7 @@ let from_html file =
     Some (String.trim (String.concat String.empty xs))
   in
   let to_t () =
-    skip signals (`Start_element (tag "p"));
+    skip signals (`Start_element (mk_tag "p"));
     let on_failure _ = failwith "expected <a>" in
     let attrs = next_start signals "a" on_failure Fun.id in
     let description =

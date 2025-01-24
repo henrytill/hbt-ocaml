@@ -62,10 +62,23 @@ module Time : sig
   val yojson_of_t : t -> Yojson.Safe.t
 end
 
+module Extended : sig
+  type t
+
+  val of_string : string -> t
+  val to_string : t -> string
+  val equal : t -> t -> bool
+  val compare : t -> t -> int
+  val pp : Format.formatter -> t -> unit
+  val t_of_yojson : Yojson.Safe.t -> t
+  val yojson_of_t : t -> Yojson.Safe.t
+end
+
 module Entity : sig
   type t
 
   val make : Uri.t -> Time.t -> Name.t option -> Label_set.t -> t
+  val of_pinboard : Pinboard.t -> t
   val equal : t -> t -> bool
   val pp : Format.formatter -> t -> unit
   val update : Time.t -> Name_set.t -> Label_set.t -> t -> t

@@ -30,6 +30,9 @@ val entity : Entity.t =
     updated_at = [];
     names = {};
     labels = {};
+    extended = None;
+    shared = false;
+    toread = false;
   }
 ```
 
@@ -46,6 +49,9 @@ val entity : Entity.t =
     updated_at = [];
     names = {"The Internet Archive"};
     labels = {"archives"};
+    extended = None;
+    shared = false;
+    toread = false;
   }
 ```
 
@@ -62,6 +68,9 @@ val entity : Entity.t =
     updated_at = [];
     names = {"The Internet Archive"};
     labels = {"archives"; "books"};
+    extended = None;
+    shared = false;
+    toread = false;
   }
 ```
 
@@ -87,6 +96,9 @@ val entities : Entity.t list =
      updated_at = [];
      names = {"The Internet Archive"};
      labels = {"archives"; "search"};
+     extended = None;
+     shared = false;
+     toread = false;
    };
    {
      uri = https://www.google.com/;
@@ -94,6 +106,9 @@ val entities : Entity.t list =
      updated_at = [];
      names = {"Google"};
      labels = {"search"};
+     extended = None;
+     shared = false;
+     toread = false;
    }]
 ```
 
@@ -176,7 +191,9 @@ val collection : t = <abstr>
         "createdAt": 1700035200.0,
         "updatedAt": [],
         "names": [ "Baz" ],
-        "labels": [ "Bar", "Baz", "Foo" ]
+        "labels": [ "Bar", "Baz", "Foo" ],
+        "shared": false,
+        "toread": false
       },
       "edges": [ 0 ]
     },
@@ -187,7 +204,9 @@ val collection : t = <abstr>
         "createdAt": 1700035200.0,
         "updatedAt": [],
         "names": [ "Bar" ],
-        "labels": [ "Bar", "Foo" ]
+        "labels": [ "Bar", "Foo" ],
+        "shared": false,
+        "toread": false
       },
       "edges": [ 0 ]
     },
@@ -198,7 +217,9 @@ val collection : t = <abstr>
         "createdAt": 1700035200.0,
         "updatedAt": [],
         "names": [ "Foo" ],
-        "labels": [ "Foo" ]
+        "labels": [ "Foo" ],
+        "shared": false,
+        "toread": false
       },
       "edges": [ 1, 2 ]
     }
@@ -222,7 +243,9 @@ val roundtripped : t = <abstr>
         "createdAt": 1700035200.0,
         "updatedAt": [],
         "names": [ "Baz" ],
-        "labels": [ "Bar", "Baz", "Foo" ]
+        "labels": [ "Bar", "Baz", "Foo" ],
+        "shared": false,
+        "toread": false
       },
       "edges": [ 0 ]
     },
@@ -233,7 +256,9 @@ val roundtripped : t = <abstr>
         "createdAt": 1700035200.0,
         "updatedAt": [],
         "names": [ "Bar" ],
-        "labels": [ "Bar", "Foo" ]
+        "labels": [ "Bar", "Foo" ],
+        "shared": false,
+        "toread": false
       },
       "edges": [ 0 ]
     },
@@ -244,7 +269,9 @@ val roundtripped : t = <abstr>
         "createdAt": 1700035200.0,
         "updatedAt": [],
         "names": [ "Foo" ],
-        "labels": [ "Foo" ]
+        "labels": [ "Foo" ],
+        "shared": false,
+        "toread": false
       },
       "edges": [ 1, 2 ]
     }
