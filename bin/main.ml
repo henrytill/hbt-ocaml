@@ -35,7 +35,7 @@ let run (parse : string -> 'a) (to_collection : 'a -> Hbt.Collection.t) (file : 
     (args : Args.t) : unit =
   parse file |> to_collection |> update_collection args |> print_collection file args
 
-let run_markdown = run (fun file -> read_file file |> Hbt.Markdown.parse) Fun.id
+let run_markdown = run (Fun.compose Hbt.Markdown.parse read_file) Fun.id
 
 let collection_of_posts (posts : Hbt.Pinboard.t list) : Hbt.Collection.t =
   let ret = Hbt.Collection.make (List.length posts) in
@@ -73,11 +73,11 @@ let process_file dump_entities dump_tags mappings_file file =
       Printf.eprintf "Error: no handler for files with extension '%s'\n" ext;
       exit 1
 
-let process_file_t = Term.(const process_file $ dump_entities $ dump_tags $ mappings_file $ file)
+let process_file_term = Term.(const process_file $ dump_entities $ dump_tags $ mappings_file $ file)
 
 let cmd =
   let doc = "Process bookmark files in various formats" in
   let info = Cmd.info "hbt" ~doc in
-  Cmd.v info process_file_t
+  Cmd.v info process_file_term
 
 let () = exit (Cmd.eval cmd)
