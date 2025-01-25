@@ -31,52 +31,20 @@ let print_collection (file : string) (args : Args.t) (collection : Hbt.Collectio
     let length = length collection in
     Printf.printf "%s: %d entities\n" file length
 
-module Make_runner (Collector : sig
-  type t
+let run (parse : string -> 'a) (to_collection : 'a -> Hbt.Collection.t) (file : string)
+    (args : Args.t) : unit =
+  parse file |> to_collection |> update_collection args |> print_collection file args
 
-  val parse : string -> t
-  val to_collection : t -> Hbt.Collection.t
-end) =
-struct
-  let run (file : string) (args : Args.t) : unit =
-    Collector.parse file
-    |> Collector.to_collection
-    |> update_collection args
-    |> print_collection file args
-end
-
-module Markdown = Make_runner (struct
-  type t = Hbt.Collection.t
-
-  let parse (file : string) : t = read_file file |> Hbt.Markdown.parse
-  let to_collection = Fun.id
-end)
+let run_markdown = run (fun file -> read_file file |> Hbt.Markdown.parse) Fun.id
 
 let collection_of_posts (posts : Hbt.Pinboard.t list) : Hbt.Collection.t =
   let ret = Hbt.Collection.make (List.length posts) in
   List.iter (fun post -> ignore Hbt.Collection.(insert ret (Entity.of_pinboard post))) posts;
   ret
 
-module Xml = Make_runner (struct
-  type t = Hbt.Pinboard.t list
-
-  let parse : string -> t = Hbt.Pinboard.from_xml
-  let to_collection = collection_of_posts
-end)
-
-module Html = Make_runner (struct
-  type t = Hbt.Pinboard.t list
-
-  let parse : string -> t = Hbt.Pinboard.from_html
-  let to_collection = collection_of_posts
-end)
-
-module Json = Make_runner (struct
-  type t = Hbt.Pinboard.t list
-
-  let parse : string -> t = Hbt.Pinboard.from_json
-  let to_collection = collection_of_posts
-end)
+let run_xml = run Hbt.Pinboard.from_xml collection_of_posts
+let run_html = run Hbt.Pinboard.from_html collection_of_posts
+let run_json = run Hbt.Pinboard.from_json collection_of_posts
 
 let dump_entities =
   let doc = "Dump entities" in
@@ -97,10 +65,10 @@ let file =
 let process_file dump_entities dump_tags mappings_file file =
   let args = Args.{ dump_entities; dump_tags; mappings_file } in
   match Filename.extension file with
-  | ".md" -> Markdown.run file args
-  | ".xml" -> Xml.run file args
-  | ".html" -> Html.run file args
-  | ".json" -> Json.run file args
+  | ".md" -> run_markdown file args
+  | ".xml" -> run_xml file args
+  | ".html" -> run_html file args
+  | ".json" -> run_json file args
   | ext ->
       Printf.eprintf "Error: no handler for files with extension '%s'\n" ext;
       exit 1
