@@ -8,7 +8,20 @@ on:
   workflow_dispatch:
 
 jobs:
-  flake:
+  linux:
+    runs-on: ubuntu-latest
+    env:
+      TZ: America/Los_Angeles
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: 5.2.0
+          dune-cache: true
+      - run: opam install . --deps-only --with-test
+      - run: opam exec -- dune build
+      - run: opam exec -- dune runtest
+  linux-flake:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
