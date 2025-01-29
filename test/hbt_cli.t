@@ -1,3 +1,7 @@
+Set TZ:
+
+  $ export TZ=UTC
+
 Create a test input file:
 
   $ cat >input.md <<EOF
@@ -33,7 +37,7 @@ Test dumping entities:
         "id": 2,
         "entity": {
           "uri": "https://www.gnu.org/software/emacs/",
-          "createdAt": 1700035200.0,
+          "createdAt": 1700006400.0,
           "updatedAt": [],
           "names": [ "Emacs" ],
           "labels": [ "editor", "ocaml", "tools" ],
@@ -46,7 +50,7 @@ Test dumping entities:
         "id": 1,
         "entity": {
           "uri": "https://discuss.ocaml.org/",
-          "createdAt": 1700035200.0,
+          "createdAt": 1700006400.0,
           "updatedAt": [],
           "names": [],
           "labels": [ "ocaml", "programming" ],
@@ -59,7 +63,7 @@ Test dumping entities:
         "id": 0,
         "entity": {
           "uri": "https://ocaml.org/",
-          "createdAt": 1700035200.0,
+          "createdAt": 1700006400.0,
           "updatedAt": [],
           "names": [ "OCaml Website" ],
           "labels": [ "ocaml", "programming" ],
@@ -108,7 +112,7 @@ Verify that entities are preserved while tags are transformed:
         "id": 2,
         "entity": {
           "uri": "https://www.gnu.org/software/emacs/",
-          "createdAt": 1700035200.0,
+          "createdAt": 1700006400.0,
           "updatedAt": [],
           "names": [ "Emacs" ],
           "labels": [ "editors", "languages", "tools" ],
@@ -121,7 +125,7 @@ Verify that entities are preserved while tags are transformed:
         "id": 1,
         "entity": {
           "uri": "https://discuss.ocaml.org/",
-          "createdAt": 1700035200.0,
+          "createdAt": 1700006400.0,
           "updatedAt": [],
           "names": [],
           "labels": [ "dev", "languages" ],
@@ -134,7 +138,7 @@ Verify that entities are preserved while tags are transformed:
         "id": 0,
         "entity": {
           "uri": "https://ocaml.org/",
-          "createdAt": 1700035200.0,
+          "createdAt": 1700006400.0,
           "updatedAt": [],
           "names": [ "OCaml Website" ],
           "labels": [ "dev", "languages" ],

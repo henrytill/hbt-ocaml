@@ -10,8 +10,6 @@ on:
 jobs:
   linux:
     runs-on: ubuntu-latest
-    env:
-      TZ: America/Los_Angeles
     steps:
       - uses: actions/checkout@v4
       - uses: ocaml/setup-ocaml@v3

@@ -1,6 +1,8 @@
 # Collection
 
 ```ocaml
+# Unix.putenv "TZ" "UTC";;
+- : unit = ()
 # #require "hbt";;
 # open Hbt.Collection;;
 # #install_printer Hbt.Collection.Entity.pp;;
@@ -26,7 +28,7 @@ A bare entity
 val entity : Entity.t =
   {
     uri = https://archive.org/;
-    created_at = "1725260400";
+    created_at = "1725235200";
     updated_at = [];
     names = {};
     labels = {};
@@ -45,7 +47,7 @@ An entity with a name and label
 val entity : Entity.t =
   {
     uri = https://archive.org/;
-    created_at = "1725260400";
+    created_at = "1725235200";
     updated_at = [];
     names = {"The Internet Archive"};
     labels = {"archives"};
@@ -64,7 +66,7 @@ An entity with more labels
 val entity : Entity.t =
   {
     uri = https://archive.org/;
-    created_at = "1725260400";
+    created_at = "1725235200";
     updated_at = [];
     names = {"The Internet Archive"};
     labels = {"archives"; "books"};
@@ -92,7 +94,7 @@ Multiple entities
 val entities : Entity.t list =
   [{
      uri = https://archive.org/;
-     created_at = "1725260400";
+     created_at = "1725235200";
      updated_at = [];
      names = {"The Internet Archive"};
      labels = {"archives"; "search"};
@@ -102,7 +104,7 @@ val entities : Entity.t list =
    };
    {
      uri = https://www.google.com/;
-     created_at = "1725260400";
+     created_at = "1725235200";
      updated_at = [];
      names = {"Google"};
      labels = {"search"};
@@ -168,9 +170,9 @@ val collection : t = <abstr>
 <!DOCTYPE NETSCAPE-Bookmark-file-1>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <TITLE>Bookmarks</TITLE>
-<dl><dt><a href="https://foo.com/" add_date="1700035200" last_modified="1700035200" tags="Foo">Foo</a></dt>
- <dt><a href="https://bar.com/" add_date="1700035200" last_modified="1700035200" tags="Bar,Foo">Bar</a></dt>
- <dt><a href="https://baz.com/" add_date="1700035200" last_modified="1700035200" tags="Bar,Baz,Foo">Baz</a></dt>
+<dl><dt><a href="https://foo.com/" add_date="1700006400" last_modified="1700006400" tags="Foo">Foo</a></dt>
+ <dt><a href="https://bar.com/" add_date="1700006400" last_modified="1700006400" tags="Bar,Foo">Bar</a></dt>
+ <dt><a href="https://baz.com/" add_date="1700006400" last_modified="1700006400" tags="Bar,Baz,Foo">Baz</a></dt>
 </dl>
 
 - : unit = ()
@@ -188,7 +190,7 @@ val collection : t = <abstr>
       "id": 2,
       "entity": {
         "uri": "https://baz.com/",
-        "createdAt": 1700035200.0,
+        "createdAt": 1700006400.0,
         "updatedAt": [],
         "names": [ "Baz" ],
         "labels": [ "Bar", "Baz", "Foo" ],
@@ -201,7 +203,7 @@ val collection : t = <abstr>
       "id": 1,
       "entity": {
         "uri": "https://bar.com/",
-        "createdAt": 1700035200.0,
+        "createdAt": 1700006400.0,
         "updatedAt": [],
         "names": [ "Bar" ],
         "labels": [ "Bar", "Foo" ],
@@ -214,7 +216,7 @@ val collection : t = <abstr>
       "id": 0,
       "entity": {
         "uri": "https://foo.com/",
-        "createdAt": 1700035200.0,
+        "createdAt": 1700006400.0,
         "updatedAt": [],
         "names": [ "Foo" ],
         "labels": [ "Foo" ],
@@ -240,7 +242,7 @@ val roundtripped : t = <abstr>
       "id": 2,
       "entity": {
         "uri": "https://baz.com/",
-        "createdAt": 1700035200.0,
+        "createdAt": 1700006400.0,
         "updatedAt": [],
         "names": [ "Baz" ],
         "labels": [ "Bar", "Baz", "Foo" ],
@@ -253,7 +255,7 @@ val roundtripped : t = <abstr>
       "id": 1,
       "entity": {
         "uri": "https://bar.com/",
-        "createdAt": 1700035200.0,
+        "createdAt": 1700006400.0,
         "updatedAt": [],
         "names": [ "Bar" ],
         "labels": [ "Bar", "Foo" ],
@@ -266,7 +268,7 @@ val roundtripped : t = <abstr>
       "id": 0,
       "entity": {
         "uri": "https://foo.com/",
-        "createdAt": 1700035200.0,
+        "createdAt": 1700006400.0,
         "updatedAt": [],
         "names": [ "Foo" ],
         "labels": [ "Foo" ],

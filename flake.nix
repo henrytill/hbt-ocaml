@@ -37,10 +37,6 @@
         overlay = final: prev: {
           ${package} = prev.${package}.overrideAttrs (as: {
             nativeBuildInputs = as.nativeBuildInputs ++ [ pkgs.tzdata ];
-            # The output of Unix.mktime is dependent on the time zone
-            # of the user's environment, and expect test outputs were
-            # generated in this time zone.
-            preBuild = "export TZ=America/Los_Angeles";
           });
         };
       in
