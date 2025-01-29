@@ -3,6 +3,10 @@ let ( let@ ) = ( @@ )
 module List_ext = struct
   let tail_or_nil l = try List.tl l with _ -> []
 
+  let hd_opt = function
+    | [] -> None
+    | x :: _ -> Some x
+
   let take n l =
     let[@tail_mod_cons] rec go n l =
       match (n, l) with
