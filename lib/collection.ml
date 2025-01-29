@@ -168,11 +168,7 @@ module Entity = struct
   let make uri created_at maybe_name labels =
     let uri = Uri.canonicalize uri in
     let updated_at = [] in
-    let names =
-      match maybe_name with
-      | Some name -> Name_set.(empty |> add name)
-      | None -> Name_set.empty
-    in
+    let names = Option.fold ~none:Name_set.empty ~some:Name_set.singleton maybe_name in
     let extended = None in
     let shared = false in
     let toread = false in
@@ -194,11 +190,7 @@ module Entity = struct
     let uri = Uri.of_string (href p) in
     let created_at = Time.of_string (time p) in
     let updated_at = [] in
-    let names =
-      match description p with
-      | Some name -> Name_set.(empty |> add name)
-      | None -> Name_set.empty
-    in
+    let names = Option.fold ~none:Name_set.empty ~some:Name_set.singleton (description p) in
     let labels = Label_set.of_list (tag p) in
     let extended = Option.map Extended.of_string (extended p) in
     let shared = shared p in
