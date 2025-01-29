@@ -134,7 +134,7 @@ Basic
 
 ```ocaml
 # let collection =
-    let labels_foo = Label_set.(empty |> add (Label.of_string "Foo")) in
+    let labels_foo = Label_set.singleton (Label.of_string "Foo") in
     let foo =
       Entity.make
         (Uri.of_string "https://foo.com")

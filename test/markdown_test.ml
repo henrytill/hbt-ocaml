@@ -387,7 +387,7 @@ let label = {|# November 15, 2023
 let test_label () =
   let open Collection in
   let actual = Markdown.parse label in
-  let labels = Label_set.(empty |> add (Label.of_string "Foo")) in
+  let labels = Label_set.singleton (Label.of_string "Foo") in
   let foo =
     Entity.make
       (Uri.of_string "https://foo.com")
@@ -429,7 +429,7 @@ let labels =
 let test_labels () =
   let open Collection in
   let actual = Markdown.parse labels in
-  let labels_foo = Label_set.(empty |> add (Label.of_string "Foo")) in
+  let labels_foo = Label_set.singleton (Label.of_string "Foo") in
   let foo =
     Entity.make
       (Uri.of_string "https://foo.com")
@@ -444,7 +444,7 @@ let test_labels () =
       (Some (Name.of_string "Bar"))
       labels_foo
   in
-  let labels_baz = Label_set.(empty |> add (Label.of_string "Baz")) in
+  let labels_baz = Label_set.singleton (Label.of_string "Baz") in
   let baz =
     Entity.make
       (Uri.of_string "https://baz.com")
@@ -492,7 +492,7 @@ let multiple_labels =
 let test_multiple_labels () =
   let open Collection in
   let actual = Markdown.parse multiple_labels in
-  let labels_foo = Label_set.(empty |> add (Label.of_string "Foo")) in
+  let labels_foo = Label_set.singleton (Label.of_string "Foo") in
   let foo =
     Entity.make
       (Uri.of_string "https://foo.com")
@@ -550,11 +550,11 @@ let test_update () =
       (Uri.of_string "https://foo.com")
       (Time.of_string "December 5, 2023")
       (Some (Name.of_string "Foo"))
-      Label_set.(empty |> add (Label.of_string "Foo"))
+      (Label_set.singleton (Label.of_string "Foo"))
     |> Entity.update
          (Time.of_string "December 6, 2023")
-         Name_set.(empty |> add (Name.of_string "Bar"))
-         Label_set.(empty |> add (Label.of_string "Bar"))
+         (Name_set.singleton (Name.of_string "Bar"))
+         (Label_set.singleton (Label.of_string "Bar"))
   in
   let expected, id_foo =
     let ret = create () in
@@ -586,11 +586,11 @@ let test_descending_dates () =
       (Uri.of_string "https://foo.com")
       (Time.of_string "December 6, 2023")
       (Some (Name.of_string "Foo"))
-      Label_set.(empty |> add (Label.of_string "Foo"))
+      (Label_set.singleton (Label.of_string "Foo"))
     |> Entity.update
          (Time.of_string "December 5, 2023")
-         Name_set.(empty |> add (Name.of_string "Bar"))
-         Label_set.(empty |> add (Label.of_string "Bar"))
+         (Name_set.singleton (Name.of_string "Bar"))
+         (Label_set.singleton (Label.of_string "Bar"))
   in
   let expected, id_foo =
     let ret = create () in
@@ -628,15 +628,15 @@ let test_mixed_dates () =
       (Uri.of_string "https://foo.com")
       (Time.of_string "December 6, 2023")
       (Some (Name.of_string "Foo"))
-      Label_set.(empty |> add (Label.of_string "Foo"))
+      (Label_set.singleton (Label.of_string "Foo"))
     |> Entity.update
          (Time.of_string "December 5, 2023")
-         Name_set.(empty |> add (Name.of_string "Bar"))
-         Label_set.(empty |> add (Label.of_string "Bar"))
+         (Name_set.singleton (Name.of_string "Bar"))
+         (Label_set.singleton (Label.of_string "Bar"))
     |> Entity.update
          (Time.of_string "December 7, 2023")
-         Name_set.(empty |> add (Name.of_string "Baz"))
-         Label_set.(empty |> add (Label.of_string "Baz"))
+         (Name_set.singleton (Name.of_string "Baz"))
+         (Label_set.singleton (Label.of_string "Baz"))
   in
   let expected, id_foo =
     let ret = create () in
@@ -666,7 +666,7 @@ let test_basic () =
   let open Collection in
   let actual = Markdown.parse basic in
   let time = Time.of_string "November 16, 2023" in
-  let labels_foo = Label_set.(empty |> add (Label.of_string "Foo")) in
+  let labels_foo = Label_set.singleton (Label.of_string "Foo") in
   let foo =
     Entity.make (Uri.of_string "https://foo.com") time (Some (Name.of_string "Foo")) labels_foo
   in
@@ -682,7 +682,7 @@ let test_basic () =
       (Uri.of_string "https://example.com/")
       time
       (Some (Name.of_string "Hello, world!"))
-      Label_set.(empty |> add (Label.of_string "Misc"))
+      (Label_set.singleton (Label.of_string "Misc"))
   in
   let expected, id_foo, id_bar, id_ex =
     let ret = create () in
@@ -712,7 +712,7 @@ let test_nested () =
   let open Collection in
   let actual = Markdown.parse nested in
   let time = Time.of_string "November 17, 2023" in
-  let labels = Label_set.(empty |> add (Label.of_string "Foo")) in
+  let labels = Label_set.singleton (Label.of_string "Foo") in
   let foo =
     Entity.make (Uri.of_string "https://foo.com") time (Some (Name.of_string "Foo")) labels
   in
