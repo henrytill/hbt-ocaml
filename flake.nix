@@ -15,6 +15,14 @@
       follows = "opam-nix/flake-utils";
     };
   };
+
+  nixConfig = {
+    extra-substituters = [ "https://henrytill.cachix.org" ];
+    extra-trusted-public-keys = [
+      "henrytill.cachix.org-1:EOoUIk8e9627viyFmT6mfqghh/xtfnpzEtqT4jnyn1M="
+    ];
+  };
+
   outputs =
     {
       self,
