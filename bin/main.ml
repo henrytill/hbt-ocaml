@@ -35,16 +35,25 @@ let run (parse : string -> 'a) (to_collection : 'a -> Hbt.Collection.t) (file : 
     (args : Args.t) : unit =
   parse file |> to_collection |> update_collection args |> print_collection file args
 
-let run_markdown = run (Fun.compose Hbt.Markdown.parse read_file) Fun.id
-
 let collection_of_posts (posts : Hbt.Pinboard.t list) : Hbt.Collection.t =
   let ret = Hbt.Collection.make (List.length posts) in
   List.iter (fun post -> ignore Hbt.Collection.(insert ret (Entity.of_pinboard post))) posts;
   ret
 
-let run_xml = run Hbt.Pinboard.from_xml collection_of_posts
-let run_html = run Hbt.Pinboard.from_html collection_of_posts
-let run_json = run Hbt.Pinboard.from_json collection_of_posts
+let process_file dump_entities dump_tags mappings_file file =
+  let run_markdown = run (Fun.compose Hbt.Markdown.parse read_file) Fun.id in
+  let run_xml = run Hbt.Pinboard.from_xml collection_of_posts in
+  let run_html = run Hbt.Pinboard.from_html collection_of_posts in
+  let run_json = run Hbt.Pinboard.from_json collection_of_posts in
+  let args = Args.{ dump_entities; dump_tags; mappings_file } in
+  match Filename.extension file with
+  | ".md" -> run_markdown file args
+  | ".xml" -> run_xml file args
+  | ".html" -> run_html file args
+  | ".json" -> run_json file args
+  | ext ->
+      Printf.eprintf "Error: no handler for files with extension '%s'\n" ext;
+      exit 1
 
 let dump_entities =
   let doc = "Dump entities" in
@@ -61,17 +70,6 @@ let mappings_file =
 let file =
   let doc = "Input file to process" in
   Arg.(required & pos 0 (some string) None & info [] ~docv:"FILE" ~doc)
-
-let process_file dump_entities dump_tags mappings_file file =
-  let args = Args.{ dump_entities; dump_tags; mappings_file } in
-  match Filename.extension file with
-  | ".md" -> run_markdown file args
-  | ".xml" -> run_xml file args
-  | ".html" -> run_html file args
-  | ".json" -> run_json file args
-  | ext ->
-      Printf.eprintf "Error: no handler for files with extension '%s'\n" ext;
-      exit 1
 
 let process_file_term = Term.(const process_file $ dump_entities $ dump_tags $ mappings_file $ file)
 
