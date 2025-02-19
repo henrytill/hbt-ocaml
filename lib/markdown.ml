@@ -14,7 +14,7 @@ module Fold_state = struct
   let empty =
     { name = None; time = None; uri = None; labels = []; maybe_parent = None; parents = [] }
 
-  let pp fmt st =
+  let[@warning "-32"] pp fmt st =
     let open Format in
     let none fmt () = fprintf fmt "None" in
     let pp_sep fmt () = fprintf fmt ";@;<1 2>" in
@@ -40,16 +40,6 @@ module Fold_state = struct
         Some (Collection.Entity.make uri time st.name labels)
     | _ -> None
 end
-
-let _inspect_text text =
-  Format.(
-    pp_print_string std_formatter text;
-    pp_print_newline std_formatter ())
-
-let _inspect_st st =
-  Format.(
-    Fold_state.pp std_formatter st;
-    pp_print_newline std_formatter ())
 
 let option_of_string s =
   if String.length s = 0 then
