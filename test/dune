@@ -1,7 +1,9 @@
 (cram
- (deps %{bin:hbt}))
+ (deps %{bin:hbt})
+ (package hbt-cli))
 
 (mdx
+ (package hbt)
  (libraries unix)
  (deps
   (package hbt)))
@@ -9,14 +11,17 @@
 (test
  (name collection_test)
  (modules collection_test)
+ (package hbt)
  (libraries alcotest hbt uri))
 
 (test
  (name markdown_test)
  (modules common markdown_test)
+ (package hbt)
  (libraries alcotest hbt))
 
 (test
  (name pinboard_test)
  (modules common pinboard_test)
+ (package hbt)
  (libraries alcotest hbt))

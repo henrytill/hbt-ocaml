@@ -32,18 +32,18 @@
       ...
     }@inputs:
     let
-      package = "hbt";
+      package = "hbt-cli";
     in
     flake-utils.lib.eachDefaultSystem (
       system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
         on = opam-nix.lib.${system};
-        scope = on.buildOpamProject { resolveArgs.with-test = true; } package ./. {
+        scope = on.buildOpamProject' { resolveArgs.with-test = true; } ./. {
           ocaml-base-compiler = "5.2.0";
         };
         overlay = final: prev: {
-          ${package} = prev.${package}.overrideAttrs (as: {
+          hbt = prev.hbt.overrideAttrs (as: {
             nativeBuildInputs = as.nativeBuildInputs ++ [ pkgs.tzdata ];
           });
         };

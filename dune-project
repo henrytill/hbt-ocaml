@@ -4,6 +4,8 @@
 
 (name hbt)
 
+(version 0.1.0)
+
 (generate_opam_files true)
 
 (source
@@ -18,7 +20,8 @@
 (package
  (name hbt)
  (synopsis "Heterogeneous Bookmark Transformation")
- (description "A tool for parsing and transforming bookmarks from various sources")
+ (description
+  "A tool for parsing and transforming bookmarks from various sources")
  (depends
   (ocaml
    (>= 5.2.0))
@@ -29,8 +32,6 @@
     (>= 1.7.0)))
   (cmarkit
    (>= 0.3.0))
-  (cmdliner
-   (>= 1.3.0))
   (markup
    (>= 1.0.3))
   (mdx
@@ -45,3 +46,17 @@
    (>= 4.4.0))
   (yojson
    (>= 2.1.0))))
+
+(package
+ (name hbt-cli)
+ (synopsis "Heterogeneous Bookmark Transformation (command-line interface)")
+ (description
+  "A tool for parsing and transforming bookmarks from various sources (command-line interface)")
+ (depends
+  (ocaml
+   (>= 5.2.0))
+  dune
+  (hbt
+   (= :version))
+  (cmdliner
+   (>= 1.3.0))))
