@@ -71,8 +71,8 @@ let tags = List.fold_left (fun acc post -> Tags.of_list post.tag |> Tags.union a
 module Attrs = struct
   type t = ((string * string) * string) list
 
-  let get_opt (attrs : t) (k : string) : string option = List.assoc_opt (String.empty, k) attrs
-  let get (attrs : t) (k : string) : string = Option.value ~default:String.empty (get_opt attrs k)
+  let get_opt (k : string) (attrs : t) : string option = List.assoc_opt (String.empty, k) attrs
+  let get (k : string) (attrs : t) : string = Option.value ~default:String.empty (get_opt k attrs)
 end
 
 let from_xml file =
@@ -81,14 +81,14 @@ let from_xml file =
   let html = Markup.parse_html channel in
   let signals = Markup.signals html in
   let to_t (attrs : Attrs.t) : t =
-    let href = Attrs.get attrs "href" in
-    let time = Attrs.get attrs "time" in
-    let description = Attrs.get_opt attrs "description" in
-    let extended = Attrs.get_opt attrs "extended" in
-    let tag = Str.split (Str.regexp "[ \t]+") (Attrs.get attrs "tag") in
-    let hash = Attrs.get_opt attrs "hash" in
-    let shared = Attrs.get attrs "shared" = "yes" in
-    let toread = Attrs.get attrs "toread" = "yes" in
+    let href = Attrs.get "href" attrs in
+    let time = Attrs.get "time" attrs in
+    let description = Attrs.get_opt "description" attrs in
+    let extended = Attrs.get_opt "extended" attrs in
+    let tag = Str.split (Str.regexp "[ \t]+") (Attrs.get "tag" attrs) in
+    let hash = Attrs.get_opt "hash" attrs in
+    let shared = Attrs.get "shared" attrs = "yes" in
+    let toread = Attrs.get "toread" attrs = "yes" in
     { href; time; description; extended; tag; hash; shared; toread }
   in
   let rec go depth acc =
@@ -171,15 +171,15 @@ let from_html file =
     skip_newlines signals ();
     skip signals `End_element (* implicit </dt> *);
     let extended = Option.map String.trim (parse_dd ()) in
-    let href = Attrs.get attrs "href" in
-    let time = Attrs.get attrs "add_date" in
+    let href = Attrs.get "href" attrs in
+    let time = Attrs.get "add_date" attrs in
     let tag =
-      let tags = Str.split (Str.regexp "[,]+") (Attrs.get attrs "tags") in
+      let tags = Str.split (Str.regexp "[,]+") (Attrs.get "tags" attrs) in
       List.filter (( <> ) "toread") tags
     in
-    let hash = Attrs.get_opt attrs "hash" in
-    let shared = Attrs.get attrs "private" = "0" in
-    let toread = Attrs.get attrs "toread" = "1" in
+    let hash = Attrs.get_opt "hash" attrs in
+    let shared = Attrs.get "private" attrs = "0" in
+    let toread = Attrs.get "toread" attrs = "1" in
     { href; time; description; extended; tag; hash; shared; toread }
   in
   let rec go depth acc =
