@@ -3,10 +3,10 @@
  (package hbt-cli))
 
 (mdx
- (package hbt)
- (libraries unix)
  (deps
-  (package hbt)))
+  (package hbt))
+ (package hbt)
+ (libraries unix))
 
 (test
  (name collection_test)
