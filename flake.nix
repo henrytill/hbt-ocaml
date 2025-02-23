@@ -32,7 +32,7 @@
       ...
     }@inputs:
     let
-      package = "hbt-cli";
+      package = "hbt";
     in
     flake-utils.lib.eachDefaultSystem (
       system:
@@ -43,7 +43,7 @@
           ocaml-base-compiler = "5.2.0";
         };
         overlay = final: prev: {
-          hbt = prev.hbt.overrideAttrs (as: {
+          hbt-core = prev.hbt-core.overrideAttrs (as: {
             nativeBuildInputs = as.nativeBuildInputs ++ [ pkgs.tzdata ];
           });
         };

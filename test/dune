@@ -1,27 +1,27 @@
 (cram
  (deps %{bin:hbt})
- (package hbt-cli))
+ (package hbt))
 
 (mdx
  (deps
-  (package hbt))
- (package hbt)
+  (package hbt-core))
+ (package hbt-core)
  (libraries unix))
 
 (test
  (name collection_test)
  (modules collection_test)
- (package hbt)
- (libraries alcotest hbt uri))
+ (package hbt-core)
+ (libraries alcotest hbt-core uri))
 
 (test
  (name markdown_test)
  (modules common markdown_test)
- (package hbt)
- (libraries alcotest hbt))
+ (package hbt-core)
+ (libraries alcotest hbt-core))
 
 (test
  (name pinboard_test)
  (modules common pinboard_test)
- (package hbt)
- (libraries alcotest hbt))
+ (package hbt-core)
+ (libraries alcotest hbt-core))

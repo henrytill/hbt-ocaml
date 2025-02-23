@@ -18,7 +18,7 @@
 (license ISC)
 
 (package
- (name hbt)
+ (name hbt-core)
  (synopsis "Heterogeneous Bookmark Transformation")
  (description
   "A tool for parsing and transforming bookmarks from various sources")
@@ -48,7 +48,7 @@
    (>= 2.1.0))))
 
 (package
- (name hbt-cli)
+ (name hbt)
  (synopsis "Heterogeneous Bookmark Transformation (command-line interface)")
  (description
   "A tool for parsing and transforming bookmarks from various sources (command-line interface)")
@@ -56,7 +56,7 @@
   (ocaml
    (>= 5.2.0))
   dune
-  (hbt
+  (hbt-core
    (= :version))
   (cmdliner
    (>= 1.3.0))))

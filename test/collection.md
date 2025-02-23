@@ -3,7 +3,7 @@
 ```ocaml
 # Unix.putenv "TZ" "UTC";;
 - : unit = ()
-# #require "hbt";;
+# #require "hbt-core";;
 # open Hbt.Collection;;
 # #install_printer Hbt.Collection.Entity.pp;;
 ```
