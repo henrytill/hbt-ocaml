@@ -1,4 +1,5 @@
 open Cmdliner
+open Hbt
 
 module Args = struct
   type t = {
@@ -14,13 +15,13 @@ let read_file file =
   close_in ic;
   ret
 
-let update_collection (args : Args.t) : Hbt.Collection.t -> Hbt.Collection.t =
+let update_collection (args : Args.t) : Collection.t -> Collection.t =
   match args.mappings_file with
-  | Some file -> read_file file |> Yojson.Basic.from_string |> Hbt.Collection.update_labels
+  | Some file -> read_file file |> Yojson.Basic.from_string |> Collection.update_labels
   | None -> Fun.id
 
-let print_collection (file : string) (args : Args.t) (collection : Hbt.Collection.t) : unit =
-  let open Hbt.Collection in
+let print_collection (file : string) (args : Args.t) (collection : Collection.t) : unit =
+  let open Collection in
   if args.dump_entities then
     yojson_of_t collection |> Yojson.Safe.pretty_print Format.std_formatter
   else if args.dump_tags then
@@ -31,20 +32,20 @@ let print_collection (file : string) (args : Args.t) (collection : Hbt.Collectio
     let length = length collection in
     Printf.printf "%s: %d entities\n" file length
 
-let run (parse : string -> 'a) (to_collection : 'a -> Hbt.Collection.t) (file : string)
-    (args : Args.t) : unit =
+let run (parse : string -> 'a) (to_collection : 'a -> Collection.t) (file : string) (args : Args.t)
+    : unit =
   parse file |> to_collection |> update_collection args |> print_collection file args
 
-let collection_of_posts (posts : Hbt.Pinboard.t list) : Hbt.Collection.t =
-  let ret = Hbt.Collection.make (List.length posts) in
-  List.iter (fun post -> ignore Hbt.Collection.(insert ret (Entity.of_pinboard post))) posts;
+let collection_of_posts (posts : Pinboard.t list) : Collection.t =
+  let ret = Collection.make (List.length posts) in
+  List.iter (fun post -> ignore Collection.(insert ret (Entity.of_pinboard post))) posts;
   ret
 
 let process_file dump_entities dump_tags mappings_file file =
-  let run_markdown = run (Fun.compose Hbt.Markdown.parse read_file) Fun.id in
-  let run_xml = run Hbt.Pinboard.from_xml collection_of_posts in
-  let run_html = run Hbt.Pinboard.from_html collection_of_posts in
-  let run_json = run Hbt.Pinboard.from_json collection_of_posts in
+  let run_markdown = run (Fun.compose Markdown.parse read_file) Fun.id in
+  let run_xml = run Pinboard.from_xml collection_of_posts in
+  let run_html = run Pinboard.from_html collection_of_posts in
+  let run_json = run Pinboard.from_json collection_of_posts in
   let args = Args.{ dump_entities; dump_tags; mappings_file } in
   match Filename.extension file with
   | ".md" -> run_markdown file args
