@@ -52,9 +52,7 @@ let process_file dump_entities dump_tags mappings_file file =
   | ".xml" -> run_xml file args
   | ".html" -> run_html file args
   | ".json" -> run_json file args
-  | ext ->
-      Printf.eprintf "Error: no handler for files with extension '%s'\n" ext;
-      exit 1
+  | ext -> invalid_arg (Format.sprintf "no handler for files with extension '%s'\n" ext)
 
 let dump_entities =
   let doc = "Dump entities" in
