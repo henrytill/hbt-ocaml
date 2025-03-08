@@ -11,7 +11,7 @@ homepage: "https://github.com/henrytill/hbt-ocaml"
 bug-reports: "https://github.com/henrytill/hbt-ocaml/issues"
 depends: [
   "ocaml" {>= "5.2.0"}
-  "dune" {>= "3.10"}
+  "dune" {>= "3.17"}
   "alcotest" {with-test & >= "1.7.0"}
   "cmarkit" {>= "0.3.0"}
   "markup" {>= "1.0.3"}
@@ -23,7 +23,6 @@ depends: [
   "odoc" {with-doc}
 ]
 build: [
-  ["dune" "subst"] {dev}
   [
     "dune"
     "build"

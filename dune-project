@@ -1,4 +1,6 @@
-(lang dune 3.10)
+(lang dune 3.17)
+
+(subst disabled)
 
 (using mdx 0.4)
 
