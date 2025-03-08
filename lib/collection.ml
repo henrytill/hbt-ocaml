@@ -336,7 +336,11 @@ let insert c e =
 let upsert c e =
   match id c (Entity.uri e) with
   | Some id ->
-      Dynarray.(get c.nodes id |> Entity.absorb e |> set c.nodes id);
+      let updated_entity = Dynarray.get c.nodes id |> Entity.absorb e in
+      let () =
+        if not (Entity.equal updated_entity e) then
+          Dynarray.(set c.nodes id updated_entity)
+      in
       id
   | None -> insert c e
 
