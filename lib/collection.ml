@@ -261,7 +261,12 @@ module Entity = struct
     else
       { e with updated_at = updated_at :: e.updated_at; names; labels }
 
-  let absorb other = update other.created_at other.names other.labels
+  let absorb other existing =
+    if not (equal other existing) then
+      update other.created_at other.names other.labels existing
+    else
+      existing
+
   let uri e = e.uri
   let created_at e = e.created_at
   let updated_at e = e.updated_at
