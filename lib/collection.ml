@@ -203,6 +203,9 @@ module Entity = struct
     && List.equal Time.equal x.updated_at y.updated_at
     && Name_set.equal x.names y.names
     && Label_set.equal x.labels y.labels
+    && Option.equal Extended.equal x.extended y.extended
+    && Bool.equal x.shared y.shared
+    && Bool.equal x.toread y.toread
 
   let pp fmt e =
     let open Format in
