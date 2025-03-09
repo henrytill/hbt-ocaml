@@ -1,7 +1,9 @@
 let ( let@ ) = ( @@ )
 
 module List_ext = struct
-  let tail_or_nil l = try List.tl l with _ -> []
+  let tail_or_nil = function
+    | [] -> []
+    | _ :: l -> l
 
   let hd_opt = function
     | [] -> None
