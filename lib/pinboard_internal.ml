@@ -95,11 +95,11 @@ let from_xml file =
     match Markup.next signals with
     | Some (`Start_element ((_, "post"), attrs)) ->
         let parsed = to_t attrs in
-        go (depth + 1) (parsed :: acc)
-    | Some (`Start_element ((_, "posts"), _)) -> go (depth + 1) acc
+        go (succ depth) (parsed :: acc)
+    | Some (`Start_element ((_, "posts"), _)) -> go (succ depth) acc
     | Some (`Start_element ((_, s), _)) -> failwith ("unexpected Start_element: " ^ s)
     | Some `End_element when depth = 1 -> acc
-    | Some `End_element -> go (depth - 1) acc
+    | Some `End_element -> go (pred depth) acc
     | Some _ -> go depth acc
     | None -> failwith "unexpected end of stream"
   in
@@ -187,9 +187,9 @@ let from_html file =
     | Some (`Start_element ((_, "dt"), _)) ->
         let parsed = to_t () in
         go depth (parsed :: acc)
-    | Some (`Start_element ((_, _), _)) -> go (depth + 1) acc
+    | Some (`Start_element ((_, _), _)) -> go (succ depth) acc
     | Some `End_element when depth = 1 -> acc
-    | Some `End_element -> go (depth - 1) acc
+    | Some `End_element -> go (pred depth) acc
     | Some _ -> go depth acc
     | None -> failwith "unexpected end of stream"
   in

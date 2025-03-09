@@ -13,7 +13,7 @@ module List_ext = struct
     let[@tail_mod_cons] rec go n l =
       match (n, l) with
       | 0, _ | _, [] -> []
-      | n, x :: l -> x :: go (n - 1) l
+      | n, x :: l -> x :: go (pred n) l
     in
     if n < 0 then invalid_arg "List_ext.take";
     go n l
