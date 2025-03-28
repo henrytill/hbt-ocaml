@@ -11,7 +11,8 @@ type t = {
   toread : bool;
 }
 
-let make ~href ~time ~description ~extended ~tag ~hash ~shared ~toread =
+let make ~href ~time ?(description = None) ?(extended = None) ?(tag = []) ?(hash = None)
+    ?(shared = false) ?(toread = false) () =
   { href; time; description; extended; tag; hash; shared; toread }
 
 let href p = p.href

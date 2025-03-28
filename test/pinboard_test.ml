@@ -23,11 +23,9 @@ let test_small () =
         ~href:"http://c-faq.com/decl/spiral.anderson.html"
         ~time:"1653114361"
         ~description:(Some "Clockwise/Spiral Rule")
-        ~extended:None
         ~tag:[ "c"; "c++" ]
-        ~hash:None
         ~shared:true
-        ~toread:false;
+        ();
       Pinboard.make
         ~href:"https://docs.microsoft.com/en-us/sysinternals/downloads/procmon"
         ~time:"1606184699"
@@ -35,18 +33,14 @@ let test_small () =
         ~extended:
           (Some "Monitor file system, Registry, process, thread and DLL activity in real-time.")
         ~tag:[ "windows-dev" ]
-        ~hash:None
-        ~shared:false
-        ~toread:false;
+        ();
       Pinboard.make
         ~href:"https://www.intel.com/content/www/us/en/developer/tools/oneapi/vtune-profiler.html"
         ~time:"1649855530"
         ~description:(Some "Fix Performance Bottlenecks with Intel® VTune™ Profiler")
-        ~extended:None
         ~tag:[ "performance"; "profiling"; "tools" ]
-        ~hash:None
-        ~shared:false
-        ~toread:true;
+        ~toread:true
+        ();
     ]
   in
   let expected = List.rev expected in
