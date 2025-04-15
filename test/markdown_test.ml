@@ -546,15 +546,18 @@ let test_update () =
   let open Collection in
   let actual = Markdown.parse update in
   let foo =
-    Entity.make
-      (Uri.of_string "https://foo.com")
-      (Time.of_string "December 5, 2023")
-      (Some (Name.of_string "Foo"))
-      (Label_set.singleton (Label.of_string "Foo"))
-    |> Entity.update
-         (Time.of_string "December 6, 2023")
-         (Name_set.singleton (Name.of_string "Bar"))
-         (Label_set.singleton (Label.of_string "Bar"))
+    let original =
+      Entity.make
+        (Uri.of_string "https://foo.com")
+        (Time.of_string "December 5, 2023")
+        (Some (Name.of_string "Foo"))
+        (Label_set.singleton (Label.of_string "Foo"))
+    in
+    Entity.update
+      (Time.of_string "December 6, 2023")
+      (Name_set.singleton (Name.of_string "Bar"))
+      (Label_set.singleton (Label.of_string "Bar"))
+      original
   in
   let expected, id_foo =
     let ret = create () in
@@ -582,15 +585,18 @@ let test_descending_dates () =
   let open Collection in
   let actual = Markdown.parse descending_dates in
   let foo =
-    Entity.make
-      (Uri.of_string "https://foo.com")
-      (Time.of_string "December 6, 2023")
-      (Some (Name.of_string "Foo"))
-      (Label_set.singleton (Label.of_string "Foo"))
-    |> Entity.update
-         (Time.of_string "December 5, 2023")
-         (Name_set.singleton (Name.of_string "Bar"))
-         (Label_set.singleton (Label.of_string "Bar"))
+    let original =
+      Entity.make
+        (Uri.of_string "https://foo.com")
+        (Time.of_string "December 6, 2023")
+        (Some (Name.of_string "Foo"))
+        (Label_set.singleton (Label.of_string "Foo"))
+    in
+    Entity.update
+      (Time.of_string "December 5, 2023")
+      (Name_set.singleton (Name.of_string "Bar"))
+      (Label_set.singleton (Label.of_string "Bar"))
+      original
   in
   let expected, id_foo =
     let ret = create () in

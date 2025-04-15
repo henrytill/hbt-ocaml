@@ -23,11 +23,11 @@ let update_collection (args : Args.t) : Collection.t -> Collection.t =
 let print_collection (file : string) (args : Args.t) (collection : Collection.t) : unit =
   let open Collection in
   if args.dump_entities then
-    yojson_of_t collection |> Yojson.Safe.pretty_print Format.std_formatter
+    Yojson.Safe.pretty_print Format.std_formatter (yojson_of_t collection)
   else if args.dump_tags then
     entities collection
-    |> Array.fold_left (fun acc et -> Entity.labels et |> Label_set.union acc) Label_set.empty
-    |> Label_set.iter (fun l -> Label.to_string l |> Printf.printf "%s\n")
+    |> Array.fold_left (fun acc et -> Label_set.union acc (Entity.labels et)) Label_set.empty
+    |> Label_set.iter (fun l -> Printf.printf "%s\n" (Label.to_string l))
   else
     let length = length collection in
     Printf.printf "%s: %d entities\n" file length

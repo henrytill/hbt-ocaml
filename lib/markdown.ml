@@ -82,7 +82,7 @@ let block m ((c, st) : Collection.t * Fold_state.t) = function
   | _ -> Folder.default
 
 let save_entity c st =
-  let entity = Fold_state.to_entity st |> Option.get in
+  let entity = Option.get (Fold_state.to_entity st) in
   let id = Collection.upsert c entity in
   Option.iter (fun parent -> Collection.add_edges c parent id) (List_ext.hd_opt st.parents);
   let st = { st with uri = None; name = None; maybe_parent = Some id } in

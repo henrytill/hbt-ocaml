@@ -14,7 +14,7 @@ module Version = struct
     if not (Semver.equal version expected) then
       raise Unsupported
 
-  let t_of_yojson json = Yojson.Safe.Util.to_string json |> Semver.of_string
+  let t_of_yojson json = Semver.of_string (Yojson.Safe.Util.to_string json)
   let yojson_of_t version = `String (Semver.to_string version)
 end
 
@@ -53,7 +53,7 @@ module Name_set = struct
       empty
       (Yojson.Safe.Util.to_list json)
 
-  let yojson_of_t set = `List (elements set |> List.map Name.yojson_of_t)
+  let yojson_of_t set = `List (List.map Name.yojson_of_t (elements set))
 end
 
 module Label = struct
@@ -79,7 +79,7 @@ module Label_set = struct
       empty
       (Yojson.Safe.Util.to_list json)
 
-  let yojson_of_t set = `List (elements set |> List.map Label.yojson_of_t)
+  let yojson_of_t set = `List (List.map Label.yojson_of_t (elements set))
 end
 
 module Label_map = Map.Make (Label)
@@ -325,7 +325,7 @@ let is_empty c =
   assert (ret = Dynarray.is_empty c.edges);
   ret
 
-let contains c uri = Uri_hashtbl.find_opt c.uris uri |> Option.is_some
+let contains c uri = Option.is_some (Uri_hashtbl.find_opt c.uris uri)
 let id c uri = Uri_hashtbl.find_opt c.uris uri
 
 let insert c e =
@@ -358,7 +358,7 @@ let add_edges c from target =
   add_edge c target from
 
 let entity c id = Dynarray.get c.nodes id
-let edges c id = Dynarray.(get c.edges id |> to_array)
+let edges c id = Dynarray.(to_array (get c.edges id))
 let entities c = Dynarray.to_array c.nodes
 
 let t_of_yojson json =
@@ -422,7 +422,7 @@ let json_to_map (json : Yojson.Basic.t) : Label.t Label_map.t =
 
 let update_labels (json : Yojson.Basic.t) : t -> t =
   let mapping = json_to_map json in
-  let f label = Label_map.find_opt label mapping |> Option.value ~default:label in
+  let f label = Option.value ~default:label (Label_map.find_opt label mapping) in
   map_labels (Label_set.map f)
 
 let make_dt e =

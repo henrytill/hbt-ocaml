@@ -67,7 +67,7 @@ module Tags = struct
   let to_string = Format.asprintf "%a" pp
 end
 
-let tags = List.fold_left (fun acc post -> Tags.of_list post.tag |> Tags.union acc) Tags.empty
+let tags = List.fold_left (fun acc post -> Tags.(union acc (of_list post.tag))) Tags.empty
 
 module Attrs = struct
   type t = ((string * string) * string) list
