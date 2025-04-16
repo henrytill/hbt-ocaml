@@ -325,8 +325,8 @@ let is_empty c =
   assert (ret = Dynarray.is_empty c.edges);
   ret
 
-let contains c uri = Option.is_some (Uri_hashtbl.find_opt c.uris uri)
 let id c uri = Uri_hashtbl.find_opt c.uris uri
+let contains c uri = Option.is_some (id c uri)
 
 let insert c e =
   let id = Id.of_int (length c) in
