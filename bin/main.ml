@@ -29,8 +29,7 @@ let print_collection (file : string) (args : Args.t) (collection : Collection.t)
     |> Array.fold_left (fun acc et -> Label_set.union acc (Entity.labels et)) Label_set.empty
     |> Label_set.iter (fun l -> Printf.printf "%s\n" (Label.to_string l))
   else
-    let length = length collection in
-    Printf.printf "%s: %d entities\n" file length
+    Printf.printf "%s: %d entities\n" file (length collection)
 
 let run (parse : string -> 'a) (to_collection : 'a -> Collection.t) (file : string) (args : Args.t)
     : unit =
@@ -42,13 +41,13 @@ let collection_of_posts (posts : Pinboard.t list) : Collection.t =
   ret
 
 let process_file dump_entities dump_tags mappings_file file =
-  let run_markdown = run (Fun.compose Markdown.parse read_file) Fun.id in
+  let run_md = run (Fun.compose Markdown.parse read_file) Fun.id in
   let run_xml = run Pinboard.from_xml collection_of_posts in
   let run_html = run Pinboard.from_html collection_of_posts in
   let run_json = run Pinboard.from_json collection_of_posts in
   let args = Args.{ dump_entities; dump_tags; mappings_file } in
   match Filename.extension file with
-  | ".md" -> run_markdown file args
+  | ".md" -> run_md file args
   | ".xml" -> run_xml file args
   | ".html" -> run_html file args
   | ".json" -> run_json file args
