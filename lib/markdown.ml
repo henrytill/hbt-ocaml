@@ -114,7 +114,12 @@ let rec extract_string (inlines : Inline.t list) : string =
   go [] inlines
 
 let get_text (link : Inline.Link.t) : string option =
-  Inline.Link.text link |> Inline.normalize |> fun x -> [ x ] |> extract_string |> option_of_string
+  Inline.Link.text link
+  |> Inline.normalize
+  |> List_ext.singleton
+  |> extract_string
+  |> String.trim
+  |> option_of_string
 
 let handle_link (link : Inline.Link.t) ((c, st) : Collection.t * Fold_state.t) =
   let kf () = Folder.default in

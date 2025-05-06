@@ -7,6 +7,8 @@ let option_of_string s =
     Some s
 
 module List_ext = struct
+  let singleton x = [ x ]
+
   let tail_or_nil = function
     | [] -> []
     | _ :: l -> l
