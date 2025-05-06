@@ -41,12 +41,6 @@ module Fold_state = struct
     | _ -> None
 end
 
-let option_of_string s =
-  if String.length s = 0 then
-    None
-  else
-    Some s
-
 let get_heading_text (h : Block.Heading.t) kf ks =
   match Block.Heading.inline h with
   | Inline.Text (t, _) -> ks t

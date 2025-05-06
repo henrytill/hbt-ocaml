@@ -1,5 +1,11 @@
 let ( let@ ) = ( @@ )
 
+let option_of_string s =
+  if String.length s = 0 then
+    None
+  else
+    Some s
+
 module List_ext = struct
   let tail_or_nil = function
     | [] -> []
