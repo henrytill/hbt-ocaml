@@ -21,19 +21,13 @@ let no_labels = {|# November 15, 2023
 let test_no_labels () =
   let open Collection in
   let actual = Markdown.parse no_labels in
+  let time = Time.of_string "November 15, 2023" in
+  let labels = Label_set.empty in
   let foo =
-    Entity.make
-      (Uri.of_string "https://foo.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Foo"))
-      Label_set.empty
+    Entity.make (Uri.of_string "https://foo.com") time (Some (Name.of_string "Foo")) labels
   in
   let bar =
-    Entity.make
-      (Uri.of_string "https://bar.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Bar"))
-      Label_set.empty
+    Entity.make (Uri.of_string "https://bar.com") time (Some (Name.of_string "Bar")) labels
   in
   let expected, id_foo, id_bar =
     let ret = create () in
@@ -118,19 +112,13 @@ let parent = {|# November 15, 2023
 let test_parent () =
   let open Collection in
   let actual = Markdown.parse parent in
+  let time = Time.of_string "November 15, 2023" in
+  let labels = Label_set.empty in
   let foo =
-    Entity.make
-      (Uri.of_string "https://foo.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Foo"))
-      Label_set.empty
+    Entity.make (Uri.of_string "https://foo.com") time (Some (Name.of_string "Foo")) labels
   in
   let bar =
-    Entity.make
-      (Uri.of_string "https://bar.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Bar"))
-      Label_set.empty
+    Entity.make (Uri.of_string "https://bar.com") time (Some (Name.of_string "Bar")) labels
   in
   let expected, id_foo, id_bar =
     let ret = create () in
@@ -155,26 +143,16 @@ let parents =
 let test_parents () =
   let open Collection in
   let actual = Markdown.parse parents in
+  let time = Time.of_string "November 15, 2023" in
+  let labels = Label_set.empty in
   let foo =
-    Entity.make
-      (Uri.of_string "https://foo.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Foo"))
-      Label_set.empty
+    Entity.make (Uri.of_string "https://foo.com") time (Some (Name.of_string "Foo")) labels
   in
   let bar =
-    Entity.make
-      (Uri.of_string "https://bar.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Bar"))
-      Label_set.empty
+    Entity.make (Uri.of_string "https://bar.com") time (Some (Name.of_string "Bar")) labels
   in
   let baz =
-    Entity.make
-      (Uri.of_string "https://baz.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Baz"))
-      Label_set.empty
+    Entity.make (Uri.of_string "https://baz.com") time (Some (Name.of_string "Baz")) labels
   in
   let expected, id_foo, id_bar, id_baz =
     let ret = create () in
@@ -202,26 +180,16 @@ let parents_indented =
 let test_parents_indented () =
   let open Collection in
   let actual = Markdown.parse parents_indented in
+  let time = Time.of_string "November 15, 2023" in
+  let labels = Label_set.empty in
   let foo =
-    Entity.make
-      (Uri.of_string "https://foo.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Foo"))
-      Label_set.empty
+    Entity.make (Uri.of_string "https://foo.com") time (Some (Name.of_string "Foo")) labels
   in
   let bar =
-    Entity.make
-      (Uri.of_string "https://bar.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Bar"))
-      Label_set.empty
+    Entity.make (Uri.of_string "https://bar.com") time (Some (Name.of_string "Bar")) labels
   in
   let baz =
-    Entity.make
-      (Uri.of_string "https://baz.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Baz"))
-      Label_set.empty
+    Entity.make (Uri.of_string "https://baz.com") time (Some (Name.of_string "Baz")) labels
   in
   let expected, id_foo, id_bar, id_baz =
     let ret = create () in
@@ -250,33 +218,19 @@ let single_parent =
 let test_single_parent () =
   let open Collection in
   let actual = Markdown.parse single_parent in
+  let time = Time.of_string "November 15, 2023" in
+  let labels = Label_set.empty in
   let foo =
-    Entity.make
-      (Uri.of_string "https://foo.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Foo"))
-      Label_set.empty
+    Entity.make (Uri.of_string "https://foo.com") time (Some (Name.of_string "Foo")) labels
   in
   let bar =
-    Entity.make
-      (Uri.of_string "https://bar.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Bar"))
-      Label_set.empty
+    Entity.make (Uri.of_string "https://bar.com") time (Some (Name.of_string "Bar")) labels
   in
   let baz =
-    Entity.make
-      (Uri.of_string "https://baz.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Baz"))
-      Label_set.empty
+    Entity.make (Uri.of_string "https://baz.com") time (Some (Name.of_string "Baz")) labels
   in
   let quux =
-    Entity.make
-      (Uri.of_string "https://quux.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Quux"))
-      Label_set.empty
+    Entity.make (Uri.of_string "https://quux.com") time (Some (Name.of_string "Quux")) labels
   in
   let expected, id_foo, id_bar, id_baz, id_quux =
     let ret = create () in
@@ -308,19 +262,13 @@ let inverted_parent = {|# November 15, 2023
 let test_inverted_parent () =
   let open Collection in
   let actual = Markdown.parse inverted_parent in
+  let time = Time.of_string "November 15, 2023" in
+  let labels = Label_set.empty in
   let foo =
-    Entity.make
-      (Uri.of_string "https://foo.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Foo"))
-      Label_set.empty
+    Entity.make (Uri.of_string "https://foo.com") time (Some (Name.of_string "Foo")) labels
   in
   let bar =
-    Entity.make
-      (Uri.of_string "https://bar.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Bar"))
-      Label_set.empty
+    Entity.make (Uri.of_string "https://bar.com") time (Some (Name.of_string "Bar")) labels
   in
   let expected, id_foo, id_bar =
     let ret = create () in
@@ -343,26 +291,16 @@ let inverted_single_parent =
 let test_inverted_single_parent () =
   let open Collection in
   let actual = Markdown.parse inverted_single_parent in
+  let time = Time.of_string "November 15, 2023" in
+  let labels = Label_set.empty in
   let foo =
-    Entity.make
-      (Uri.of_string "https://foo.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Foo"))
-      Label_set.empty
+    Entity.make (Uri.of_string "https://foo.com") time (Some (Name.of_string "Foo")) labels
   in
   let bar =
-    Entity.make
-      (Uri.of_string "https://bar.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Bar"))
-      Label_set.empty
+    Entity.make (Uri.of_string "https://bar.com") time (Some (Name.of_string "Bar")) labels
   in
   let baz =
-    Entity.make
-      (Uri.of_string "https://baz.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Baz"))
-      Label_set.empty
+    Entity.make (Uri.of_string "https://baz.com") time (Some (Name.of_string "Baz")) labels
   in
   let expected, id_foo, id_bar, id_baz =
     let ret = create () in
@@ -387,20 +325,13 @@ let label = {|# November 15, 2023
 let test_label () =
   let open Collection in
   let actual = Markdown.parse label in
+  let time = Time.of_string "November 15, 2023" in
   let labels = Label_set.singleton (Label.of_string "Foo") in
   let foo =
-    Entity.make
-      (Uri.of_string "https://foo.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Foo"))
-      labels
+    Entity.make (Uri.of_string "https://foo.com") time (Some (Name.of_string "Foo")) labels
   in
   let bar =
-    Entity.make
-      (Uri.of_string "https://bar.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Bar"))
-      labels
+    Entity.make (Uri.of_string "https://bar.com") time (Some (Name.of_string "Bar")) labels
   in
   let expected, id_foo, id_bar =
     let ret = create () in
@@ -429,35 +360,20 @@ let labels =
 let test_labels () =
   let open Collection in
   let actual = Markdown.parse labels in
+  let time = Time.of_string "November 15, 2023" in
   let labels_foo = Label_set.singleton (Label.of_string "Foo") in
   let foo =
-    Entity.make
-      (Uri.of_string "https://foo.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Foo"))
-      labels_foo
+    Entity.make (Uri.of_string "https://foo.com") time (Some (Name.of_string "Foo")) labels_foo
   in
   let bar =
-    Entity.make
-      (Uri.of_string "https://bar.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Bar"))
-      labels_foo
+    Entity.make (Uri.of_string "https://bar.com") time (Some (Name.of_string "Bar")) labels_foo
   in
   let labels_baz = Label_set.singleton (Label.of_string "Baz") in
   let baz =
-    Entity.make
-      (Uri.of_string "https://baz.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Baz"))
-      labels_baz
+    Entity.make (Uri.of_string "https://baz.com") time (Some (Name.of_string "Baz")) labels_baz
   in
   let quux =
-    Entity.make
-      (Uri.of_string "https://quux.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Quux"))
-      labels_baz
+    Entity.make (Uri.of_string "https://quux.com") time (Some (Name.of_string "Quux")) labels_baz
   in
   let expected, id_foo, id_bar, id_baz, id_quux =
     let ret = create () in
@@ -492,29 +408,18 @@ let multiple_labels =
 let test_multiple_labels () =
   let open Collection in
   let actual = Markdown.parse multiple_labels in
+  let time = Time.of_string "November 15, 2023" in
   let labels_foo = Label_set.singleton (Label.of_string "Foo") in
   let foo =
-    Entity.make
-      (Uri.of_string "https://foo.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Foo"))
-      labels_foo
+    Entity.make (Uri.of_string "https://foo.com") time (Some (Name.of_string "Foo")) labels_foo
   in
   let labels_bar = Label_set.add (Label.of_string "Bar") labels_foo in
   let bar =
-    Entity.make
-      (Uri.of_string "https://bar.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Bar"))
-      labels_bar
+    Entity.make (Uri.of_string "https://bar.com") time (Some (Name.of_string "Bar")) labels_bar
   in
   let labels_baz = Label_set.add (Label.of_string "Baz") labels_bar in
   let baz =
-    Entity.make
-      (Uri.of_string "https://baz.com")
-      (Time.of_string "November 15, 2023")
-      (Some (Name.of_string "Baz"))
-      labels_baz
+    Entity.make (Uri.of_string "https://baz.com") time (Some (Name.of_string "Baz")) labels_baz
   in
   let expected, id_foo, id_bar, id_baz =
     let ret = create () in
@@ -545,25 +450,29 @@ let update =
 let test_update () =
   let open Collection in
   let actual = Markdown.parse update in
+  let uri = Uri.of_string "https://foo.com" in
   let foo =
-    let original =
-      Entity.make
-        (Uri.of_string "https://foo.com")
-        (Time.of_string "December 5, 2023")
-        (Some (Name.of_string "Foo"))
-        (Label_set.singleton (Label.of_string "Foo"))
-    in
-    Entity.update
-      (Time.of_string "December 6, 2023")
-      (Name_set.singleton (Name.of_string "Bar"))
-      (Label_set.singleton (Label.of_string "Bar"))
-      original
+    Entity.make
+      uri
+      (Time.of_string "December 5, 2023")
+      (Some (Name.of_string "Foo"))
+      (Label_set.singleton (Label.of_string "Foo"))
   in
-  let expected, id_foo =
+  let bar =
+    Entity.make
+      uri
+      (Time.of_string "December 6, 2023")
+      (Some (Name.of_string "Bar"))
+      (Label_set.singleton (Label.of_string "Bar"))
+  in
+  let expected, id_foo, id_bar =
     let ret = create () in
     let id_foo = upsert ret foo in
-    (ret, id_foo)
+    let id_bar = upsert ret bar in
+    (ret, id_foo, id_bar)
   in
+  Alcotest.(check testable_id) "same id" id_foo id_bar;
+  Alcotest.(check int) "same length" (length expected) 1;
   Alcotest.(check int) "same length" (length expected) (length actual);
   Alcotest.(check testable_entity) "same entity" (entity expected id_foo) (entity actual id_foo)
 
@@ -584,25 +493,29 @@ let descending_dates =
 let test_descending_dates () =
   let open Collection in
   let actual = Markdown.parse descending_dates in
+  let uri = Uri.of_string "https://foo.com" in
   let foo =
-    let original =
-      Entity.make
-        (Uri.of_string "https://foo.com")
-        (Time.of_string "December 6, 2023")
-        (Some (Name.of_string "Foo"))
-        (Label_set.singleton (Label.of_string "Foo"))
-    in
-    Entity.update
-      (Time.of_string "December 5, 2023")
-      (Name_set.singleton (Name.of_string "Bar"))
-      (Label_set.singleton (Label.of_string "Bar"))
-      original
+    Entity.make
+      uri
+      (Time.of_string "December 6, 2023")
+      (Some (Name.of_string "Foo"))
+      (Label_set.singleton (Label.of_string "Foo"))
   in
-  let expected, id_foo =
+  let bar =
+    Entity.make
+      uri
+      (Time.of_string "December 5, 2023")
+      (Some (Name.of_string "Bar"))
+      (Label_set.singleton (Label.of_string "Bar"))
+  in
+  let expected, id_foo, id_bar =
     let ret = create () in
     let id_foo = upsert ret foo in
-    (ret, id_foo)
+    let id_bar = upsert ret bar in
+    (ret, id_foo, id_bar)
   in
+  Alcotest.(check testable_id) "same id" id_foo id_bar;
+  Alcotest.(check int) "same length" (length expected) 1;
   Alcotest.(check int) "same length" (length expected) (length actual);
   Alcotest.(check testable_entity) "same entity" (entity expected id_foo) (entity actual id_foo)
 
@@ -629,26 +542,37 @@ let mixed_dates =
 let test_mixed_dates () =
   let open Collection in
   let actual = Markdown.parse mixed_dates in
+  let uri = Uri.of_string "https://foo.com" in
   let foo =
     Entity.make
-      (Uri.of_string "https://foo.com")
+      uri
       (Time.of_string "December 6, 2023")
       (Some (Name.of_string "Foo"))
       (Label_set.singleton (Label.of_string "Foo"))
-    |> Entity.update
-         (Time.of_string "December 5, 2023")
-         (Name_set.singleton (Name.of_string "Bar"))
-         (Label_set.singleton (Label.of_string "Bar"))
-    |> Entity.update
-         (Time.of_string "December 7, 2023")
-         (Name_set.singleton (Name.of_string "Baz"))
-         (Label_set.singleton (Label.of_string "Baz"))
   in
-  let expected, id_foo =
+  let bar =
+    Entity.make
+      uri
+      (Time.of_string "December 5, 2023")
+      (Some (Name.of_string "Bar"))
+      (Label_set.singleton (Label.of_string "Bar"))
+  in
+  let baz =
+    Entity.make
+      uri
+      (Time.of_string "December 7, 2023")
+      (Some (Name.of_string "Baz"))
+      (Label_set.singleton (Label.of_string "Baz"))
+  in
+  let expected, id_foo, id_bar, id_baz =
     let ret = create () in
     let id_foo = upsert ret foo in
-    (ret, id_foo)
+    let id_bar = upsert ret bar in
+    let id_baz = upsert ret baz in
+    (ret, id_foo, id_bar, id_baz)
   in
+  Alcotest.(check bool) "same id" true (List.for_all (fun id -> id == id_foo) [ id_bar; id_baz ]);
+  Alcotest.(check int) "same length" (length expected) 1;
   Alcotest.(check int) "same length" (length expected) (length actual);
   Alcotest.(check testable_entity) "same entity" (entity expected id_foo) (entity actual id_foo)
 
