@@ -42,7 +42,8 @@ Test dumping entities:
           "names": [ "Emacs" ],
           "labels": [ "editor", "ocaml", "tools" ],
           "shared": false,
-          "toread": false
+          "toread": false,
+          "isFeed": false
         },
         "edges": []
       },
@@ -55,7 +56,8 @@ Test dumping entities:
           "names": [],
           "labels": [ "ocaml", "programming" ],
           "shared": false,
-          "toread": false
+          "toread": false,
+          "isFeed": false
         },
         "edges": []
       },
@@ -68,7 +70,8 @@ Test dumping entities:
           "names": [ "OCaml Website" ],
           "labels": [ "ocaml", "programming" ],
           "shared": false,
-          "toread": false
+          "toread": false,
+          "isFeed": false
         },
         "edges": []
       }
@@ -117,7 +120,8 @@ Verify that entities are preserved while tags are transformed:
           "names": [ "Emacs" ],
           "labels": [ "editors", "languages", "tools" ],
           "shared": false,
-          "toread": false
+          "toread": false,
+          "isFeed": false
         },
         "edges": []
       },
@@ -130,7 +134,8 @@ Verify that entities are preserved while tags are transformed:
           "names": [],
           "labels": [ "dev", "languages" ],
           "shared": false,
-          "toread": false
+          "toread": false,
+          "isFeed": false
         },
         "edges": []
       },
@@ -143,7 +148,8 @@ Verify that entities are preserved while tags are transformed:
           "names": [ "OCaml Website" ],
           "labels": [ "dev", "languages" ],
           "shared": false,
-          "toread": false
+          "toread": false,
+          "isFeed": false
         },
         "edges": []
       }

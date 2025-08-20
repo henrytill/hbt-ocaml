@@ -35,6 +35,8 @@ val entity : Entity.t =
     extended = None;
     shared = false;
     toread = false;
+    last_visited_at = None;
+    is_feed = false;
   }
 ```
 
@@ -54,6 +56,8 @@ val entity : Entity.t =
     extended = None;
     shared = false;
     toread = false;
+    last_visited_at = None;
+    is_feed = false;
   }
 ```
 
@@ -73,6 +77,8 @@ val entity : Entity.t =
     extended = None;
     shared = false;
     toread = false;
+    last_visited_at = None;
+    is_feed = false;
   }
 ```
 
@@ -101,6 +107,8 @@ val entities : Entity.t list =
      extended = None;
      shared = false;
      toread = false;
+     last_visited_at = None;
+     is_feed = false;
    };
    {
      uri = https://www.google.com/;
@@ -111,6 +119,8 @@ val entities : Entity.t list =
      extended = None;
      shared = false;
      toread = false;
+     last_visited_at = None;
+     is_feed = false;
    }]
 ```
 
@@ -195,7 +205,8 @@ val collection : t = <abstr>
         "names": [ "Baz" ],
         "labels": [ "Bar", "Baz", "Foo" ],
         "shared": false,
-        "toread": false
+        "toread": false,
+        "isFeed": false
       },
       "edges": [ 0 ]
     },
@@ -208,7 +219,8 @@ val collection : t = <abstr>
         "names": [ "Bar" ],
         "labels": [ "Bar", "Foo" ],
         "shared": false,
-        "toread": false
+        "toread": false,
+        "isFeed": false
       },
       "edges": [ 0 ]
     },
@@ -221,7 +233,8 @@ val collection : t = <abstr>
         "names": [ "Foo" ],
         "labels": [ "Foo" ],
         "shared": false,
-        "toread": false
+        "toread": false,
+        "isFeed": false
       },
       "edges": [ 1, 2 ]
     }
@@ -247,7 +260,8 @@ val roundtripped : t = <abstr>
         "names": [ "Baz" ],
         "labels": [ "Bar", "Baz", "Foo" ],
         "shared": false,
-        "toread": false
+        "toread": false,
+        "isFeed": false
       },
       "edges": [ 0 ]
     },
@@ -260,7 +274,8 @@ val roundtripped : t = <abstr>
         "names": [ "Bar" ],
         "labels": [ "Bar", "Foo" ],
         "shared": false,
-        "toread": false
+        "toread": false,
+        "isFeed": false
       },
       "edges": [ 0 ]
     },
@@ -273,7 +288,8 @@ val roundtripped : t = <abstr>
         "names": [ "Foo" ],
         "labels": [ "Foo" ],
         "shared": false,
-        "toread": false
+        "toread": false,
+        "isFeed": false
       },
       "edges": [ 1, 2 ]
     }

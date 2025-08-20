@@ -163,6 +163,8 @@ module Entity = struct
     extended : Extended.t option;
     shared : bool;
     toread : bool;
+    last_visited_at : Time.t option;
+    is_feed : bool;
   }
 
   let make uri created_at maybe_name labels =
@@ -172,7 +174,20 @@ module Entity = struct
     let extended = None in
     let shared = false in
     let toread = false in
-    { uri; created_at; updated_at; names; labels; extended; shared; toread }
+    let last_visited_at = None in
+    let is_feed = false in
+    {
+      uri;
+      created_at;
+      updated_at;
+      names;
+      labels;
+      extended;
+      shared;
+      toread;
+      last_visited_at;
+      is_feed;
+    }
 
   let empty =
     let uri = Uri.empty in
@@ -183,7 +198,20 @@ module Entity = struct
     let extended = None in
     let shared = false in
     let toread = false in
-    { uri; created_at; updated_at; names; labels; extended; shared; toread }
+    let last_visited_at = None in
+    let is_feed = false in
+    {
+      uri;
+      created_at;
+      updated_at;
+      names;
+      labels;
+      extended;
+      shared;
+      toread;
+      last_visited_at;
+      is_feed;
+    }
 
   let of_pinboard (p : Pinboard.t) : t =
     let open Pinboard in
@@ -195,7 +223,20 @@ module Entity = struct
     let extended = Option.map Extended.of_string (extended p) in
     let shared = shared p in
     let toread = toread p in
-    { uri; created_at; updated_at; names; labels; extended; shared; toread }
+    let last_visited_at = None in
+    let is_feed = false in
+    {
+      uri;
+      created_at;
+      updated_at;
+      names;
+      labels;
+      extended;
+      shared;
+      toread;
+      last_visited_at;
+      is_feed;
+    }
 
   let equal x y =
     Uri.equal x.uri y.uri
@@ -206,6 +247,8 @@ module Entity = struct
     && Option.equal Extended.equal x.extended y.extended
     && Bool.equal x.shared y.shared
     && Bool.equal x.toread y.toread
+    && Option.equal Time.equal x.last_visited_at y.last_visited_at
+    && Bool.equal x.is_feed y.is_feed
 
   let pp fmt e =
     let open Format in
@@ -214,6 +257,7 @@ module Entity = struct
     let none fmt () = fprintf fmt "None" in
     let some fmt = fprintf fmt "Some %a" Extended.pp in
     let pp_extended_opt = pp_print_option ~none some in
+    let pp_last_visit_opt = pp_print_option ~none Time.pp in
     fprintf fmt "@[<hv>{";
     fprintf fmt "@;<1 2>@[uri =@ %a@];" Uri.pp e.uri;
     fprintf fmt "@;<1 2>@[created_at =@ %a@];" Time.pp e.created_at;
@@ -223,6 +267,8 @@ module Entity = struct
     fprintf fmt "@;<1 2>@[extended =@ %a@];" pp_extended_opt e.extended;
     fprintf fmt "@;<1 2>@[shared =@ %a@];" pp_print_bool e.shared;
     fprintf fmt "@;<1 2>@[toread =@ %a@];" pp_print_bool e.toread;
+    fprintf fmt "@;<1 2>@[last_visited_at =@ %a@];" pp_last_visit_opt e.last_visited_at;
+    fprintf fmt "@;<1 2>@[is_feed =@ %a@];" pp_print_bool e.is_feed;
     fprintf fmt "@;<1 0>}@]"
 
   let t_of_yojson json =
@@ -236,12 +282,19 @@ module Entity = struct
       extended = json |> member "extended" |> to_option Extended.t_of_yojson;
       shared = json |> member "shared" |> to_bool;
       toread = json |> member "toread" |> to_bool;
+      last_visited_at = json |> member "lastVisitedAt" |> to_option Time.t_of_yojson;
+      is_feed = json |> member "isFeed" |> to_bool;
     }
 
   let yojson_of_t entity =
     let maybe_extended =
       match entity.extended with
       | Some extended -> [ ("extended", Extended.yojson_of_t extended) ]
+      | None -> []
+    in
+    let maybe_last_visit =
+      match entity.last_visited_at with
+      | Some last_visit -> [ ("lastVisitedAt", Time.yojson_of_t last_visit) ]
       | None -> []
     in
     `Assoc
@@ -253,8 +306,10 @@ module Entity = struct
          ("labels", Label_set.yojson_of_t entity.labels);
          ("shared", `Bool entity.shared);
          ("toread", `Bool entity.toread);
+         ("isFeed", `Bool entity.is_feed);
        ]
-      @ maybe_extended)
+      @ maybe_extended
+      @ maybe_last_visit)
 
   let update updated_at names labels e =
     let names = Name_set.union e.names names in
@@ -281,6 +336,8 @@ module Entity = struct
 
   let names e = e.names
   let labels e = e.labels
+  let last_visited_at e = e.last_visited_at
+  let is_feed e = e.is_feed
   let map_labels f e = { e with labels = f e.labels }
 end
 
