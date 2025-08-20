@@ -43,7 +43,7 @@ let collection_of_posts (posts : Pinboard.t list) : Collection.t =
 let process_file dump_entities dump_tags mappings_file file =
   let run_md = run (Fun.compose Markdown.parse read_file) Fun.id in
   let run_xml = run Pinboard.from_xml collection_of_posts in
-  let run_html = run Pinboard.from_html collection_of_posts in
+  let run_html = run Collection.from_html Fun.id in
   let run_json = run Pinboard.from_json collection_of_posts in
   let args = Args.{ dump_entities; dump_tags; mappings_file } in
   match Filename.extension file with

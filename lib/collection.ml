@@ -524,3 +524,196 @@ let to_html c =
     (Html.pp_elt ~indent:true ())
     (Html.dl dts);
   Format.flush_str_formatter ()
+
+module Netscape = struct
+  module Attrs = struct
+    type t = ((string * string) * string) list
+
+    let get_opt (k : string) (attrs : t) : string option = List.assoc_opt (String.empty, k) attrs
+    let get (k : string) (attrs : t) : string = Option.value ~default:String.empty (get_opt k attrs)
+  end
+
+  let parse_timestamp_opt (attrs : Attrs.t) (key : string) : Time.t option =
+    match Attrs.get_opt key attrs with
+    | Some timestamp_str when timestamp_str <> "" ->
+        let timestamp = Float.of_string timestamp_str in
+        Some (timestamp, Unix.gmtime timestamp)
+    | _ -> None
+
+  let parse_timestamp (attrs : Attrs.t) (key : string) : Time.t =
+    match parse_timestamp_opt attrs key with
+    | Some time -> time
+    | None -> Time.empty
+
+  let create_bookmark (folder_labels : string list) (attrs : Attrs.t) (description : string option)
+      (extended : string option) : Entity.t =
+    let href = Attrs.get "href" attrs in
+    let uri = Uri.of_string href in
+    let created_at = parse_timestamp attrs "add_date" in
+    let last_modified = parse_timestamp_opt attrs "last_modified" in
+    let last_visited_at = parse_timestamp_opt attrs "last_visit" in
+    let tag_string = Attrs.get "tags" attrs in
+    let tag = if tag_string = "" then [] else Str.split (Str.regexp "[,]+") tag_string in
+    (* Add folder path as labels *)
+    let label_strings = tag @ folder_labels in
+    let labels = Label_set.of_list (List.map Label.of_string label_strings) in
+    let extended_field = Option.map Extended.of_string extended in
+    let shared =
+      match Attrs.get_opt "private" attrs with
+      | Some "1" -> false
+      | Some "0" -> true
+      | Some "" -> true
+      | None -> true
+      | Some _ -> true
+    in
+    let toread = Attrs.get "toread" attrs = "1" in
+    let is_feed =
+      match Attrs.get_opt "feed" attrs with
+      | Some "true" -> true
+      | _ -> false
+    in
+    let base_entity = Entity.make uri created_at (Option.map Name.of_string description) labels in
+    (* Update with additional fields that Entity.make doesn't set *)
+    {
+      base_entity with
+      updated_at =
+        (match last_modified with
+        | Some t -> [ t ]
+        | None -> []);
+      extended = extended_field;
+      shared;
+      toread;
+      last_visited_at;
+      is_feed;
+    }
+
+  let add_pending (collection : t) (folder_stack : string list) (attrs : Attrs.t)
+      (bookmark_description : string option) (extended : string option) : unit =
+    let entity = create_bookmark folder_stack attrs bookmark_description extended in
+    ignore (upsert collection entity)
+
+  let element_of_string = function
+    | "h3" -> `H3
+    | "dt" -> `Dt
+    | "a" -> `A
+    | "dd" -> `Dd
+    | "dl" -> `Dl
+    | name -> `Other name
+
+  let from_html file =
+    let ic = open_in file in
+    let channel = Markup.channel ic in
+    let html = Markup.parse_html channel in
+    let signals = Markup.signals html in
+    let collection = create () in
+    let folder_stack = ref [] in
+    let element_stack = ref [] in
+    let continue = ref true in
+
+    let bookmark_attrs = ref None in
+    let bookmark_description = ref None in
+    let waiting_for = ref `Nothing in
+
+    while !continue do
+      match Markup.next signals with
+      | Some (`Start_element ((_, name), _)) when element_of_string name = `H3 ->
+          element_stack := `H3 :: !element_stack;
+          waiting_for := `Folder_name
+      | Some (`Start_element ((_, name), _)) when element_of_string name = `Dt ->
+          element_stack := `Dt :: !element_stack;
+          begin
+            (* If we have a previous bookmark without extended description, create it now *)
+            match !bookmark_attrs with
+            | Some attrs ->
+                add_pending collection !folder_stack attrs !bookmark_description None;
+                bookmark_attrs := None;
+                bookmark_description := None
+            | None -> ()
+          end
+      | Some (`Start_element ((_, name), attrs)) when element_of_string name = `A ->
+          element_stack := `A :: !element_stack;
+          begin
+            match !element_stack with
+            | `A :: `Dt :: _ ->
+                bookmark_attrs := Some attrs;
+                waiting_for := `Bookmark_description
+            | _ -> ()
+          end
+      | Some (`Start_element ((_, name), _))
+        when element_of_string name = `Dd && Option.is_some !bookmark_attrs ->
+          (* DD elements contain extended descriptions and should only be processed 
+             when we have pending bookmark_attrs from a previous DT>A sequence *)
+          element_stack := `Dd :: !element_stack;
+          waiting_for := `Extended_description
+      | Some (`Start_element ((_, name), _)) ->
+          element_stack := element_of_string name :: !element_stack
+      | Some (`Text xs) -> begin
+          match !waiting_for with
+          | `Folder_name ->
+              let folder_name = String.trim (String.concat String.empty xs) in
+              folder_stack := folder_name :: !folder_stack;
+              waiting_for := `Nothing
+          | `Bookmark_description ->
+              bookmark_description := Some (String.trim (String.concat String.empty xs));
+              waiting_for := `Nothing
+          | `Extended_description ->
+              begin
+                match !bookmark_attrs with
+                | Some attrs ->
+                    let extended = Some (String.trim (String.concat String.empty xs)) in
+                    add_pending collection !folder_stack attrs !bookmark_description extended;
+                    bookmark_attrs := None;
+                    bookmark_description := None
+                | None -> ()
+              end;
+              waiting_for := `Nothing
+          | `Nothing -> ()
+        end
+      | Some `End_element -> begin
+          match !element_stack with
+          | `Dl :: rest ->
+              element_stack := rest;
+              begin
+                (* End of folder - create any pending bookmark *)
+                match !bookmark_attrs with
+                | Some attrs ->
+                    add_pending collection !folder_stack attrs !bookmark_description None;
+                    bookmark_attrs := None;
+                    bookmark_description := None
+                | None -> ()
+              end;
+              begin
+                (* Pop folder from stack *)
+                match !folder_stack with
+                | _ :: rest_folders -> folder_stack := rest_folders
+                | [] -> ()
+              end
+          | `Dt :: rest ->
+              element_stack := rest;
+              (* Don't create bookmark yet - wait to see if there's a dd element *)
+              ()
+          | _ :: rest ->
+              element_stack := rest;
+              ()
+          | [] -> ()
+        end
+      | Some _ -> () (* Skip other nodes *)
+      | None ->
+          begin
+            (* End of parsing - create any pending bookmark *)
+            match !bookmark_attrs with
+            | Some attrs ->
+                add_pending collection !folder_stack attrs !bookmark_description None;
+                bookmark_attrs := None;
+                bookmark_description := None
+            | None -> ()
+          end;
+          (* Prepare to exit the loop *)
+          continue := false
+    done;
+
+    close_in ic;
+    collection
+end
+
+let from_html = Netscape.from_html

@@ -25,3 +25,11 @@
  (modules common pinboard_test)
  (package hbt-core)
  (libraries alcotest hbt-core))
+
+(test
+ (name netscape_test)
+ (modules netscape_test)
+ (deps
+  (glob_files *.html))
+ (package hbt-core)
+ (libraries alcotest hbt-core))

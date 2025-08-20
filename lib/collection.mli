@@ -117,3 +117,4 @@ val yojson_of_t : t -> Yojson.Safe.t
 val map_labels : (Label_set.t -> Label_set.t) -> t -> t
 val update_labels : Yojson.Basic.t -> t -> t
 val to_html : t -> string
+val from_html : string -> t
