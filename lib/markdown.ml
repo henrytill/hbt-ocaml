@@ -138,9 +138,9 @@ let inline _m (acc : Collection.t * Fold_state.t) = function
 
 let parse input =
   let folder = Folder.make ~block ~inline () in
-  let doc = Doc.of_string input in
   let collection = Collection.create () in
   let state = Fold_state.empty in
+  let doc = Doc.of_string input in
   let ret, _state = Folder.fold_doc folder (collection, state) doc in
   assert (collection == ret);
   assert (collection = ret);
