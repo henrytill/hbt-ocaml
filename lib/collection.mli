@@ -88,6 +88,9 @@ module Entity : sig
   val updated_at : t -> Time.t list
   val names : t -> Name_set.t
   val labels : t -> Label_set.t
+  val extended : t -> Extended.t option
+  val shared : t -> bool
+  val toread : t -> bool
   val last_visited_at : t -> Time.t option
   val is_feed : t -> bool
   val t_of_yojson : Yojson.Safe.t -> t

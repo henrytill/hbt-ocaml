@@ -336,6 +336,9 @@ module Entity = struct
 
   let names e = e.names
   let labels e = e.labels
+  let extended e = e.extended
+  let shared e = e.shared
+  let toread e = e.toread
   let last_visited_at e = e.last_visited_at
   let is_feed e = e.is_feed
   let map_labels f e = { e with labels = f e.labels }
