@@ -1,5 +1,3 @@
-open Prelude
-
 type t = {
   href : string;
   time : string;
@@ -76,37 +74,36 @@ module Attrs = struct
   let get (k : string) (attrs : t) : string = Option.value ~default:String.empty (get_opt k attrs)
 end
 
+let t_of_attrs (attrs : Attrs.t) : t =
+  let href = Attrs.get "href" attrs in
+  let time = Attrs.get "time" attrs in
+  let description = Attrs.get_opt "description" attrs in
+  let extended = Attrs.get_opt "extended" attrs in
+  let tag = Str.split (Str.regexp "[ \t]+") (Attrs.get "tag" attrs) in
+  let hash = Attrs.get_opt "hash" attrs in
+  let shared = Attrs.get "shared" attrs = "yes" in
+  let toread = Attrs.get "toread" attrs = "yes" in
+  { href; time; description; extended; tag; hash; shared; toread }
+
 let from_xml file =
   let ic = open_in file in
   let channel = Markup.channel ic in
-  let html = Markup.parse_html channel in
-  let signals = Markup.signals html in
-  let to_t (attrs : Attrs.t) : t =
-    let href = Attrs.get "href" attrs in
-    let time = Attrs.get "time" attrs in
-    let description = Attrs.get_opt "description" attrs in
-    let extended = Attrs.get_opt "extended" attrs in
-    let tag = Str.split (Str.regexp "[ \t]+") (Attrs.get "tag" attrs) in
-    let hash = Attrs.get_opt "hash" attrs in
-    let shared = Attrs.get "shared" attrs = "yes" in
-    let toread = Attrs.get "toread" attrs = "yes" in
-    { href; time; description; extended; tag; hash; shared; toread }
-  in
-  let rec go depth acc =
+  let xml = Markup.parse_xml channel in
+  let signals = Markup.signals xml in
+  let continue = ref true in
+  let acc = ref [] in
+
+  while !continue do
     match Markup.next signals with
-    | Some (`Start_element ((_, "post"), attrs)) ->
-        let parsed = to_t attrs in
-        go (succ depth) (parsed :: acc)
-    | Some (`Start_element ((_, "posts"), _)) -> go (succ depth) acc
+    | Some (`Start_element ((_, "post"), attrs)) -> acc := t_of_attrs attrs :: !acc
+    | Some (`Start_element ((_, "posts"), _)) -> ()
     | Some (`Start_element ((_, s), _)) -> failwith ("unexpected Start_element: " ^ s)
-    | Some `End_element when depth = 1 -> acc
-    | Some `End_element -> go (pred depth) acc
-    | Some _ -> go depth acc
-    | None -> failwith "unexpected end of stream"
-  in
-  let ret = go 0 [] in
+    | Some _ -> ()
+    | None -> continue := false
+  done;
+
   close_in ic;
-  ret
+  !acc
 
 let t_of_yojson json =
   let open Yojson.Basic.Util in
