@@ -597,14 +597,14 @@ module Netscape = struct
     let channel = Markup.channel ic in
     let html = Markup.parse_html channel in
     let signals = Markup.signals html in
-    let collection = create () in
-    let folder_stack = ref [] in
-    let element_stack = ref [] in
-    let continue = ref true in
 
+    let collection = create () in
     let bookmark_attrs = ref None in
     let bookmark_description = ref None in
     let waiting_for = ref `Nothing in
+    let element_stack = ref [] in
+    let folder_stack = ref [] in
+    let continue = ref true in
 
     while !continue do
       match Markup.next signals with
@@ -633,7 +633,7 @@ module Netscape = struct
           end
       | Some (`Start_element ((_, name), _))
         when element_of_string name = `Dd && Option.is_some !bookmark_attrs ->
-          (* DD elements contain extended descriptions and should only be processed 
+          (* DD elements contain extended descriptions and should only be processed
              when we have pending bookmark_attrs from a previous DT>A sequence *)
           element_stack := `Dd :: !element_stack;
           waiting_for := `Extended_description
