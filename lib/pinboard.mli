@@ -21,5 +21,4 @@ end
 
 val tags : t list -> Tags.t
 val from_xml : string -> t list
-val from_html : string -> t list
 val from_json : string -> t list

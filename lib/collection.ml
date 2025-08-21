@@ -554,8 +554,10 @@ module Netscape = struct
     let last_visited_at = parse_timestamp_opt attrs "last_visit" in
     let tag_string = Attrs.get "tags" attrs in
     let tag = if tag_string = "" then [] else Str.split (Str.regexp "[,]+") tag_string in
+    (* Filter out "toread" since it's represented as a separate boolean field *)
+    let filtered_tags = List.filter (fun t -> t <> "toread") tag in
     (* Add folder path as labels *)
-    let label_strings = tag @ folder_labels in
+    let label_strings = filtered_tags @ folder_labels in
     let labels = Label_set.of_list (List.map Label.of_string label_strings) in
     let extended_field = Option.map Extended.of_string extended in
     let shared =

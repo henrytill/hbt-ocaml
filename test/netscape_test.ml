@@ -154,6 +154,61 @@ let test_github_labels_debug () =
 
   Alcotest.(check (list string)) "github labels" sorted_expected sorted_labels
 
+let test_pinboard_format () =
+  (* Test parsing Pinboard HTML export format *)
+  let collection = from_html "bookmarks_pinboard.html" in
+  let entities_array = entities collection in
+  let entity_count = Array.length entities_array in
+  Alcotest.(check int) same_entity_count 3 entity_count;
+
+  (* Check first bookmark - c-faq *)
+  let cfaq_entity =
+    find_entity_by_uri entities_array "http://c-faq.com/decl/spiral.anderson.html"
+  in
+  Alcotest.(check bool) same_shared true (Entity.shared cfaq_entity);
+  Alcotest.(check bool) "same toread" false (Entity.toread cfaq_entity);
+  let cfaq_labels = Entity.labels cfaq_entity in
+  let has_c = Label_set.mem (Label.of_string "c") cfaq_labels in
+  let has_cpp = Label_set.mem (Label.of_string "c++") cfaq_labels in
+  Alcotest.(check bool) has_label true has_c;
+  Alcotest.(check bool) has_label true has_cpp;
+
+  (* Check second bookmark - procmon with extended description *)
+  let procmon_entity =
+    find_entity_by_uri
+      entities_array
+      "https://docs.microsoft.com/en-us/sysinternals/downloads/procmon"
+  in
+  Alcotest.(check bool) same_shared false (Entity.shared procmon_entity);
+  let expected_extended =
+    "Monitor file system, Registry, process, thread and DLL activity in real-time."
+  in
+  let actual_extended =
+    match Entity.extended procmon_entity with
+    | Some desc -> Extended.to_string desc
+    | None -> ""
+  in
+  Alcotest.(check string) same_extended expected_extended actual_extended;
+
+  (* Check third bookmark - vtune with toread flag *)
+  let vtune_entity =
+    find_entity_by_uri
+      entities_array
+      "https://www.intel.com/content/www/us/en/developer/tools/oneapi/vtune-profiler.html"
+  in
+  Alcotest.(check bool) same_shared false (Entity.shared vtune_entity);
+  Alcotest.(check bool) "same toread" true (Entity.toread vtune_entity);
+  let vtune_labels = Entity.labels vtune_entity in
+  let has_performance = Label_set.mem (Label.of_string "performance") vtune_labels in
+  let has_profiling = Label_set.mem (Label.of_string "profiling") vtune_labels in
+  let has_tools = Label_set.mem (Label.of_string "tools") vtune_labels in
+  (* Should not have "toread" as a label since it's filtered out *)
+  let has_toread_label = Label_set.mem (Label.of_string "toread") vtune_labels in
+  Alcotest.(check bool) has_label true has_performance;
+  Alcotest.(check bool) has_label true has_profiling;
+  Alcotest.(check bool) has_label true has_tools;
+  Alcotest.(check bool) "no toread label" false has_toread_label
+
 let tests =
   let open Alcotest in
   [
@@ -167,6 +222,7 @@ let tests =
         test_case "last visit times" `Quick test_last_visit_times;
         test_case "descriptions" `Quick test_descriptions;
         test_case "github labels debug" `Quick test_github_labels_debug;
+        test_case "pinboard format" `Quick test_pinboard_format;
       ] );
   ]
 
