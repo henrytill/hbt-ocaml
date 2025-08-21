@@ -109,24 +109,54 @@ module Time = struct
   let parse_date s =
     Scanf.sscanf s "%s %d, %d" (fun month day year -> (int_of_month month, day, year))
 
+  let parse_iso8601 s =
+    try
+      (* Try to parse ISO 8601ish format *)
+      let f year month day hour min sec = (year, month - 1, day, hour, min, sec) in
+      Scanf.sscanf s "%d-%d-%dT%d:%d:%dZ" f
+    with _ ->
+      (* Fallback to a date without time *)
+      let f year month day = (year, month - 1, day, 0, 0, 0) in
+      Scanf.sscanf s "%d-%d-%d" f
+
   let of_string (s : string) : t =
     let open Unix in
-    let tm_mon, tm_mday, year = parse_date s in
-    let tm_year = year - 1900 in
-    let tm =
-      {
-        tm_sec = 0;
-        tm_min = 0;
-        tm_hour = 0;
-        tm_mday;
-        tm_mon;
-        tm_year;
-        tm_wday = 0;
-        tm_yday = 0;
-        tm_isdst = false;
-      }
-    in
-    mktime tm
+    try
+      (* Try ISO 8601ish format first (for Pinboard XML) *)
+      let year, tm_mon, tm_mday, tm_hour, tm_min, tm_sec = parse_iso8601 s in
+      let tm_year = year - 1900 in
+      let tm =
+        {
+          tm_sec;
+          tm_min;
+          tm_hour;
+          tm_mday;
+          tm_mon;
+          tm_year;
+          tm_wday = 0;
+          tm_yday = 0;
+          tm_isdst = false;
+        }
+      in
+      mktime tm
+    with _ ->
+      (* Fallback to original format "Month Day, Year" *)
+      let tm_mon, tm_mday, year = parse_date s in
+      let tm_year = year - 1900 in
+      let tm =
+        {
+          tm_sec = 0;
+          tm_min = 0;
+          tm_hour = 0;
+          tm_mday;
+          tm_mon;
+          tm_year;
+          tm_wday = 0;
+          tm_yday = 0;
+          tm_isdst = false;
+        }
+      in
+      mktime tm
 
   let to_string t = fst t |> int_of_float |> string_of_int
   let equal x y = Float.equal (fst x) (fst y)

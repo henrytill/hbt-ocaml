@@ -36,7 +36,7 @@ let run (parse : string -> 'a) (to_collection : 'a -> Collection.t) (file : stri
   parse file |> to_collection |> update_collection args |> print_collection file args
 
 let collection_of_posts (posts : Pinboard.t list) : Collection.t =
-  let ret = Collection.make (List.length posts) in
+  let ret = Collection.create () in
   List.iter (fun post -> ignore Collection.(insert ret (Entity.of_pinboard post))) posts;
   ret
 
