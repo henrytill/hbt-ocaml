@@ -515,46 +515,6 @@ let update_labels (json : Yojson.Basic.t) : t -> t =
   let f label = Option.value ~default:label (Label_map.find_opt label mapping) in
   map_labels (Label_set.map f)
 
-let make_dt e =
-  let open Tyxml in
-  let href = Entity.uri e |> Uri.to_string |> Html.a_href in
-  let created_at = Entity.created_at e in
-  let add_date = created_at |> Time.to_string |> Html.Unsafe.string_attrib "add_date" in
-  let last_modified =
-    Entity.last_updated_at e
-    |> Option.value ~default:created_at
-    |> Time.to_string
-    |> Html.Unsafe.string_attrib "last_modified"
-  in
-  let tags =
-    Entity.labels e
-    |> Label_set.to_list
-    |> List.map Label.to_string
-    |> String.concat ","
-    |> Html.Unsafe.string_attrib "tags"
-  in
-  let name = Entity.names e |> Name_set.to_list |> List.hd |> Name.to_string |> Html.txt in
-  Html.(dt [ a ~a:[ href; add_date; last_modified; tags ] [ name ] ])
-
-let to_html c =
-  let top =
-    [
-      {|<!DOCTYPE NETSCAPE-Bookmark-file-1>|};
-      {|<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">|};
-      {|<TITLE>Bookmarks</TITLE>|};
-    ]
-  in
-  let dts = Array.fold_right (fun e acc -> make_dt e :: acc) (entities c) [] in
-  let open Tyxml in
-  Format.pp_set_margin Format.str_formatter 200;
-  Format.fprintf
-    Format.str_formatter
-    "%s@[<h>%a@]\n"
-    (String.concat "\n" top)
-    (Html.pp_elt ~indent:true ())
-    (Html.dl dts);
-  Format.flush_str_formatter ()
-
 module Netscape = struct
   module Attrs = struct
     type t = ((string * string) * string) list
@@ -746,6 +706,47 @@ module Netscape = struct
 
     close_in ic;
     collection
+
+  let make_dt e =
+    let open Tyxml in
+    let href = Entity.uri e |> Uri.to_string |> Html.a_href in
+    let created_at = Entity.created_at e in
+    let add_date = created_at |> Time.to_string |> Html.Unsafe.string_attrib "add_date" in
+    let last_modified =
+      Entity.last_updated_at e
+      |> Option.value ~default:created_at
+      |> Time.to_string
+      |> Html.Unsafe.string_attrib "last_modified"
+    in
+    let tags =
+      Entity.labels e
+      |> Label_set.to_list
+      |> List.map Label.to_string
+      |> String.concat ","
+      |> Html.Unsafe.string_attrib "tags"
+    in
+    let name = Entity.names e |> Name_set.to_list |> List.hd |> Name.to_string |> Html.txt in
+    Html.(dt [ a ~a:[ href; add_date; last_modified; tags ] [ name ] ])
+
+  let to_html c =
+    let top =
+      [
+        {|<!DOCTYPE NETSCAPE-Bookmark-file-1>|};
+        {|<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">|};
+        {|<TITLE>Bookmarks</TITLE>|};
+      ]
+    in
+    let dts = Array.fold_right (fun e acc -> make_dt e :: acc) (entities c) [] in
+    let open Tyxml in
+    Format.pp_set_margin Format.str_formatter 200;
+    Format.fprintf
+      Format.str_formatter
+      "%s@[<h>%a@]\n"
+      (String.concat "\n" top)
+      (Html.pp_elt ~indent:true ())
+      (Html.dl dts);
+    Format.flush_str_formatter ()
 end
 
 let from_html = Netscape.from_html
+let to_html = Netscape.to_html
