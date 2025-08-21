@@ -67,12 +67,7 @@ end
 
 let tags = List.fold_left (fun acc post -> Tags.(union acc (of_list post.tag))) Tags.empty
 
-module Attrs = struct
-  type t = ((string * string) * string) list
-
-  let get_opt (k : string) (attrs : t) : string option = List.assoc_opt (String.empty, k) attrs
-  let get (k : string) (attrs : t) : string = Option.value ~default:String.empty (get_opt k attrs)
-end
+module Attrs = Prelude.Markup_ext.Attrs
 
 let t_of_attrs (attrs : Attrs.t) : t =
   let href = Attrs.get "href" attrs in

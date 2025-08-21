@@ -516,12 +516,7 @@ let update_labels (json : Yojson.Basic.t) : t -> t =
   map_labels (Label_set.map f)
 
 module Netscape = struct
-  module Attrs = struct
-    type t = ((string * string) * string) list
-
-    let get_opt (k : string) (attrs : t) : string option = List.assoc_opt (String.empty, k) attrs
-    let get (k : string) (attrs : t) : string = Option.value ~default:String.empty (get_opt k attrs)
-  end
+  module Attrs = Prelude.Markup_ext.Attrs
 
   let parse_timestamp_opt (attrs : Attrs.t) (key : string) : Time.t option =
     match Attrs.get_opt key attrs with

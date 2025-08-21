@@ -26,3 +26,12 @@ module List_ext = struct
     if n < 0 then invalid_arg "List_ext.take";
     go n l
 end
+
+module Markup_ext = struct
+  module Attrs = struct
+    type t = ((string * string) * string) list
+
+    let get_opt (k : string) (attrs : t) : string option = List.assoc_opt (String.empty, k) attrs
+    let get (k : string) (attrs : t) : string = Option.value ~default:String.empty (get_opt k attrs)
+  end
+end
