@@ -467,13 +467,8 @@ let yaml_of_t c =
   let f i entity =
     assert (Option.equal Id.equal (id c (Entity.uri entity)) (Some (Id.of_int i)));
     let entity_yaml = Entity.yaml_of_t entity in
-    let edges_yaml =
-      `A Dynarray.(fold_right (fun e acc -> `Float (float_of_int e) :: acc) (get c.edges i) [])
-    in
-    let item =
-      `O [ ("id", `Float (float_of_int i)); ("entity", entity_yaml); ("edges", edges_yaml) ]
-    in
-    item
+    let edges_yaml = Dynarray.(to_list (map (fun e -> `Float (float_of_int e)) (get c.edges i))) in
+    `O [ ("id", `Float (float_of_int i)); ("entity", entity_yaml); ("edges", `A edges_yaml) ]
   in
   let items = Dynarray.(to_list (mapi f c.nodes)) in
   `O
