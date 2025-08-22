@@ -85,17 +85,15 @@ Test dumping tags:
 
 Now create a mappings file to transform some tags:
 
-  $ cat >mappings.json <<EOF
-  > {
-  >   "editor": "editors",
-  >   "programming": "dev",
-  >   "ocaml": "languages"
-  > }
+  $ cat >mappings.yaml <<EOF
+  > editor: editors
+  > programming: dev
+  > ocaml: languages
   > EOF
 
 Test the tag mapping functionality:
 
-  $ hbt --tags --mappings mappings.json input.md
+  $ hbt --tags --mappings mappings.yaml input.md
   dev
   editors
   languages
@@ -103,7 +101,7 @@ Test the tag mapping functionality:
 
 Verify that entities are preserved while tags are transformed:
 
-  $ hbt --dump --mappings mappings.json input.md
+  $ hbt --dump --mappings mappings.yaml input.md
   version: 0.1.0
   length: 3
   value:
@@ -152,10 +150,10 @@ Verify that entities are preserved while tags are transformed:
 
 Test with an empty mappings file:
 
-  $ cat >empty-mappings.json <<EOF
+  $ cat >empty-mappings.yaml <<EOF
   > {}
   > EOF
-  $ hbt --tags --mappings empty-mappings.json input.md
+  $ hbt --tags --mappings empty-mappings.yaml input.md
   editor
   ocaml
   programming
@@ -163,13 +161,11 @@ Test with an empty mappings file:
 
 Test with invalid JSON mappings file:
 
-  $ cat >invalid.json <<EOF
-  > {
-  >   "editor": 123,
-  >   "programming": ["foo"]
-  > }
+  $ cat >invalid.yaml <<EOF
+  > editor: 123,
+  > programming: [foo]
   > EOF
-  $ hbt --mappings invalid.json input.md
+  $ hbt --mappings invalid.yaml input.md
   hbt: internal error, uncaught exception:
        Yaml__Util.Value_error("Expected a string value")
        
