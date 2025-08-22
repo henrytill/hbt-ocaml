@@ -90,7 +90,7 @@ module Entity : sig
   val labels : t -> Label_set.t
   val extended : t -> Extended.t option
   val shared : t -> bool
-  val toread : t -> bool
+  val to_read : t -> bool
   val last_visited_at : t -> Time.t option
   val is_feed : t -> bool
   val t_of_yaml : Yaml.value -> t

@@ -34,7 +34,7 @@ val entity : Entity.t =
     labels = {};
     extended = None;
     shared = false;
-    toread = false;
+    to_read = false;
     last_visited_at = None;
     is_feed = false;
   }
@@ -55,7 +55,7 @@ val entity : Entity.t =
     labels = {"archives"};
     extended = None;
     shared = false;
-    toread = false;
+    to_read = false;
     last_visited_at = None;
     is_feed = false;
   }
@@ -76,7 +76,7 @@ val entity : Entity.t =
     labels = {"archives"; "books"};
     extended = None;
     shared = false;
-    toread = false;
+    to_read = false;
     last_visited_at = None;
     is_feed = false;
   }
@@ -106,7 +106,7 @@ val entities : Entity.t list =
      labels = {"archives"; "search"};
      extended = None;
      shared = false;
-     toread = false;
+     to_read = false;
      last_visited_at = None;
      is_feed = false;
    };
@@ -118,7 +118,7 @@ val entities : Entity.t list =
      labels = {"search"};
      extended = None;
      shared = false;
-     toread = false;
+     to_read = false;
      last_visited_at = None;
      is_feed = false;
    }]
@@ -207,7 +207,7 @@ value:
     - Baz
     - Foo
     shared: false
-    toread: false
+    toRead: false
     isFeed: false
   edges:
   - 0
@@ -222,7 +222,7 @@ value:
     - Bar
     - Foo
     shared: false
-    toread: false
+    toRead: false
     isFeed: false
   edges:
   - 0
@@ -236,7 +236,7 @@ value:
     labels:
     - Foo
     shared: false
-    toread: false
+    toRead: false
     isFeed: false
   edges:
   - 1
@@ -264,7 +264,7 @@ value:
     - Baz
     - Foo
     shared: false
-    toread: false
+    toRead: false
     isFeed: false
   edges:
   - 0
@@ -279,7 +279,7 @@ value:
     - Bar
     - Foo
     shared: false
-    toread: false
+    toRead: false
     isFeed: false
   edges:
   - 0
@@ -293,7 +293,7 @@ value:
     labels:
     - Foo
     shared: false
-    toread: false
+    toRead: false
     isFeed: false
   edges:
   - 1

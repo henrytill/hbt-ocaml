@@ -44,7 +44,7 @@ Test dumping entities:
       - ocaml
       - tools
       shared: false
-      toread: false
+      toRead: false
       isFeed: false
     edges: []
   - id: 1
@@ -57,7 +57,7 @@ Test dumping entities:
       - ocaml
       - programming
       shared: false
-      toread: false
+      toRead: false
       isFeed: false
     edges: []
   - id: 0
@@ -71,7 +71,7 @@ Test dumping entities:
       - ocaml
       - programming
       shared: false
-      toread: false
+      toRead: false
       isFeed: false
     edges: []
 
@@ -119,7 +119,7 @@ Verify that entities are preserved while tags are transformed:
       - languages
       - tools
       shared: false
-      toread: false
+      toRead: false
       isFeed: false
     edges: []
   - id: 1
@@ -132,7 +132,7 @@ Verify that entities are preserved while tags are transformed:
       - dev
       - languages
       shared: false
-      toread: false
+      toRead: false
       isFeed: false
     edges: []
   - id: 0
@@ -146,7 +146,7 @@ Verify that entities are preserved while tags are transformed:
       - dev
       - languages
       shared: false
-      toread: false
+      toRead: false
       isFeed: false
     edges: []
 

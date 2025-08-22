@@ -182,7 +182,7 @@ module Entity = struct
     labels : Label_set.t;
     extended : Extended.t option;
     shared : bool;
-    toread : bool;
+    to_read : bool;
     last_visited_at : Time.t option;
     is_feed : bool;
   }
@@ -193,7 +193,7 @@ module Entity = struct
     let names = Option.fold ~none:Name_set.empty ~some:Name_set.singleton maybe_name in
     let extended = None in
     let shared = false in
-    let toread = false in
+    let to_read = false in
     let last_visited_at = None in
     let is_feed = false in
     {
@@ -204,7 +204,7 @@ module Entity = struct
       labels;
       extended;
       shared;
-      toread;
+      to_read;
       last_visited_at;
       is_feed;
     }
@@ -217,7 +217,7 @@ module Entity = struct
     let labels = Label_set.empty in
     let extended = None in
     let shared = false in
-    let toread = false in
+    let to_read = false in
     let last_visited_at = None in
     let is_feed = false in
     {
@@ -228,7 +228,7 @@ module Entity = struct
       labels;
       extended;
       shared;
-      toread;
+      to_read;
       last_visited_at;
       is_feed;
     }
@@ -242,7 +242,7 @@ module Entity = struct
     let labels = Label_set.of_list (tag p) in
     let extended = Option.map Extended.of_string (extended p) in
     let shared = shared p in
-    let toread = toread p in
+    let to_read = toread p in
     let last_visited_at = None in
     let is_feed = false in
     {
@@ -253,7 +253,7 @@ module Entity = struct
       labels;
       extended;
       shared;
-      toread;
+      to_read;
       last_visited_at;
       is_feed;
     }
@@ -266,7 +266,7 @@ module Entity = struct
     && Label_set.equal x.labels y.labels
     && Option.equal Extended.equal x.extended y.extended
     && Bool.equal x.shared y.shared
-    && Bool.equal x.toread y.toread
+    && Bool.equal x.to_read y.to_read
     && Option.equal Time.equal x.last_visited_at y.last_visited_at
     && Bool.equal x.is_feed y.is_feed
 
@@ -286,7 +286,7 @@ module Entity = struct
     fprintf fmt "@;<1 2>@[labels =@ %a@];" Label_set.pp e.labels;
     fprintf fmt "@;<1 2>@[extended =@ %a@];" pp_extended_opt e.extended;
     fprintf fmt "@;<1 2>@[shared =@ %a@];" pp_print_bool e.shared;
-    fprintf fmt "@;<1 2>@[toread =@ %a@];" pp_print_bool e.toread;
+    fprintf fmt "@;<1 2>@[to_read =@ %a@];" pp_print_bool e.to_read;
     fprintf fmt "@;<1 2>@[last_visited_at =@ %a@];" pp_last_visit_opt e.last_visited_at;
     fprintf fmt "@;<1 2>@[is_feed =@ %a@];" pp_print_bool e.is_feed;
     fprintf fmt "@;<1 0>}@]"
@@ -301,7 +301,7 @@ module Entity = struct
       labels = get_field ~key:"labels" value |> Label_set.t_of_yaml;
       extended = map_optional_field ~key:"extended" ~f:Extended.t_of_yaml value;
       shared = get_field ~key:"shared" value |> Yaml.Util.to_bool_exn;
-      toread = get_field ~key:"toread" value |> Yaml.Util.to_bool_exn;
+      to_read = get_field ~key:"toRead" value |> Yaml.Util.to_bool_exn;
       last_visited_at = map_optional_field ~key:"lastVisitedAt" ~f:Time.t_of_yaml value;
       is_feed = get_field ~key:"isFeed" value |> Yaml.Util.to_bool_exn;
     }
@@ -325,7 +325,7 @@ module Entity = struct
          ("names", Name_set.yaml_of_t entity.names);
          ("labels", Label_set.yaml_of_t entity.labels);
          ("shared", `Bool entity.shared);
-         ("toread", `Bool entity.toread);
+         ("toRead", `Bool entity.to_read);
          ("isFeed", `Bool entity.is_feed);
        ]
       @ maybe_extended
@@ -358,7 +358,7 @@ module Entity = struct
   let labels e = e.labels
   let extended e = e.extended
   let shared e = e.shared
-  let toread e = e.toread
+  let to_read e = e.to_read
   let last_visited_at e = e.last_visited_at
   let is_feed e = e.is_feed
   let map_labels f e = { e with labels = f e.labels }
@@ -537,7 +537,7 @@ module Netscape = struct
       | None -> true
       | Some _ -> true
     in
-    let toread = Attrs.get "toread" attrs = "1" in
+    let to_read = Attrs.get "toread" attrs = "1" in
     let is_feed =
       match Attrs.get_opt "feed" attrs with
       | Some "true" -> true
@@ -553,7 +553,7 @@ module Netscape = struct
         | None -> []);
       extended = extended_field;
       shared;
-      toread;
+      to_read;
       last_visited_at;
       is_feed;
     }
