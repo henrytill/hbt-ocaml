@@ -32,17 +32,16 @@ Test dumping entities:
   version: 0.1.0
   length: 3
   value:
-  - id: 2
+  - id: 0
     entity:
-      uri: https://www.gnu.org/software/emacs/
+      uri: https://ocaml.org/
       createdAt: 1700006400
       updatedAt: []
       names:
-      - Emacs
+      - OCaml Website
       labels:
-      - editor
       - ocaml
-      - tools
+      - programming
       shared: false
       toRead: false
       isFeed: false
@@ -60,16 +59,17 @@ Test dumping entities:
       toRead: false
       isFeed: false
     edges: []
-  - id: 0
+  - id: 2
     entity:
-      uri: https://ocaml.org/
+      uri: https://www.gnu.org/software/emacs/
       createdAt: 1700006400
       updatedAt: []
       names:
-      - OCaml Website
+      - Emacs
       labels:
+      - editor
       - ocaml
-      - programming
+      - tools
       shared: false
       toRead: false
       isFeed: false
@@ -105,17 +105,16 @@ Verify that entities are preserved while tags are transformed:
   version: 0.1.0
   length: 3
   value:
-  - id: 2
+  - id: 0
     entity:
-      uri: https://www.gnu.org/software/emacs/
+      uri: https://ocaml.org/
       createdAt: 1700006400
       updatedAt: []
       names:
-      - Emacs
+      - OCaml Website
       labels:
-      - editors
+      - dev
       - languages
-      - tools
       shared: false
       toRead: false
       isFeed: false
@@ -133,16 +132,17 @@ Verify that entities are preserved while tags are transformed:
       toRead: false
       isFeed: false
     edges: []
-  - id: 0
+  - id: 2
     entity:
-      uri: https://ocaml.org/
+      uri: https://www.gnu.org/software/emacs/
       createdAt: 1700006400
       updatedAt: []
       names:
-      - OCaml Website
+      - Emacs
       labels:
-      - dev
+      - editors
       - languages
+      - tools
       shared: false
       toRead: false
       isFeed: false

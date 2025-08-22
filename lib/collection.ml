@@ -464,7 +464,6 @@ let t_of_yaml value =
   ret
 
 let yaml_of_t c =
-  let items = ref [] in
   let f i entity =
     assert (Option.equal Id.equal (id c (Entity.uri entity)) (Some (Id.of_int i)));
     let entity_yaml = Entity.yaml_of_t entity in
@@ -474,14 +473,14 @@ let yaml_of_t c =
     let item =
       `O [ ("id", `Float (float_of_int i)); ("entity", entity_yaml); ("edges", edges_yaml) ]
     in
-    items := item :: !items
+    item
   in
-  Dynarray.iteri f c.nodes;
+  let items = Dynarray.(to_list (mapi f c.nodes)) in
   `O
     [
       ("version", Version.(yaml_of_t expected));
       ("length", `Float (float_of_int (length c)));
-      ("value", `A !items);
+      ("value", `A items);
     ]
 
 let map_labels (f : Label_set.t -> Label_set.t) (c : t) : t =

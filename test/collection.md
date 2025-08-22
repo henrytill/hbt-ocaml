@@ -195,6 +195,36 @@ val collection : t = <abstr>
 version: 0.1.0
 length: 3
 value:
+- id: 0
+  entity:
+    uri: https://foo.com/
+    createdAt: 1700006400
+    updatedAt: []
+    names:
+    - Foo
+    labels:
+    - Foo
+    shared: false
+    toRead: false
+    isFeed: false
+  edges:
+  - 1
+  - 2
+- id: 1
+  entity:
+    uri: https://bar.com/
+    createdAt: 1700006400
+    updatedAt: []
+    names:
+    - Bar
+    labels:
+    - Bar
+    - Foo
+    shared: false
+    toRead: false
+    isFeed: false
+  edges:
+  - 0
 - id: 2
   entity:
     uri: https://baz.com/
@@ -211,36 +241,6 @@ value:
     isFeed: false
   edges:
   - 0
-- id: 1
-  entity:
-    uri: https://bar.com/
-    createdAt: 1700006400
-    updatedAt: []
-    names:
-    - Bar
-    labels:
-    - Bar
-    - Foo
-    shared: false
-    toRead: false
-    isFeed: false
-  edges:
-  - 0
-- id: 0
-  entity:
-    uri: https://foo.com/
-    createdAt: 1700006400
-    updatedAt: []
-    names:
-    - Foo
-    labels:
-    - Foo
-    shared: false
-    toRead: false
-    isFeed: false
-  edges:
-  - 1
-  - 2
 
 - : unit = ()
 ```
@@ -252,6 +252,36 @@ val roundtripped : t = <abstr>
 version: 0.1.0
 length: 3
 value:
+- id: 0
+  entity:
+    uri: https://foo.com/
+    createdAt: 1700006400
+    updatedAt: []
+    names:
+    - Foo
+    labels:
+    - Foo
+    shared: false
+    toRead: false
+    isFeed: false
+  edges:
+  - 1
+  - 2
+- id: 1
+  entity:
+    uri: https://bar.com/
+    createdAt: 1700006400
+    updatedAt: []
+    names:
+    - Bar
+    labels:
+    - Bar
+    - Foo
+    shared: false
+    toRead: false
+    isFeed: false
+  edges:
+  - 0
 - id: 2
   entity:
     uri: https://baz.com/
@@ -268,36 +298,6 @@ value:
     isFeed: false
   edges:
   - 0
-- id: 1
-  entity:
-    uri: https://bar.com/
-    createdAt: 1700006400
-    updatedAt: []
-    names:
-    - Bar
-    labels:
-    - Bar
-    - Foo
-    shared: false
-    toRead: false
-    isFeed: false
-  edges:
-  - 0
-- id: 0
-  entity:
-    uri: https://foo.com/
-    createdAt: 1700006400
-    updatedAt: []
-    names:
-    - Foo
-    labels:
-    - Foo
-    shared: false
-    toRead: false
-    isFeed: false
-  edges:
-  - 1
-  - 2
 
 - : unit = ()
 ```
