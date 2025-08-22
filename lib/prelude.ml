@@ -52,5 +52,5 @@ module Yaml_ext = struct
     | `O assoc -> List.fold_left f acc assoc
     | _ -> invalid_arg "expected object"
 
-  let int_of_value value = int_of_float (Yaml.Util.to_float_exn value)
+  let int_of_float_value value = int_of_float (Yaml.Util.to_float_exn value)
 end

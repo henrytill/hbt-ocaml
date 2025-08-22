@@ -447,12 +447,12 @@ let t_of_yaml value =
     let version = get_field ~key:"version" value |> Version.t_of_yaml in
     Version.check version
   end;
-  let length = get_field ~key:"length" value |> int_of_value in
+  let length = get_field ~key:"length" value |> int_of_float_value in
   let ret = make length in
   let process_item pairs =
-    let i = get_field ~key:"id" pairs |> int_of_value in
+    let i = get_field ~key:"id" pairs |> int_of_float_value in
     let entity = get_field ~key:"entity" pairs |> Entity.t_of_yaml in
-    let edges = get_field ~key:"edges" pairs |> map_array int_of_value |> Dynarray.of_list in
+    let edges = get_field ~key:"edges" pairs |> map_array int_of_float_value |> Dynarray.of_list in
     let uri = Entity.uri entity in
     Dynarray.set ret.nodes i entity;
     Dynarray.set ret.edges i edges;
