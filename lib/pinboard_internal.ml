@@ -106,15 +106,15 @@ let t_of_yaml (value : Yaml.value) : t =
   let open Yaml_ext in
   let href = get_field ~key:"href" value |> Yaml.Util.to_string_exn in
   let time = get_field ~key:"time" value |> Yaml.Util.to_string_exn in
-  let description = map_optional_field ~key:"description" ~f:Yaml.Util.to_string_exn value in
-  let extended = map_optional_field ~key:"extended" ~f:Yaml.Util.to_string_exn value in
+  let description = map_optional_field_exn ~key:"description" ~f:Yaml.Util.to_string_exn value in
+  let extended = map_optional_field_exn ~key:"extended" ~f:Yaml.Util.to_string_exn value in
   let tags = get_field ~key:"tags" value |> Yaml.Util.to_string_exn in
   let tag = Str.split (Str.regexp "[ \t]+") tags in
-  let hash = map_optional_field ~key:"hash" ~f:Yaml.Util.to_string_exn value in
+  let hash = map_optional_field_exn ~key:"hash" ~f:Yaml.Util.to_string_exn value in
   let shared = get_field ~key:"shared" value |> Yaml.Util.to_string_exn = "yes" in
   let toread = get_field ~key:"toread" value |> Yaml.Util.to_string_exn = "yes" in
   { href; time; description; extended; tag; hash; shared; toread }
 
 let from_json file =
   let input = In_channel.with_open_text file In_channel.input_all in
-  Ezjsonm.from_string input |> Yaml_ext.map_array t_of_yaml
+  Ezjsonm.from_string input |> Yaml_ext.map_array_exn t_of_yaml

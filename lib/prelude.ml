@@ -40,17 +40,17 @@ module Yaml_ext = struct
   let get_field ~key value =
     match Yaml.Util.find_exn key value with
     | Some v -> v
-    | None -> invalid_arg ("missing field: " ^ key)
+    | None -> invalid_arg ("Missing field: " ^ key)
 
-  let map_optional_field ~key ~f value = Option.map f (Yaml.Util.find_exn key value)
+  let map_optional_field_exn ~key ~f value = Option.map f (Yaml.Util.find_exn key value)
 
-  let map_array f = function
+  let map_array_exn f = function
     | `A items -> List.map f items
-    | _ -> invalid_arg "expected array"
+    | _ -> raise (Yaml.Util.Value_error "Expected a value array")
 
-  let fold_object f acc = function
+  let fold_object_exn f acc = function
     | `O assoc -> List.fold_left f acc assoc
-    | _ -> invalid_arg "expected object"
+    | _ -> raise (Yaml.Util.Value_error "Expected an object")
 
-  let int_of_float_value value = int_of_float (Yaml.Util.to_float_exn value)
+  let int_of_float_exn value = int_of_float (Yaml.Util.to_float_exn value)
 end

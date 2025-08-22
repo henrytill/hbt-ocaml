@@ -48,7 +48,7 @@ module Name_set = struct
   include Set.Make (Name)
 
   let pp fmt s = pp_print_set Name.pp fmt (elements s)
-  let t_of_yaml value = of_list (Yaml_ext.map_array Name.t_of_yaml value)
+  let t_of_yaml value = of_list (Yaml_ext.map_array_exn Name.t_of_yaml value)
   let yaml_of_t set = Yaml.Util.list Name.yaml_of_t (to_list set)
 end
 
@@ -68,7 +68,7 @@ module Label_set = struct
   include Set.Make (Label)
 
   let pp fmt s = pp_print_set Label.pp fmt (elements s)
-  let t_of_yaml value = of_list (Yaml_ext.map_array Label.t_of_yaml value)
+  let t_of_yaml value = of_list (Yaml_ext.map_array_exn Label.t_of_yaml value)
   let yaml_of_t set = Yaml.Util.list Label.yaml_of_t (to_list set)
 end
 
@@ -296,13 +296,13 @@ module Entity = struct
     {
       uri = get_field ~key:"uri" value |> Yaml.Util.to_string_exn |> Uri.of_string;
       created_at = get_field ~key:"createdAt" value |> Time.t_of_yaml;
-      updated_at = get_field ~key:"updatedAt" value |> map_array Time.t_of_yaml;
+      updated_at = get_field ~key:"updatedAt" value |> map_array_exn Time.t_of_yaml;
       names = get_field ~key:"names" value |> Name_set.t_of_yaml;
       labels = get_field ~key:"labels" value |> Label_set.t_of_yaml;
-      extended = map_optional_field ~key:"extended" ~f:Extended.t_of_yaml value;
+      extended = map_optional_field_exn ~key:"extended" ~f:Extended.t_of_yaml value;
       shared = get_field ~key:"shared" value |> Yaml.Util.to_bool_exn;
       to_read = get_field ~key:"toRead" value |> Yaml.Util.to_bool_exn;
-      last_visited_at = map_optional_field ~key:"lastVisitedAt" ~f:Time.t_of_yaml value;
+      last_visited_at = map_optional_field_exn ~key:"lastVisitedAt" ~f:Time.t_of_yaml value;
       is_feed = get_field ~key:"isFeed" value |> Yaml.Util.to_bool_exn;
     }
 
@@ -447,18 +447,20 @@ let t_of_yaml value =
     let version = get_field ~key:"version" value |> Version.t_of_yaml in
     Version.check version
   end;
-  let length = get_field ~key:"length" value |> int_of_float_value in
+  let length = get_field ~key:"length" value |> int_of_float_exn in
   let ret = make length in
   let process_item pairs =
-    let i = get_field ~key:"id" pairs |> int_of_float_value in
+    let i = get_field ~key:"id" pairs |> int_of_float_exn in
     let entity = get_field ~key:"entity" pairs |> Entity.t_of_yaml in
-    let edges = get_field ~key:"edges" pairs |> map_array int_of_float_value |> Dynarray.of_list in
+    let edges =
+      get_field ~key:"edges" pairs |> map_array_exn int_of_float_exn |> Dynarray.of_list
+    in
     let uri = Entity.uri entity in
     Dynarray.set ret.nodes i entity;
     Dynarray.set ret.edges i edges;
     Uri_hashtbl.add ret.uris uri i
   in
-  get_field ~key:"value" value |> map_array process_item |> ignore;
+  get_field ~key:"value" value |> map_array_exn process_item |> ignore;
   ret
 
 let yaml_of_t c =
@@ -492,7 +494,7 @@ let yaml_to_map (yaml : Yaml.value) : Label.t Label_map.t =
     let v = Label.t_of_yaml v in
     Label_map.add k v acc
   in
-  Yaml_ext.fold_object f Label_map.empty yaml
+  Yaml_ext.fold_object_exn f Label_map.empty yaml
 
 let update_labels (yaml : Yaml.value) : t -> t =
   let mapping = yaml_to_map yaml in
