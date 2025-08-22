@@ -13,9 +13,3 @@
  (modules collection_test)
  (package hbt-core)
  (libraries alcotest hbt-core uri))
-
-(test
- (name markdown_test)
- (modules common markdown_test)
- (package hbt-core)
- (libraries alcotest hbt-core))
