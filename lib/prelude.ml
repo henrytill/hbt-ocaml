@@ -48,6 +48,10 @@ module Yaml_ext = struct
     | `A items -> List.map f items
     | _ -> raise (Yaml.Util.Value_error "Expected a value array")
 
+  let iter_array_exn f = function
+    | `A items -> List.iter f items
+    | _ -> raise (Yaml.Util.Value_error "Expected a value array")
+
   let fold_object_exn f acc = function
     | `O assoc -> List.fold_left f acc assoc
     | _ -> raise (Yaml.Util.Value_error "Expected an object")

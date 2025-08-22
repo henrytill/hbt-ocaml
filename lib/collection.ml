@@ -460,7 +460,7 @@ let t_of_yaml value =
     Dynarray.set ret.edges i edges;
     Uri_hashtbl.add ret.uris uri i
   in
-  get_field ~key:"value" value |> map_array_exn process_item |> ignore;
+  get_field ~key:"value" value |> iter_array_exn process_item;
   ret
 
 let yaml_of_t c =
