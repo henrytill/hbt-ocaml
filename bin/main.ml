@@ -23,7 +23,11 @@ let update_collection (args : Args.t) : Collection.t -> Collection.t =
 let print_collection (file : string) (args : Args.t) (collection : Collection.t) : unit =
   let open Collection in
   if args.dump_entities then
-    Yaml.to_string (yaml_of_t collection) |> Result.get_ok |> print_string
+    let len = 1024 * 1024 in
+    let yaml = yaml_of_t collection in
+    match Yaml.to_string ~len yaml with
+    | Ok s -> print_string s
+    | Error (`Msg e) -> failwith e
   else if args.dump_tags then
     entities collection
     |> Array.fold_left (fun acc et -> Label_set.union acc (Entity.labels et)) Label_set.empty
