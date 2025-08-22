@@ -1,4 +1,4 @@
 (library
  (name hbt)
  (public_name hbt-core)
- (libraries cmarkit markup semver str tyxml unix uri yaml))
+ (libraries cmarkit ezjsonm markup semver str tyxml unix uri yaml))

@@ -1,3 +1,5 @@
+module Yaml_ext = Prelude.Yaml_ext
+
 type t = {
   href : string;
   time : string;
@@ -100,39 +102,19 @@ let from_xml file =
   close_in ic;
   !acc
 
-let get_field fields key = List.assoc key fields
-let get_optional_field fields key = try Some (List.assoc key fields) with Not_found -> None
-
-let get_string = function
-  | `String s -> s
-  | _ -> invalid_arg "expected string"
-
-let get_optional_string = function
-  | `String s -> Some s
-  | `Null -> None
-  | _ -> invalid_arg "expected string or null"
-
-let t_of_yaml = function
-  | `A items ->
-      List.map
-        (function
-          | `O fields ->
-              let href = get_field fields "href" |> get_string in
-              let time = get_field fields "time" |> get_string in
-              let description = get_optional_field fields "description" |> Option.map get_string in
-              let extended = get_optional_field fields "extended" |> Option.map get_string in
-              let tags = get_field fields "tags" |> get_string in
-              let tag = Str.split (Str.regexp "[ \t]+") tags in
-              let hash = get_optional_field fields "hash" |> Option.map get_string in
-              let shared = get_field fields "shared" |> get_string = "yes" in
-              let toread = get_field fields "toread" |> get_string = "yes" in
-              { href; time; description; extended; tag; hash; shared; toread }
-          | _ -> invalid_arg "expected object in array")
-        items
-  | _ -> invalid_arg "expected array"
+let t_of_yaml (value : Yaml.value) : t =
+  let open Yaml_ext in
+  let href = get_field ~key:"href" value |> Yaml.Util.to_string_exn in
+  let time = get_field ~key:"time" value |> Yaml.Util.to_string_exn in
+  let description = map_optional_field ~key:"description" ~f:Yaml.Util.to_string_exn value in
+  let extended = map_optional_field ~key:"extended" ~f:Yaml.Util.to_string_exn value in
+  let tags = get_field ~key:"tags" value |> Yaml.Util.to_string_exn in
+  let tag = Str.split (Str.regexp "[ \t]+") tags in
+  let hash = map_optional_field ~key:"hash" ~f:Yaml.Util.to_string_exn value in
+  let shared = get_field ~key:"shared" value |> Yaml.Util.to_string_exn = "yes" in
+  let toread = get_field ~key:"toread" value |> Yaml.Util.to_string_exn = "yes" in
+  { href; time; description; extended; tag; hash; shared; toread }
 
 let from_json file =
-  let yaml =
-    Yaml.of_string (In_channel.with_open_text file In_channel.input_all) |> Result.get_ok
-  in
-  t_of_yaml yaml
+  let input = In_channel.with_open_text file In_channel.input_all in
+  Ezjsonm.from_string input |> Yaml_ext.map_array t_of_yaml
