@@ -7,14 +7,14 @@ let generate_rules base =
  (package hbt)
  (action
   (with-stdout-to
-   %s_out.json
+   %s_out.yaml
    (run %%{bin:hbt} --dump ../%s.html))))
 
 (rule
  (package hbt)
  (alias runtest)
  (action
-  (diff ../%s.json %s_out.json)))
+  (diff ../%s.yaml %s_out.yaml)))
 |}
     base
     base

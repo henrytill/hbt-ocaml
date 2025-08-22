@@ -100,22 +100,39 @@ let from_xml file =
   close_in ic;
   !acc
 
-let t_of_yojson json =
-  let open Yojson.Basic.Util in
-  let to_t j =
-    let href = j |> member "href" |> to_string in
-    let time = j |> member "time" |> to_string in
-    let description = j |> member "description" |> to_string_option in
-    let extended = j |> member "extended" |> to_string_option in
-    let tags = j |> member "tags" |> to_string in
-    let tag = Str.split (Str.regexp "[ \t]+") tags in
-    let hash = j |> member "hash" |> to_string_option in
-    let shared = j |> member "shared" |> to_string = "yes" in
-    let toread = j |> member "toread" |> to_string = "yes" in
-    { href; time; description; extended; tag; hash; shared; toread }
-  in
-  convert_each to_t json
+let get_field fields key = List.assoc key fields
+let get_optional_field fields key = try Some (List.assoc key fields) with Not_found -> None
+
+let get_string = function
+  | `String s -> s
+  | _ -> invalid_arg "expected string"
+
+let get_optional_string = function
+  | `String s -> Some s
+  | `Null -> None
+  | _ -> invalid_arg "expected string or null"
+
+let t_of_yaml = function
+  | `A items ->
+      List.map
+        (function
+          | `O fields ->
+              let href = get_field fields "href" |> get_string in
+              let time = get_field fields "time" |> get_string in
+              let description = get_optional_field fields "description" |> Option.map get_string in
+              let extended = get_optional_field fields "extended" |> Option.map get_string in
+              let tags = get_field fields "tags" |> get_string in
+              let tag = Str.split (Str.regexp "[ \t]+") tags in
+              let hash = get_optional_field fields "hash" |> Option.map get_string in
+              let shared = get_field fields "shared" |> get_string = "yes" in
+              let toread = get_field fields "toread" |> get_string = "yes" in
+              { href; time; description; extended; tag; hash; shared; toread }
+          | _ -> invalid_arg "expected object in array")
+        items
+  | _ -> invalid_arg "expected array"
 
 let from_json file =
-  let json = Yojson.Basic.from_file file in
-  t_of_yojson json
+  let yaml =
+    Yaml.of_string (In_channel.with_open_text file In_channel.input_all) |> Result.get_ok
+  in
+  t_of_yaml yaml

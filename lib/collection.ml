@@ -1,3 +1,5 @@
+module Yaml_ext = Prelude.Yaml_ext
+
 let pp_print_set pp_item fmt items =
   let open Format in
   let pp_sep fmt () = fprintf fmt ";@ " in
@@ -14,8 +16,8 @@ module Version = struct
     if not (Semver.equal version expected) then
       raise Unsupported
 
-  let t_of_yojson json = Semver.of_string (Yojson.Safe.Util.to_string json)
-  let yojson_of_t version = `String (Semver.to_string version)
+  let t_of_yaml value = Option.get (Semver.of_string (Yaml.Util.to_string_exn value))
+  let yaml_of_t version = Yaml.Util.string (Semver.to_string version)
 end
 
 module Id = struct
@@ -26,8 +28,8 @@ module Id = struct
   let equal = Int.equal
   let compare = Int.compare
   let pp = Format.pp_print_int
-  let t_of_yojson json = Yojson.Safe.Util.to_int json
-  let yojson_of_t id = `Int (to_int id)
+  let t_of_yaml value = int_of_float (Yaml.Util.to_float_exn value)
+  let yaml_of_t id = Yaml.Util.float (float_of_int id)
 end
 
 module Name = struct
@@ -38,22 +40,16 @@ module Name = struct
   let equal = String.equal
   let compare = String.compare
   let pp fmt = Format.fprintf fmt "%S"
-  let t_of_yojson json = Yojson.Safe.Util.to_string json
-  let yojson_of_t name = `String (to_string name)
+  let t_of_yaml = Yaml.Util.to_string_exn
+  let yaml_of_t = Yaml.Util.string
 end
 
 module Name_set = struct
   include Set.Make (Name)
 
   let pp fmt s = pp_print_set Name.pp fmt (elements s)
-
-  let t_of_yojson json =
-    List.fold_left
-      (fun acc name -> add (Name.t_of_yojson name) acc)
-      empty
-      (Yojson.Safe.Util.to_list json)
-
-  let yojson_of_t set = `List (List.map Name.yojson_of_t (elements set))
+  let t_of_yaml value = of_list (Yaml_ext.map_array Name.t_of_yaml value)
+  let yaml_of_t set = Yaml.Util.list Name.yaml_of_t (to_list set)
 end
 
 module Label = struct
@@ -64,22 +60,16 @@ module Label = struct
   let equal = String.equal
   let compare = String.compare
   let pp fmt = Format.fprintf fmt "%S"
-  let t_of_yojson json = Yojson.Safe.Util.to_string json
-  let yojson_of_t label = `String (to_string label)
+  let t_of_yaml = Yaml.Util.to_string_exn
+  let yaml_of_t = Yaml.Util.string
 end
 
 module Label_set = struct
   include Set.Make (Label)
 
   let pp fmt s = pp_print_set Label.pp fmt (elements s)
-
-  let t_of_yojson json =
-    List.fold_left
-      (fun acc label -> add (Label.t_of_yojson label) acc)
-      empty
-      (Yojson.Safe.Util.to_list json)
-
-  let yojson_of_t set = `List (List.map Label.yojson_of_t (elements set))
+  let t_of_yaml value = of_list (Yaml_ext.map_array Label.t_of_yaml value)
+  let yaml_of_t set = Yaml.Util.list Label.yaml_of_t (to_list set)
 end
 
 module Label_map = Map.Make (Label)
@@ -164,11 +154,11 @@ module Time = struct
   let max x y = if compare x y < 0 then y else x
   let pp fmt t = Format.fprintf fmt "%S" (to_string t)
 
-  let t_of_yojson json =
-    let t = Yojson.Safe.Util.to_float json in
-    (t, Unix.gmtime t)
+  let t_of_yaml value =
+    let f = Yaml.Util.to_float_exn value in
+    (f, Unix.gmtime f)
 
-  let yojson_of_t time = `Float (fst time)
+  let yaml_of_t time = Yaml.Util.float (fst time)
 end
 
 module Extended = struct
@@ -179,8 +169,8 @@ module Extended = struct
   let equal = String.equal
   let compare = String.compare
   let pp fmt = Format.fprintf fmt "%S"
-  let t_of_yojson json = Yojson.Safe.Util.to_string json
-  let yojson_of_t extended = `String (to_string extended)
+  let t_of_yaml = Yaml.Util.to_string_exn
+  let yaml_of_t = Yaml.Util.string
 end
 
 module Entity = struct
@@ -301,39 +291,39 @@ module Entity = struct
     fprintf fmt "@;<1 2>@[is_feed =@ %a@];" pp_print_bool e.is_feed;
     fprintf fmt "@;<1 0>}@]"
 
-  let t_of_yojson json =
-    let open Yojson.Safe.Util in
+  let t_of_yaml value =
+    let open Yaml_ext in
     {
-      uri = json |> member "uri" |> to_string |> Uri.of_string;
-      created_at = json |> member "createdAt" |> Time.t_of_yojson;
-      updated_at = json |> member "updatedAt" |> to_list |> List.map Time.t_of_yojson;
-      names = json |> member "names" |> Name_set.t_of_yojson;
-      labels = json |> member "labels" |> Label_set.t_of_yojson;
-      extended = json |> member "extended" |> to_option Extended.t_of_yojson;
-      shared = json |> member "shared" |> to_bool;
-      toread = json |> member "toread" |> to_bool;
-      last_visited_at = json |> member "lastVisitedAt" |> to_option Time.t_of_yojson;
-      is_feed = json |> member "isFeed" |> to_bool;
+      uri = get_field ~key:"uri" value |> Yaml.Util.to_string_exn |> Uri.of_string;
+      created_at = get_field ~key:"createdAt" value |> Time.t_of_yaml;
+      updated_at = get_field ~key:"updatedAt" value |> map_array Time.t_of_yaml;
+      names = get_field ~key:"names" value |> Name_set.t_of_yaml;
+      labels = get_field ~key:"labels" value |> Label_set.t_of_yaml;
+      extended = map_optional_field ~key:"extended" ~f:Extended.t_of_yaml value;
+      shared = get_field ~key:"shared" value |> Yaml.Util.to_bool_exn;
+      toread = get_field ~key:"toread" value |> Yaml.Util.to_bool_exn;
+      last_visited_at = map_optional_field ~key:"lastVisitedAt" ~f:Time.t_of_yaml value;
+      is_feed = get_field ~key:"isFeed" value |> Yaml.Util.to_bool_exn;
     }
 
-  let yojson_of_t entity =
+  let yaml_of_t entity =
     let maybe_extended =
       match entity.extended with
-      | Some extended -> [ ("extended", Extended.yojson_of_t extended) ]
+      | Some extended -> [ ("extended", Extended.yaml_of_t extended) ]
       | None -> []
     in
     let maybe_last_visit =
       match entity.last_visited_at with
-      | Some last_visit -> [ ("lastVisitedAt", Time.yojson_of_t last_visit) ]
+      | Some last_visit -> [ ("lastVisitedAt", Time.yaml_of_t last_visit) ]
       | None -> []
     in
-    `Assoc
+    `O
       ([
          ("uri", `String (Uri.to_string entity.uri));
-         ("createdAt", Time.yojson_of_t entity.created_at);
-         ("updatedAt", `List (List.map Time.yojson_of_t entity.updated_at));
-         ("names", Name_set.yojson_of_t entity.names);
-         ("labels", Label_set.yojson_of_t entity.labels);
+         ("createdAt", Time.yaml_of_t entity.created_at);
+         ("updatedAt", `A (List.map Time.yaml_of_t entity.updated_at));
+         ("names", Name_set.yaml_of_t entity.names);
+         ("labels", Label_set.yaml_of_t entity.labels);
          ("shared", `Bool entity.shared);
          ("toread", `Bool entity.toread);
          ("isFeed", `Bool entity.is_feed);
@@ -451,67 +441,61 @@ let entity c id = Dynarray.get c.nodes id
 let edges c id = Dynarray.(to_array (get c.edges id))
 let entities c = Dynarray.to_array c.nodes
 
-let t_of_yojson json =
-  let open Yojson.Safe.Util in
+let t_of_yaml value =
+  let open Yaml_ext in
   begin
-    let maybe_version = json |> member "version" |> Version.t_of_yojson in
-    match maybe_version with
-    | Some version -> Version.check version
-    | None -> invalid_arg "Collection.t_of_yojson: unable to parse version"
+    let version = get_field ~key:"version" value |> Version.t_of_yaml in
+    Version.check version
   end;
-  let length = json |> member "length" |> to_int in
+  let length = get_field ~key:"length" value |> int_of_value in
   let ret = make length in
-  let f item =
-    let i = item |> member "id" |> to_int in
-    let entity = item |> member "entity" |> Entity.t_of_yojson in
-    let edges = item |> member "edges" |> to_list |> List.map to_int |> Dynarray.of_list in
+  let process_item pairs =
+    let i = get_field ~key:"id" pairs |> int_of_value in
+    let entity = get_field ~key:"entity" pairs |> Entity.t_of_yaml in
+    let edges = get_field ~key:"edges" pairs |> map_array int_of_value |> Dynarray.of_list in
     let uri = Entity.uri entity in
     Dynarray.set ret.nodes i entity;
     Dynarray.set ret.edges i edges;
     Uri_hashtbl.add ret.uris uri i
   in
-  json |> member "value" |> to_list |> List.iter f;
+  get_field ~key:"value" value |> map_array process_item |> ignore;
   ret
 
-let yojson_of_t c =
+let yaml_of_t c =
   let items = ref [] in
   let f i entity =
     assert (Option.equal Id.equal (id c (Entity.uri entity)) (Some (Id.of_int i)));
-    let entity_json = Entity.yojson_of_t entity in
-    let edges_json = `List Dynarray.(fold_right (fun e acc -> `Int e :: acc) (get c.edges i) []) in
-    let item = `Assoc [ ("id", `Int i); ("entity", entity_json); ("edges", edges_json) ] in
+    let entity_yaml = Entity.yaml_of_t entity in
+    let edges_yaml =
+      `A Dynarray.(fold_right (fun e acc -> `Float (float_of_int e) :: acc) (get c.edges i) [])
+    in
+    let item =
+      `O [ ("id", `Float (float_of_int i)); ("entity", entity_yaml); ("edges", edges_yaml) ]
+    in
     items := item :: !items
   in
   Dynarray.iteri f c.nodes;
-  `Assoc
+  `O
     [
-      ("version", Version.(yojson_of_t expected));
-      ("length", `Int (length c));
-      ("value", `List !items);
+      ("version", Version.(yaml_of_t expected));
+      ("length", `Float (float_of_int (length c)));
+      ("value", `A !items);
     ]
 
 let map_labels (f : Label_set.t -> Label_set.t) (c : t) : t =
   let nodes = Dynarray.map (Entity.map_labels f) c.nodes in
   { c with nodes }
 
-let json_to_map (json : Yojson.Basic.t) : Label.t Label_map.t =
-  let pairs =
-    match json with
-    | `Assoc pairs -> pairs
-    | _ -> invalid_arg "Collection.json_to_map: expected a JSON object"
-  in
+let yaml_to_map (yaml : Yaml.value) : Label.t Label_map.t =
   let f acc (k, v) =
-    match v with
-    | `String s ->
-        let k = Label.of_string k in
-        let v = Label.of_string s in
-        Label_map.add k v acc
-    | _ -> invalid_arg "Collection.json_to_map: all values must be strings"
+    let k = Label.of_string k in
+    let v = Label.t_of_yaml v in
+    Label_map.add k v acc
   in
-  List.fold_left f Label_map.empty pairs
+  Yaml_ext.fold_object f Label_map.empty yaml
 
-let update_labels (json : Yojson.Basic.t) : t -> t =
-  let mapping = json_to_map json in
+let update_labels (yaml : Yaml.value) : t -> t =
+  let mapping = yaml_to_map yaml in
   let f label = Option.value ~default:label (Label_map.find_opt label mapping) in
   map_labels (Label_set.map f)
 

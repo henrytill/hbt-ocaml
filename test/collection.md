@@ -188,112 +188,116 @@ val collection : t = <abstr>
 - : unit = ()
 ```
 
-### JSON
+### YAML
 
 ```ocaml
-# yojson_of_t collection |> Yojson.Safe.pretty_to_string |> print_endline;;
-{
-  "version": "0.1.0",
-  "length": 3,
-  "value": [
-    {
-      "id": 2,
-      "entity": {
-        "uri": "https://baz.com/",
-        "createdAt": 1700006400.0,
-        "updatedAt": [],
-        "names": [ "Baz" ],
-        "labels": [ "Bar", "Baz", "Foo" ],
-        "shared": false,
-        "toread": false,
-        "isFeed": false
-      },
-      "edges": [ 0 ]
-    },
-    {
-      "id": 1,
-      "entity": {
-        "uri": "https://bar.com/",
-        "createdAt": 1700006400.0,
-        "updatedAt": [],
-        "names": [ "Bar" ],
-        "labels": [ "Bar", "Foo" ],
-        "shared": false,
-        "toread": false,
-        "isFeed": false
-      },
-      "edges": [ 0 ]
-    },
-    {
-      "id": 0,
-      "entity": {
-        "uri": "https://foo.com/",
-        "createdAt": 1700006400.0,
-        "updatedAt": [],
-        "names": [ "Foo" ],
-        "labels": [ "Foo" ],
-        "shared": false,
-        "toread": false,
-        "isFeed": false
-      },
-      "edges": [ 1, 2 ]
-    }
-  ]
-}
+# yaml_of_t collection |> Yaml.to_string |> Result.get_ok |> print_endline;;
+version: 0.1.0
+length: 3
+value:
+- id: 2
+  entity:
+    uri: https://baz.com/
+    createdAt: 1700006400
+    updatedAt: []
+    names:
+    - Baz
+    labels:
+    - Bar
+    - Baz
+    - Foo
+    shared: false
+    toread: false
+    isFeed: false
+  edges:
+  - 0
+- id: 1
+  entity:
+    uri: https://bar.com/
+    createdAt: 1700006400
+    updatedAt: []
+    names:
+    - Bar
+    labels:
+    - Bar
+    - Foo
+    shared: false
+    toread: false
+    isFeed: false
+  edges:
+  - 0
+- id: 0
+  entity:
+    uri: https://foo.com/
+    createdAt: 1700006400
+    updatedAt: []
+    names:
+    - Foo
+    labels:
+    - Foo
+    shared: false
+    toread: false
+    isFeed: false
+  edges:
+  - 1
+  - 2
+
 - : unit = ()
 ```
 
 ```ocaml
-# let roundtripped = yojson_of_t collection |> Yojson.Safe.pretty_to_string |> Yojson.Safe.from_string |> t_of_yojson;;
+# let roundtripped = yaml_of_t collection |> Yaml.to_string |> Result.get_ok |> Yaml.of_string |> Result.get_ok |> t_of_yaml;;
 val roundtripped : t = <abstr>
-# yojson_of_t roundtripped |> Yojson.Safe.pretty_to_string |> print_endline;;
-{
-  "version": "0.1.0",
-  "length": 3,
-  "value": [
-    {
-      "id": 2,
-      "entity": {
-        "uri": "https://baz.com/",
-        "createdAt": 1700006400.0,
-        "updatedAt": [],
-        "names": [ "Baz" ],
-        "labels": [ "Bar", "Baz", "Foo" ],
-        "shared": false,
-        "toread": false,
-        "isFeed": false
-      },
-      "edges": [ 0 ]
-    },
-    {
-      "id": 1,
-      "entity": {
-        "uri": "https://bar.com/",
-        "createdAt": 1700006400.0,
-        "updatedAt": [],
-        "names": [ "Bar" ],
-        "labels": [ "Bar", "Foo" ],
-        "shared": false,
-        "toread": false,
-        "isFeed": false
-      },
-      "edges": [ 0 ]
-    },
-    {
-      "id": 0,
-      "entity": {
-        "uri": "https://foo.com/",
-        "createdAt": 1700006400.0,
-        "updatedAt": [],
-        "names": [ "Foo" ],
-        "labels": [ "Foo" ],
-        "shared": false,
-        "toread": false,
-        "isFeed": false
-      },
-      "edges": [ 1, 2 ]
-    }
-  ]
-}
+# yaml_of_t roundtripped |> Yaml.to_string |> Result.get_ok |> print_endline;;
+version: 0.1.0
+length: 3
+value:
+- id: 2
+  entity:
+    uri: https://baz.com/
+    createdAt: 1700006400
+    updatedAt: []
+    names:
+    - Baz
+    labels:
+    - Bar
+    - Baz
+    - Foo
+    shared: false
+    toread: false
+    isFeed: false
+  edges:
+  - 0
+- id: 1
+  entity:
+    uri: https://bar.com/
+    createdAt: 1700006400
+    updatedAt: []
+    names:
+    - Bar
+    labels:
+    - Bar
+    - Foo
+    shared: false
+    toread: false
+    isFeed: false
+  edges:
+  - 0
+- id: 0
+  entity:
+    uri: https://foo.com/
+    createdAt: 1700006400
+    updatedAt: []
+    names:
+    - Foo
+    labels:
+    - Foo
+    shared: false
+    toread: false
+    isFeed: false
+  edges:
+  - 1
+  - 2
+
 - : unit = ()
 ```

@@ -19,7 +19,7 @@ depends: [
   "semver" {>= "0.2.1"}
   "tyxml" {>= "4.6.0"}
   "uri" {>= "4.4.0"}
-  "yojson" {>= "2.1.0"}
+  "yaml" {>= "3.2.0"}
   "odoc" {with-doc}
 ]
 build: [

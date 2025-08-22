@@ -29,54 +29,51 @@ Test basic functionality first - counting entities:
 Test dumping entities:
 
   $ hbt --dump input.md
-  {
-    "version": "0.1.0",
-    "length": 3,
-    "value": [
-      {
-        "id": 2,
-        "entity": {
-          "uri": "https://www.gnu.org/software/emacs/",
-          "createdAt": 1700006400.0,
-          "updatedAt": [],
-          "names": [ "Emacs" ],
-          "labels": [ "editor", "ocaml", "tools" ],
-          "shared": false,
-          "toread": false,
-          "isFeed": false
-        },
-        "edges": []
-      },
-      {
-        "id": 1,
-        "entity": {
-          "uri": "https://discuss.ocaml.org/",
-          "createdAt": 1700006400.0,
-          "updatedAt": [],
-          "names": [],
-          "labels": [ "ocaml", "programming" ],
-          "shared": false,
-          "toread": false,
-          "isFeed": false
-        },
-        "edges": []
-      },
-      {
-        "id": 0,
-        "entity": {
-          "uri": "https://ocaml.org/",
-          "createdAt": 1700006400.0,
-          "updatedAt": [],
-          "names": [ "OCaml Website" ],
-          "labels": [ "ocaml", "programming" ],
-          "shared": false,
-          "toread": false,
-          "isFeed": false
-        },
-        "edges": []
-      }
-    ]
-  }
+  version: 0.1.0
+  length: 3
+  value:
+  - id: 2
+    entity:
+      uri: https://www.gnu.org/software/emacs/
+      createdAt: 1700006400
+      updatedAt: []
+      names:
+      - Emacs
+      labels:
+      - editor
+      - ocaml
+      - tools
+      shared: false
+      toread: false
+      isFeed: false
+    edges: []
+  - id: 1
+    entity:
+      uri: https://discuss.ocaml.org/
+      createdAt: 1700006400
+      updatedAt: []
+      names: []
+      labels:
+      - ocaml
+      - programming
+      shared: false
+      toread: false
+      isFeed: false
+    edges: []
+  - id: 0
+    entity:
+      uri: https://ocaml.org/
+      createdAt: 1700006400
+      updatedAt: []
+      names:
+      - OCaml Website
+      labels:
+      - ocaml
+      - programming
+      shared: false
+      toread: false
+      isFeed: false
+    edges: []
 
 Test dumping tags:
 
@@ -107,54 +104,51 @@ Test the tag mapping functionality:
 Verify that entities are preserved while tags are transformed:
 
   $ hbt --dump --mappings mappings.json input.md
-  {
-    "version": "0.1.0",
-    "length": 3,
-    "value": [
-      {
-        "id": 2,
-        "entity": {
-          "uri": "https://www.gnu.org/software/emacs/",
-          "createdAt": 1700006400.0,
-          "updatedAt": [],
-          "names": [ "Emacs" ],
-          "labels": [ "editors", "languages", "tools" ],
-          "shared": false,
-          "toread": false,
-          "isFeed": false
-        },
-        "edges": []
-      },
-      {
-        "id": 1,
-        "entity": {
-          "uri": "https://discuss.ocaml.org/",
-          "createdAt": 1700006400.0,
-          "updatedAt": [],
-          "names": [],
-          "labels": [ "dev", "languages" ],
-          "shared": false,
-          "toread": false,
-          "isFeed": false
-        },
-        "edges": []
-      },
-      {
-        "id": 0,
-        "entity": {
-          "uri": "https://ocaml.org/",
-          "createdAt": 1700006400.0,
-          "updatedAt": [],
-          "names": [ "OCaml Website" ],
-          "labels": [ "dev", "languages" ],
-          "shared": false,
-          "toread": false,
-          "isFeed": false
-        },
-        "edges": []
-      }
-    ]
-  }
+  version: 0.1.0
+  length: 3
+  value:
+  - id: 2
+    entity:
+      uri: https://www.gnu.org/software/emacs/
+      createdAt: 1700006400
+      updatedAt: []
+      names:
+      - Emacs
+      labels:
+      - editors
+      - languages
+      - tools
+      shared: false
+      toread: false
+      isFeed: false
+    edges: []
+  - id: 1
+    entity:
+      uri: https://discuss.ocaml.org/
+      createdAt: 1700006400
+      updatedAt: []
+      names: []
+      labels:
+      - dev
+      - languages
+      shared: false
+      toread: false
+      isFeed: false
+    edges: []
+  - id: 0
+    entity:
+      uri: https://ocaml.org/
+      createdAt: 1700006400
+      updatedAt: []
+      names:
+      - OCaml Website
+      labels:
+      - dev
+      - languages
+      shared: false
+      toread: false
+      isFeed: false
+    edges: []
 
 Test with an empty mappings file:
 
@@ -177,7 +171,7 @@ Test with invalid JSON mappings file:
   > EOF
   $ hbt --mappings invalid.json input.md
   hbt: internal error, uncaught exception:
-       Invalid_argument("Collection.json_to_map: all values must be strings")
+       Yaml__Util.Value_error("Expected a string value")
        
   [125]
 

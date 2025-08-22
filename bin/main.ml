@@ -17,13 +17,13 @@ let read_file file =
 
 let update_collection (args : Args.t) : Collection.t -> Collection.t =
   match args.mappings_file with
-  | Some file -> read_file file |> Yojson.Basic.from_string |> Collection.update_labels
+  | Some file -> read_file file |> Yaml.of_string |> Result.get_ok |> Collection.update_labels
   | None -> Fun.id
 
 let print_collection (file : string) (args : Args.t) (collection : Collection.t) : unit =
   let open Collection in
   if args.dump_entities then
-    Yojson.Safe.pretty_print Format.std_formatter (yojson_of_t collection)
+    Yaml.to_string (yaml_of_t collection) |> Result.get_ok |> print_string
   else if args.dump_tags then
     entities collection
     |> Array.fold_left (fun acc et -> Label_set.union acc (Entity.labels et)) Label_set.empty

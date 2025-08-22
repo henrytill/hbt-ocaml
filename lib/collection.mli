@@ -5,8 +5,8 @@ module Id : sig
   val equal : t -> t -> bool
   val compare : t -> t -> int
   val pp : Format.formatter -> t -> unit
-  val t_of_yojson : Yojson.Safe.t -> t
-  val yojson_of_t : t -> Yojson.Safe.t
+  val t_of_yaml : Yaml.value -> t
+  val yaml_of_t : t -> Yaml.value
 end
 
 module Name : sig
@@ -17,16 +17,16 @@ module Name : sig
   val equal : t -> t -> bool
   val compare : t -> t -> int
   val pp : Format.formatter -> t -> unit
-  val t_of_yojson : Yojson.Safe.t -> t
-  val yojson_of_t : t -> Yojson.Safe.t
+  val t_of_yaml : Yaml.value -> t
+  val yaml_of_t : t -> Yaml.value
 end
 
 module Name_set : sig
   include Set.S with type elt = Name.t
 
   val pp : Format.formatter -> t -> unit
-  val t_of_yojson : Yojson.Safe.t -> t
-  val yojson_of_t : t -> Yojson.Safe.t
+  val t_of_yaml : Yaml.value -> t
+  val yaml_of_t : t -> Yaml.value
 end
 
 module Label : sig
@@ -37,16 +37,16 @@ module Label : sig
   val equal : t -> t -> bool
   val compare : t -> t -> int
   val pp : Format.formatter -> t -> unit
-  val t_of_yojson : Yojson.Safe.t -> t
-  val yojson_of_t : t -> Yojson.Safe.t
+  val t_of_yaml : Yaml.value -> t
+  val yaml_of_t : t -> Yaml.value
 end
 
 module Label_set : sig
   include Set.S with type elt = Label.t
 
   val pp : Format.formatter -> t -> unit
-  val t_of_yojson : Yojson.Safe.t -> t
-  val yojson_of_t : t -> Yojson.Safe.t
+  val t_of_yaml : Yaml.value -> t
+  val yaml_of_t : t -> Yaml.value
 end
 
 module Label_map : Map.S with type key = Label.t
@@ -58,8 +58,8 @@ module Time : sig
   val equal : t -> t -> bool
   val compare : t -> t -> int
   val pp : Format.formatter -> t -> unit
-  val t_of_yojson : Yojson.Safe.t -> t
-  val yojson_of_t : t -> Yojson.Safe.t
+  val t_of_yaml : Yaml.value -> t
+  val yaml_of_t : t -> Yaml.value
 end
 
 module Extended : sig
@@ -70,8 +70,8 @@ module Extended : sig
   val equal : t -> t -> bool
   val compare : t -> t -> int
   val pp : Format.formatter -> t -> unit
-  val t_of_yojson : Yojson.Safe.t -> t
-  val yojson_of_t : t -> Yojson.Safe.t
+  val t_of_yaml : Yaml.value -> t
+  val yaml_of_t : t -> Yaml.value
 end
 
 module Entity : sig
@@ -93,8 +93,8 @@ module Entity : sig
   val toread : t -> bool
   val last_visited_at : t -> Time.t option
   val is_feed : t -> bool
-  val t_of_yojson : Yojson.Safe.t -> t
-  val yojson_of_t : t -> Yojson.Safe.t
+  val t_of_yaml : Yaml.value -> t
+  val yaml_of_t : t -> Yaml.value
 end
 
 type t
@@ -112,9 +112,9 @@ val add_edges : t -> Id.t -> Id.t -> unit
 val entity : t -> Id.t -> Entity.t
 val edges : t -> Id.t -> Id.t array
 val entities : t -> Entity.t array
-val t_of_yojson : Yojson.Safe.t -> t
-val yojson_of_t : t -> Yojson.Safe.t
+val t_of_yaml : Yaml.value -> t
+val yaml_of_t : t -> Yaml.value
 val map_labels : (Label_set.t -> Label_set.t) -> t -> t
-val update_labels : Yojson.Basic.t -> t -> t
+val update_labels : Yaml.value -> t -> t
 val to_html : t -> string
 val from_html : string -> t
