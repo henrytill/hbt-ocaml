@@ -135,7 +135,9 @@ Empty collection
 <!DOCTYPE NETSCAPE-Bookmark-file-1>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <TITLE>Bookmarks</TITLE>
-<dl></dl>
+<H1>Bookmarks</H1>
+<DL><p>
+</DL><p>
 
 - : unit = ()
 ```
@@ -180,10 +182,12 @@ val collection : t = <abstr>
 <!DOCTYPE NETSCAPE-Bookmark-file-1>
 <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
 <TITLE>Bookmarks</TITLE>
-<dl><dt><a href="https://foo.com/" add_date="1700006400" last_modified="1700006400" tags="Foo">Foo</a></dt>
- <dt><a href="https://bar.com/" add_date="1700006400" last_modified="1700006400" tags="Bar,Foo">Bar</a></dt>
- <dt><a href="https://baz.com/" add_date="1700006400" last_modified="1700006400" tags="Bar,Baz,Foo">Baz</a></dt>
-</dl>
+<H1>Bookmarks</H1>
+<DL><p>
+    <DT><A HREF="https://foo.com/" ADD_DATE="1700006400" TAGS="Foo" PRIVATE="1">Foo</A>
+    <DT><A HREF="https://bar.com/" ADD_DATE="1700006400" TAGS="Bar,Foo" PRIVATE="1">Bar</A>
+    <DT><A HREF="https://baz.com/" ADD_DATE="1700006400" TAGS="Bar,Baz,Foo" PRIVATE="1">Baz</A>
+</DL><p>
 
 - : unit = ()
 ```

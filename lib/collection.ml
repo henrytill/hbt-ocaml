@@ -151,7 +151,6 @@ module Time = struct
   let to_string t = fst t |> int_of_float |> string_of_int
   let equal x y = Float.equal (fst x) (fst y)
   let compare x y = Float.compare (fst x) (fst y)
-  let max x y = if compare x y < 0 then y else x
   let pp fmt t = Format.fprintf fmt "%S" (to_string t)
 
   let t_of_yaml value =
@@ -348,12 +347,6 @@ module Entity = struct
   let uri e = e.uri
   let created_at e = e.created_at
   let updated_at e = e.updated_at
-
-  let last_updated_at e =
-    match e.updated_at with
-    | [] -> None
-    | x :: xs -> Some (List.fold_left Time.max x xs)
-
   let names e = e.names
   let labels e = e.labels
   let extended e = e.extended
@@ -669,53 +662,19 @@ module Netscape = struct
     close_in ic;
     collection
 
-  let make_dt e =
-    let open Tyxml in
-    let href = Entity.uri e |> Uri.to_string |> Html.a_href in
-    let created_at = Entity.created_at e in
-    let add_date = created_at |> Time.to_string |> Html.Unsafe.string_attrib "add_date" in
-    let last_modified =
-      Entity.last_updated_at e
-      |> Option.value ~default:created_at
-      |> Time.to_string
-      |> Html.Unsafe.string_attrib "last_modified"
-    in
-    let tags =
-      Entity.labels e
-      |> Label_set.to_list
-      |> List.map Label.to_string
-      |> String.concat ","
-      |> Html.Unsafe.string_attrib "tags"
-    in
-    let name =
-      let names = Entity.names e |> Name_set.to_list in
-      let name_str =
-        match names with
-        | [] -> Entity.uri e |> Uri.to_string
-        | hd :: _ -> Name.to_string hd
-      in
-      Html.txt name_str
-    in
-    Html.(dt [ a ~a:[ href; add_date; last_modified; tags ] [ name ] ])
+  let rec yaml_to_tvalue = function
+    | `Null -> Jingoo.Jg_types.Tnull
+    | `Bool b -> Jingoo.Jg_types.Tbool b
+    | `Float f -> Jingoo.Jg_types.Tfloat f
+    | `String s -> Jingoo.Jg_types.Tstr s
+    | `A lst -> Jingoo.Jg_types.Tlist (List.map yaml_to_tvalue lst)
+    | `O assoc -> Jingoo.Jg_types.Tobj (List.map (fun (k, v) -> (k, yaml_to_tvalue v)) assoc)
 
   let to_html c =
-    let top =
-      [
-        {|<!DOCTYPE NETSCAPE-Bookmark-file-1>|};
-        {|<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">|};
-        {|<TITLE>Bookmarks</TITLE>|};
-      ]
-    in
-    let dts = Array.fold_right (fun e acc -> make_dt e :: acc) (entities c) [] in
-    let open Tyxml in
-    Format.pp_set_margin Format.str_formatter 200;
-    Format.fprintf
-      Format.str_formatter
-      "%s@[<h>%a@]\n"
-      (String.concat "\n" top)
-      (Html.pp_elt ~indent:true ())
-      (Html.dl dts);
-    Format.flush_str_formatter ()
+    let entities_yaml = Array.fold_right (fun e acc -> Entity.yaml_of_t e :: acc) (entities c) [] in
+    let entities_tvalue = Jingoo.Jg_types.Tlist (List.map yaml_to_tvalue entities_yaml) in
+    let models = [ ("entities", entities_tvalue) ] in
+    Jingoo.Jg_template.from_string Templates.netscape_bookmarks ~models
 end
 
 let from_html = Netscape.from_html
