@@ -519,12 +519,10 @@ module Netscape = struct
     let last_visited_at = parse_timestamp_opt attrs "last_visit" in
     let tag_string = Attrs.get "tags" attrs in
     let tag = if tag_string = "" then [] else Str.split (Str.regexp "[,]+") tag_string in
-    (* Filter out "toread" since it's represented as a separate boolean field *)
     let filtered_tags = List.filter (fun t -> t <> "toread") tag in
-    (* Add folder path as labels *)
     let label_strings = filtered_tags @ folder_labels in
     let labels = Label_set.of_list (List.map Label.of_string label_strings) in
-    let extended_field = Option.map Extended.of_string extended in
+    let extended = Option.map Extended.of_string extended in
     let shared =
       match Attrs.get_opt "private" attrs with
       | Some "1" -> false
@@ -540,19 +538,8 @@ module Netscape = struct
       | _ -> false
     in
     let base_entity = Entity.make uri created_at (Option.map Name.of_string description) labels in
-    (* Update with additional fields that Entity.make doesn't set *)
-    {
-      base_entity with
-      updated_at =
-        (match last_modified with
-        | Some t -> [ t ]
-        | None -> []);
-      extended = extended_field;
-      shared;
-      to_read;
-      last_visited_at;
-      is_feed;
-    }
+    let updated_at = Option.to_list last_modified in
+    { base_entity with updated_at; extended; shared; to_read; last_visited_at; is_feed }
 
   let add_pending (collection : t) (folder_stack : string list) (attrs : Attrs.t)
       (bookmark_description : string option) (extended : string option) : unit =
