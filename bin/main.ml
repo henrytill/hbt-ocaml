@@ -53,8 +53,7 @@ let print_collection (file : string) (args : Args.t) (collection : Collection.t)
           match Yaml.to_string ~len yaml with
           | Ok s -> s
           | Error (`Msg e) -> failwith e)
-      | Some `Html ->
-          Collection.to_html collection
+      | Some `Html -> Collection.to_html collection
       | None -> failwith "Must specify an output format (-t) or analysis flag (--info, --list-tags)"
   in
   write_output output args.output

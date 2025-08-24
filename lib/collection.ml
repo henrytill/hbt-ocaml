@@ -687,7 +687,15 @@ module Netscape = struct
       |> String.concat ","
       |> Html.Unsafe.string_attrib "tags"
     in
-    let name = Entity.names e |> Name_set.to_list |> List.hd |> Name.to_string |> Html.txt in
+    let name =
+      let names = Entity.names e |> Name_set.to_list in
+      let name_str =
+        match names with
+        | [] -> Entity.uri e |> Uri.to_string
+        | hd :: _ -> Name.to_string hd
+      in
+      Html.txt name_str
+    in
     Html.(dt [ a ~a:[ href; add_date; last_modified; tags ] [ name ] ])
 
   let to_html c =
