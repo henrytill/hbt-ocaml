@@ -23,12 +23,12 @@ Create a test input file:
 
 Test basic functionality first - counting entities:
 
-  $ hbt input.md
+  $ hbt --info input.md
   input.md: 3 entities
 
 Test dumping entities:
 
-  $ hbt --dump input.md
+  $ hbt -t yaml input.md
   version: 0.1.0
   length: 3
   value:
@@ -77,7 +77,7 @@ Test dumping entities:
 
 Test dumping tags:
 
-  $ hbt --tags input.md
+  $ hbt --list-tags input.md
   editor
   ocaml
   programming
@@ -93,7 +93,7 @@ Now create a mappings file to transform some tags:
 
 Test the tag mapping functionality:
 
-  $ hbt --tags --mappings mappings.yaml input.md
+  $ hbt --list-tags --mappings mappings.yaml input.md
   dev
   editors
   languages
@@ -101,7 +101,7 @@ Test the tag mapping functionality:
 
 Verify that entities are preserved while tags are transformed:
 
-  $ hbt --dump --mappings mappings.yaml input.md
+  $ hbt -t yaml --mappings mappings.yaml input.md
   version: 0.1.0
   length: 3
   value:
@@ -153,7 +153,7 @@ Test with an empty mappings file:
   $ cat >empty-mappings.yaml <<EOF
   > {}
   > EOF
-  $ hbt --tags --mappings empty-mappings.yaml input.md
+  $ hbt --list-tags --mappings empty-mappings.yaml input.md
   editor
   ocaml
   programming
@@ -165,7 +165,7 @@ Test with invalid JSON mappings file:
   > editor: 123,
   > programming: [foo]
   > EOF
-  $ hbt --mappings invalid.yaml input.md
+  $ hbt --info --mappings invalid.yaml input.md
   hbt: internal error, uncaught exception:
        Yaml__Util.Value_error("Expected a string value")
        
@@ -173,7 +173,7 @@ Test with invalid JSON mappings file:
 
 Test with missing mappings file:
 
-  $ hbt --mappings nonexistent.json input.md
+  $ hbt --info --mappings nonexistent.json input.md
   hbt: internal error, uncaught exception:
        Sys_error("nonexistent.json: No such file or directory")
        
