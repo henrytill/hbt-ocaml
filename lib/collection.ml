@@ -334,9 +334,15 @@ module Entity = struct
     let names = Name_set.union e.names names in
     let labels = Label_set.union e.labels labels in
     if Time.compare updated_at e.created_at < 0 then
-      { e with updated_at = e.created_at :: e.updated_at; created_at = updated_at; names; labels }
+      {
+        e with
+        updated_at = List.sort Time.compare (e.created_at :: e.updated_at);
+        created_at = updated_at;
+        names;
+        labels;
+      }
     else
-      { e with updated_at = updated_at :: e.updated_at; names; labels }
+      { e with updated_at = List.sort Time.compare (updated_at :: e.updated_at); names; labels }
 
   let absorb other existing =
     if not (equal other existing) then

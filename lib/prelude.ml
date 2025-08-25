@@ -31,7 +31,12 @@ module Markup_ext = struct
   module Attrs = struct
     type t = ((string * string) * string) list
 
-    let get_opt (k : string) (attrs : t) : string option = List.assoc_opt (String.empty, k) attrs
+    let get_opt (k : string) (attrs : t) : string option =
+      let foo = List.assoc_opt (String.empty, k) attrs in
+      match foo with
+      | Some "" -> None
+      | other -> other
+
     let get (k : string) (attrs : t) : string = Option.value ~default:String.empty (get_opt k attrs)
   end
 end
@@ -42,7 +47,13 @@ module Yaml_ext = struct
     | Some v -> v
     | None -> invalid_arg ("Missing field: " ^ key)
 
-  let map_optional_field_exn ~key ~f value = Option.map f (Yaml.Util.find_exn key value)
+  let map_optional_field_exn ~key ~f value =
+    let g = function
+      | Some (`String "") -> None
+      | Some other -> Some (f other)
+      | None -> None
+    in
+    g (Yaml.Util.find_exn key value)
 
   let map_array_exn f = function
     | `A items -> List.map f items
