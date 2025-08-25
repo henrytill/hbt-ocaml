@@ -13,3 +13,53 @@
  (modules collection_test)
  (package hbt-core)
  (libraries alcotest hbt-core uri))
+
+(executable
+ (name gen_html))
+
+(subdir
+ data/html/run
+ (dynamic_include ../generate/dune.inc))
+
+(subdir
+ data/html/generate
+ (rule
+  (deps
+   (glob_files ../*.html))
+  (action
+   (with-stdout-to
+    dune.inc
+    (run ../../../gen_html.exe)))))
+
+(executable
+ (name gen_markdown))
+
+(subdir
+ data/markdown/run
+ (dynamic_include ../generate/dune.inc))
+
+(subdir
+ data/markdown/generate
+ (rule
+  (deps
+   (glob_files ../*.md))
+  (action
+   (with-stdout-to
+    dune.inc
+    (run ../../../gen_markdown.exe)))))
+
+(executable
+ (name gen_pinboard))
+
+(subdir
+ data/pinboard/run
+ (dynamic_include ../generate/dune.inc))
+
+(subdir
+ data/pinboard/generate
+ (rule
+  (deps ../empty.xml ../xml_sample.xml ../json_sample.json)
+  (action
+   (with-stdout-to
+    dune.inc
+    (run ../../../gen_pinboard.exe)))))
