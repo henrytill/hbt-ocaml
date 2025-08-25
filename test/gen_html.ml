@@ -5,16 +5,22 @@ let generate_rules base =
     {|
 (rule
  (package hbt)
+ (target %s_out.yaml)
+ (deps (:source ../%s.html))
+ (alias runtest)
  (action
   (with-stdout-to
-   %s_out.yaml
-   (run %%{bin:hbt} -t yaml ../%s.html))))
+   %%{target}
+   (run %%{bin:hbt} -t yaml %%{source}))))
 
 (rule
  (package hbt)
+ (deps
+  (:reference ../%s.yaml)
+  (:generated %s_out.yaml))
  (alias runtest)
  (action
-  (diff ../%s.yaml %s_out.yaml)))
+  (diff %%{reference} %%{generated})))
 |}
     base
     base
@@ -26,16 +32,22 @@ let generate_html_export_rules base =
     {|
 (rule
  (package hbt)
+ (target %s_export_out.html)
+ (deps (:source ../%s.html))
+ (alias runtest)
  (action
   (with-stdout-to
-   %s_export_out.html
-   (run %%{bin:hbt} -t html ../%s.html))))
+   %%{target}
+   (run %%{bin:hbt} -t html %%{source}))))
 
 (rule
  (package hbt)
+ (deps
+  (:reference ../export/%s_export.html)
+  (:generated %s_export_out.html))
  (alias runtest)
  (action
-  (diff ../export/%s_export.html %s_export_out.html)))
+  (diff %%{reference} %%{generated})))
 |}
     base
     base

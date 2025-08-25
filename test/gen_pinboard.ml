@@ -3,16 +3,21 @@ let generate_xml_rule base =
     {|
 (rule
  (package hbt)
+ (target %s_out.yaml)
+ (deps (:source ../%s.xml))
  (action
   (with-stdout-to
-   %s_out.yaml
-   (setenv TZ UTC (run %%{bin:hbt} -t yaml ../%s.xml)))))
+   %%{target}
+   (setenv TZ UTC (run %%{bin:hbt} -t yaml %%{source})))))
 
 (rule
  (package hbt)
+ (deps
+  (:reference ../%s.yaml)
+  (:generated %s_out.yaml))
  (alias runtest)
  (action
-  (diff ../%s.yaml %s_out.yaml)))
+  (diff %%{reference} %%{generated})))
 |}
     base
     base
@@ -24,16 +29,21 @@ let generate_json_rule base =
     {|
 (rule
  (package hbt)
+ (target %s_out.yaml)
+ (deps (:source ../%s.json))
  (action
   (with-stdout-to
-   %s_out.yaml
-   (setenv TZ UTC (run %%{bin:hbt} -t yaml ../%s.json)))))
+   %%{target}
+   (setenv TZ UTC (run %%{bin:hbt} -t yaml %%{source})))))
 
 (rule
  (package hbt)
+ (deps
+  (:reference ../%s.yaml)
+  (:generated %s_out.yaml))
  (alias runtest)
  (action
-  (diff ../%s.yaml %s_out.yaml)))
+  (diff %%{reference} %%{generated})))
 |}
     base
     base

@@ -3,16 +3,21 @@ let generate_rule base =
     {|
 (rule
  (package hbt)
+ (target %s_out.yaml)
+ (deps (:source ../%s.md))
  (action
   (with-stdout-to
-   %s_out.yaml
-   (setenv TZ UTC (run %%{bin:hbt} -t yaml ../%s.md)))))
+   %%{target}
+   (setenv TZ UTC (run %%{bin:hbt} -t yaml %%{source})))))
 
 (rule
  (package hbt)
+ (deps
+  (:reference ../%s.yaml)
+  (:generated %s_out.yaml))
  (alias runtest)
  (action
-  (diff ../%s.yaml %s_out.yaml)))
+  (diff %%{reference} %%{generated})))
 |}
     base
     base
