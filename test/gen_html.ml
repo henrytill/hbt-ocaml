@@ -1,13 +1,18 @@
 (* https://dune.readthedocs.io/en/stable/howto/rule-generation.html#using-dynamic-include *)
 
 let generate_rules base =
+  let is_problematic = Test_filter.is_problematic_base ~dir:"html" ~ext:".html" base in
+  let enabled_if =
+    if is_problematic then "\n (enabled_if (= %{profile} failing-tests))" else String.empty
+  in
   Printf.printf
     {|
+; Test: %s
+
 (rule
  (package hbt)
  (target %s_out.yaml)
  (deps (:source ../%s.html))
- (alias runtest)
  (action
   (with-stdout-to
    %%{target}
@@ -18,7 +23,7 @@ let generate_rules base =
  (deps
   (:reference ../%s.yaml)
   (:generated %s_out.yaml))
- (alias runtest)
+ (alias runtest)%s
  (action
   (diff %%{reference} %%{generated})))
 |}
@@ -26,15 +31,22 @@ let generate_rules base =
     base
     base
     base
+    base
+    enabled_if
 
 let generate_html_export_rules base =
+  let is_problematic = Test_filter.is_problematic_base ~dir:"html" ~ext:".html" base in
+  let enabled_if =
+    if is_problematic then "\n (enabled_if (= %{profile} failing-tests))" else String.empty
+  in
   Printf.printf
     {|
+; Test: %s (HTML export)
+
 (rule
  (package hbt)
  (target %s_export_out.html)
  (deps (:source ../%s.html))
- (alias runtest)
  (action
   (with-stdout-to
    %%{target}
@@ -45,7 +57,7 @@ let generate_html_export_rules base =
  (deps
   (:reference ../export/%s_export.html)
   (:generated %s_export_out.html))
- (alias runtest)
+ (alias runtest)%s
  (action
   (diff %%{reference} %%{generated})))
 |}
@@ -53,6 +65,8 @@ let generate_html_export_rules base =
     base
     base
     base
+    base
+    enabled_if
 
 let () =
   let html_files =

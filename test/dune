@@ -15,7 +15,8 @@
  (libraries alcotest hbt-core uri))
 
 (executable
- (name gen_html))
+ (name gen_html)
+ (modules gen_html test_filter))
 
 (subdir
  data/html/run
@@ -25,14 +26,16 @@
  data/html/generate
  (rule
   (deps
-   (glob_files ../*.html))
+   (glob_files ../*.html)
+   ../../../issues)
   (action
    (with-stdout-to
     dune.inc
     (run ../../../gen_html.exe)))))
 
 (executable
- (name gen_markdown))
+ (name gen_markdown)
+ (modules gen_markdown test_filter))
 
 (subdir
  data/markdown/run
@@ -42,14 +45,16 @@
  data/markdown/generate
  (rule
   (deps
-   (glob_files ../*.md))
+   (glob_files ../*.md)
+   ../../../issues)
   (action
    (with-stdout-to
     dune.inc
     (run ../../../gen_markdown.exe)))))
 
 (executable
- (name gen_pinboard))
+ (name gen_pinboard)
+ (modules gen_pinboard test_filter))
 
 (subdir
  data/pinboard/run
@@ -58,7 +63,7 @@
 (subdir
  data/pinboard/generate
  (rule
-  (deps ../empty.xml ../xml_sample.xml ../json_sample.json)
+  (deps ../empty.xml ../xml_sample.xml ../json_sample.json ../../../issues)
   (action
    (with-stdout-to
     dune.inc
