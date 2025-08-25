@@ -64,7 +64,8 @@ let run (parse : string -> 'a) (to_collection : 'a -> Collection.t) (file : stri
 
 let collection_of_posts (posts : Pinboard.t list) : Collection.t =
   let ret = Collection.create () in
-  List.iter (fun post -> ignore Collection.(insert ret (Entity.of_pinboard post))) posts;
+  let sorted = List.sort (fun a b -> String.compare (Pinboard.time a) (Pinboard.time b)) posts in
+  List.iter (fun post -> ignore Collection.(insert ret (Entity.of_pinboard post))) sorted;
   ret
 
 let detect_input_format file =
