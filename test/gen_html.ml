@@ -12,7 +12,7 @@ let generate_rules base =
 (rule
  (package hbt)
  (target %s_out.yaml)
- (deps (:source ../%s.html))
+ (deps (:source ../%s.input.html))
  (action
   (with-stdout-to
    %%{target}
@@ -21,7 +21,7 @@ let generate_rules base =
 (rule
  (package hbt)
  (deps
-  (:reference ../%s.yaml)
+  (:reference ../%s.expected.yaml)
   (:generated %s_out.yaml))
  (alias runtest)%s
  (action
@@ -46,7 +46,7 @@ let generate_html_export_rules base =
 (rule
  (package hbt)
  (target %s_export_out.html)
- (deps (:source ../%s.html))
+ (deps (:source ../%s.input.html))
  (action
   (with-stdout-to
    %%{target}
@@ -55,7 +55,7 @@ let generate_html_export_rules base =
 (rule
  (package hbt)
  (deps
-  (:reference ../export/%s_export.html)
+  (:reference ../%s.expected.html)
   (:generated %s_export_out.html))
  (alias runtest)%s
  (action
@@ -70,7 +70,9 @@ let generate_html_export_rules base =
 
 let () =
   let html_files =
-    Sys.readdir ".." |> Array.to_list |> List.filter_map (Filename.chop_suffix_opt ~suffix:".html")
+    Sys.readdir ".."
+    |> Array.to_list
+    |> List.filter_map (Filename.chop_suffix_opt ~suffix:".input.html")
   in
   List.iter generate_rules html_files;
   List.iter generate_html_export_rules html_files

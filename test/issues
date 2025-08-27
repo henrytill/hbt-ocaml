@@ -2,10 +2,10 @@
 # Format: full paths relative to test/data/ with suffixes
 
 # Unicode handling issues
-pinboard/json_sample.json
-pinboard/xml_sample.xml
-html/bookmarks_pinboard.html
+pinboard/json_sample.input.json
+pinboard/xml_sample.input.xml
+html/bookmarks_pinboard.input.html
 
 # HTML entity encoding issues
-html/bookmarks_feeds.html
-html/bookmarks_privacy.html
+html/bookmarks_feeds.input.html
+html/bookmarks_privacy.input.html

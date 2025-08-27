@@ -26,7 +26,7 @@
  data/html/generate
  (rule
   (deps
-   (glob_files ../*.html)
+   (glob_files ../*.input.html)
    ../../../issues)
   (action
    (with-stdout-to
@@ -45,7 +45,7 @@
  data/markdown/generate
  (rule
   (deps
-   (glob_files ../*.md)
+   (glob_files ../*.input.md)
    ../../../issues)
   (action
    (with-stdout-to
@@ -63,7 +63,10 @@
 (subdir
  data/pinboard/generate
  (rule
-  (deps ../empty.xml ../xml_sample.xml ../json_sample.json ../../../issues)
+  (deps
+   (glob_files ../*.input.xml)
+   (glob_files ../*.input.json)
+   ../../../issues)
   (action
    (with-stdout-to
     dune.inc

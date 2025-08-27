@@ -18,5 +18,5 @@ let read_issues_file () =
 (** Check if a base filename should be filtered out due to known conformance issues *)
 let is_problematic_base ~dir ~ext base =
   let issues = read_issues_file () in
-  let full_path = dir ^ "/" ^ base ^ ext in
+  let full_path = dir ^ "/" ^ base ^ ".input" ^ ext in
   List.exists (String.equal full_path) issues

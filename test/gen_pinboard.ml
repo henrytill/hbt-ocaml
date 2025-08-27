@@ -10,7 +10,7 @@ let generate_xml_rule base =
 (rule
  (package hbt)
  (target %s_out.yaml)
- (deps (:source ../%s.xml))
+ (deps (:source ../%s.input.xml))
  (action
   (with-stdout-to
    %%{target}
@@ -19,7 +19,7 @@ let generate_xml_rule base =
 (rule
  (package hbt)
  (deps
-  (:reference ../%s.yaml)
+  (:reference ../%s.expected.yaml)
   (:generated %s_out.yaml))
  (alias runtest)%s
  (action
@@ -44,7 +44,7 @@ let generate_json_rule base =
 (rule
  (package hbt)
  (target %s_out.yaml)
- (deps (:source ../%s.json))
+ (deps (:source ../%s.input.json))
  (action
   (with-stdout-to
    %%{target}
@@ -53,7 +53,7 @@ let generate_json_rule base =
 (rule
  (package hbt)
  (deps
-  (:reference ../%s.yaml)
+  (:reference ../%s.expected.yaml)
   (:generated %s_out.yaml))
  (alias runtest)%s
  (action
@@ -67,7 +67,15 @@ let generate_json_rule base =
     enabled_if
 
 let () =
-  let xml_files = [ "empty"; "xml_sample" ] in
-  let json_files = [ "json_sample" ] in
+  let xml_files =
+    Sys.readdir ".."
+    |> Array.to_list
+    |> List.filter_map (Filename.chop_suffix_opt ~suffix:".input.xml")
+  in
+  let json_files =
+    Sys.readdir ".."
+    |> Array.to_list
+    |> List.filter_map (Filename.chop_suffix_opt ~suffix:".input.json")
+  in
   List.iter generate_xml_rule xml_files;
   List.iter generate_json_rule json_files

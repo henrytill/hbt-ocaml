@@ -10,7 +10,7 @@ let generate_rule base =
 (rule
  (package hbt)
  (target %s_out.yaml)
- (deps (:source ../%s.md))
+ (deps (:source ../%s.input.md))
  (action
   (with-stdout-to
    %%{target}
@@ -19,7 +19,7 @@ let generate_rule base =
 (rule
  (package hbt)
  (deps
-  (:reference ../%s.yaml)
+  (:reference ../%s.expected.yaml)
   (:generated %s_out.yaml))
  (alias runtest)%s
  (action
@@ -35,5 +35,5 @@ let generate_rule base =
 let () =
   Sys.readdir ".."
   |> Array.to_list
-  |> List.filter_map (Filename.chop_suffix_opt ~suffix:".md")
+  |> List.filter_map (Filename.chop_suffix_opt ~suffix:".input.md")
   |> List.iter generate_rule
