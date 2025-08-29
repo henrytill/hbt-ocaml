@@ -1,10 +1,10 @@
 (rule
- (deps templates/netscape_bookmarks.jinja)
+ (deps templates/netscape_bookmarks.mustache)
  (targets templates.ml)
  (action
   (with-stdout-to
    %{targets}
-   (run %{dep:gen_template.exe} %{dep:templates/netscape_bookmarks.jinja}))))
+   (run %{dep:gen_template.exe} %{dep:templates/netscape_bookmarks.mustache}))))
 
 (executable
  (public_name gen-template)
@@ -15,5 +15,5 @@
 (library
  (name hbt)
  (public_name hbt-core)
- (libraries cmarkit ezjsonm jingoo markup semver str unix uri yaml)
+ (libraries cmarkit ezjsonm markup mustache semver str unix uri yaml)
  (modules collection markdown pinboard pinboard_internal prelude templates))

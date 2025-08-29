@@ -494,6 +494,82 @@ let update_labels (yaml : Yaml.value) : t -> t =
   let f label = Option.value ~default:label (Label_map.find_opt label mapping) in
   map_labels (Label_set.map f)
 
+module Template_entity = struct
+  type t = {
+    uri : string;
+    title : string;
+    createdAt : string;
+    lastModified : string option;
+    tags : string option;
+    description : string option;
+    lastVisit : string option;
+    shared : bool;
+    toRead : bool;
+    isFeed : bool;
+  }
+
+  let of_entity (entity : Entity.t) : t =
+    let uri_string = Uri.to_string (Entity.uri entity) in
+    let createdAt = Time.to_string (Entity.created_at entity) in
+    let title =
+      match Name_set.elements (Entity.names entity) with
+      | [] -> uri_string
+      | names ->
+          let name_strings = List.map Name.to_string names in
+          List.hd (List.sort String.compare name_strings)
+    in
+    let lastModified =
+      match Entity.updated_at entity with
+      | [] -> None
+      | times ->
+          let latest = List.hd (List.sort (fun a b -> Time.compare b a) times) in
+          Some (Time.to_string latest)
+    in
+    let tags =
+      let labels = Label_set.elements (Entity.labels entity) in
+      match labels with
+      | [] -> None
+      | _ -> Some (String.concat "," (List.map Label.to_string labels))
+    in
+    let description = Option.map Extended.to_string (Entity.extended entity) in
+    let lastVisit = Option.map Time.to_string (Entity.last_visited_at entity) in
+    {
+      uri = uri_string;
+      title;
+      createdAt;
+      lastModified;
+      tags;
+      description;
+      lastVisit;
+      shared = Entity.shared entity;
+      toRead = Entity.to_read entity;
+      isFeed = Entity.is_feed entity;
+    }
+
+  let yaml_of_t template_entity =
+    let base_fields =
+      [
+        ("uri", `String template_entity.uri);
+        ("createdAt", `String template_entity.createdAt);
+        ("shared", `Bool template_entity.shared);
+        ("toRead", `Bool template_entity.toRead);
+        ("isFeed", `Bool template_entity.isFeed);
+        ("title", `String template_entity.title);
+      ]
+    in
+    let optional_fields =
+      List.filter_map
+        Fun.id
+        [
+          Option.map (fun v -> ("lastModified", `String v)) template_entity.lastModified;
+          Option.map (fun v -> ("tags", `String v)) template_entity.tags;
+          Option.map (fun v -> ("description", `String v)) template_entity.description;
+          Option.map (fun v -> ("lastVisit", `String v)) template_entity.lastVisit;
+        ]
+    in
+    `O (base_fields @ optional_fields)
+end
+
 module Netscape = struct
   module Attrs = Prelude.Markup_ext.Attrs
 
@@ -668,19 +744,13 @@ module Netscape = struct
     close_in ic;
     collection
 
-  let rec yaml_to_tvalue = function
-    | `Null -> Jingoo.Jg_types.Tnull
-    | `Bool b -> Jingoo.Jg_types.Tbool b
-    | `Float f -> Jingoo.Jg_types.Tfloat f
-    | `String s -> Jingoo.Jg_types.Tstr s
-    | `A lst -> Jingoo.Jg_types.Tlist (List.map yaml_to_tvalue lst)
-    | `O assoc -> Jingoo.Jg_types.Tobj (List.map (fun (k, v) -> (k, yaml_to_tvalue v)) assoc)
-
   let to_html c =
-    let entities_yaml = Array.fold_right (fun e acc -> Entity.yaml_of_t e :: acc) (entities c) [] in
-    let entities_tvalue = Jingoo.Jg_types.Tlist (List.map yaml_to_tvalue entities_yaml) in
-    let models = [ ("entities", entities_tvalue) ] in
-    Jingoo.Jg_template.from_string Templates.netscape_bookmarks ~models
+    let entities_array = entities c in
+    let template_entities = Array.to_list (Array.map Template_entity.of_entity entities_array) in
+    let entities_mustache = List.map Template_entity.yaml_of_t template_entities in
+    let json = `O [ ("entities", `A entities_mustache) ] in
+    let template = Mustache.of_string Templates.netscape_bookmarks in
+    Mustache.render ~strict:false template json
 end
 
 let from_html = Netscape.from_html
