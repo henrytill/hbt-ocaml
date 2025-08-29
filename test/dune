@@ -14,60 +14,22 @@
  (package hbt-core)
  (libraries alcotest hbt-core uri))
 
-(executable
- (name gen_html)
- (modules gen_html test_filter))
+; Unified test approach
 
-(subdir
- data/html/run
- (dynamic_include ../generate/dune.inc))
-
-(subdir
- data/html/generate
- (rule
-  (deps
-   (glob_files ../*.input.html)
-   ../../../issues)
-  (action
-   (with-stdout-to
-    dune.inc
-    (run ../../../gen_html.exe)))))
-
-(executable
- (name gen_markdown)
- (modules gen_markdown test_filter))
-
-(subdir
- data/markdown/run
- (dynamic_include ../generate/dune.inc))
-
-(subdir
- data/markdown/generate
- (rule
-  (deps
-   (glob_files ../*.input.md)
-   ../../../issues)
-  (action
-   (with-stdout-to
-    dune.inc
-    (run ../../../gen_markdown.exe)))))
-
-(executable
- (name gen_pinboard)
- (modules gen_pinboard test_filter))
-
-(subdir
- data/pinboard/run
- (dynamic_include ../generate/dune.inc))
-
-(subdir
- data/pinboard/generate
- (rule
-  (deps
-   (glob_files ../*.input.xml)
-   (glob_files ../*.input.json)
-   ../../../issues)
-  (action
-   (with-stdout-to
-    dune.inc
-    (run ../../../gen_pinboard.exe)))))
+(test
+ (name hbt_test)
+ (modules hbt_test test_data)
+ (package hbt-core)
+ (libraries alcotest hbt-core yaml uri)
+ (deps
+  (glob_files data/markdown/*.input.*)
+  (glob_files data/markdown/*.expected.*)
+  (glob_files data/html/*.input.*)
+  (glob_files data/html/*.expected.*)
+  (glob_files data/pinboard/*.input.*)
+  (glob_files data/pinboard/*.expected.*))
+ (action
+  (setenv
+   TZ
+   UTC
+   (run %{test}))))
