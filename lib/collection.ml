@@ -711,19 +711,8 @@ module Netscape = struct
                     bookmark_description := None
                 | None -> ()
               end;
-              begin
-                (* Pop folder from stack *)
-                match !folder_stack with
-                | _ :: rest_folders -> folder_stack := rest_folders
-                | [] -> ()
-              end
-          | `Dt :: rest ->
-              element_stack := rest;
-              (* Don't create bookmark yet - wait to see if there's a dd element *)
-              ()
-          | _ :: rest ->
-              element_stack := rest;
-              ()
+              folder_stack := List.drop 1 !folder_stack
+          | _ :: rest -> element_stack := rest
           | [] -> ()
         end
       | Some _ -> () (* Skip other nodes *)
