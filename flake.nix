@@ -40,7 +40,7 @@
         pkgs = nixpkgs.legacyPackages.${system};
         on = opam-nix.lib.${system};
         scope = on.buildOpamProject' { resolveArgs.with-test = true; } ./. {
-          ocaml-base-compiler = "5.2.0";
+          ocaml-base-compiler = "5.3.0";
         };
         overlay = final: prev: {
           hbt-core = prev.hbt-core.overrideAttrs (as: {
