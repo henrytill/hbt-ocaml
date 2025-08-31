@@ -661,13 +661,8 @@ module Netscape = struct
           end
       | Some (`Start_element ((_, name), attrs)) when element_of_string name = `A ->
           element_stack := `A :: !element_stack;
-          begin
-            match !element_stack with
-            | `A :: `Dt :: _ ->
-                bookmark_attrs := Some attrs;
-                waiting_for := `Bookmark_description
-            | _ -> ()
-          end
+          bookmark_attrs := Some attrs;
+          waiting_for := `Bookmark_description
       | Some (`Start_element ((_, name), _))
         when element_of_string name = `Dd && Option.is_some !bookmark_attrs ->
           (* DD elements contain extended descriptions and should only be processed
@@ -703,7 +698,6 @@ module Netscape = struct
           | `Dl :: rest ->
               element_stack := rest;
               begin
-                (* End of folder - create any pending bookmark *)
                 match !bookmark_attrs with
                 | Some attrs ->
                     add_pending collection !folder_stack attrs !bookmark_description None;
