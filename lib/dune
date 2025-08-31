@@ -16,4 +16,11 @@
  (name hbt)
  (public_name hbt-core)
  (libraries cmarkit ezjsonm markup mustache semver str unix uri yaml)
- (modules collection markdown pinboard pinboard_internal prelude templates))
+ (modules
+  collection
+  data
+  markdown
+  pinboard
+  pinboard_internal
+  prelude
+  templates))

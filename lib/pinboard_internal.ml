@@ -82,10 +82,9 @@ let t_of_attrs (attrs : Attrs.t) : t =
   let toread = Attrs.get "toread" attrs = "yes" in
   { href; time; description; extended; tag; hash; shared; toread }
 
-let from_xml file =
-  let ic = open_in file in
-  let channel = Markup.channel ic in
-  let xml = Markup.parse_xml channel in
+let from_xml content =
+  let stream = Markup.string content in
+  let xml = Markup.parse_xml stream in
   let signals = Markup.signals xml in
   let continue = ref true in
   let acc = ref [] in
@@ -99,7 +98,6 @@ let from_xml file =
     | None -> continue := false
   done;
 
-  close_in ic;
   !acc
 
 let t_of_yaml (value : Yaml.value) : t =
@@ -115,6 +113,4 @@ let t_of_yaml (value : Yaml.value) : t =
   let toread = get_field ~key:"toread" value |> Yaml.Util.to_string_exn = "yes" in
   { href; time; description; extended; tag; hash; shared; toread }
 
-let from_json file =
-  let input = In_channel.with_open_text file In_channel.input_all in
-  Ezjsonm.from_string input |> Yaml_ext.map_array_exn t_of_yaml
+let from_json content = Ezjsonm.from_string content |> Yaml_ext.map_array_exn t_of_yaml

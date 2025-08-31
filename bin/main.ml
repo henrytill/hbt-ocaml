@@ -3,8 +3,8 @@ open Hbt
 
 module Args = struct
   type t = {
-    input_format : [ `Html | `Json | `Xml | `Markdown ] option;
-    output_format : [ `Yaml | `Html ] option;
+    input_format : Data.input option;
+    output_format : Data.output option;
     output : string option;
     info : bool;
     list_tags : bool;
@@ -14,6 +14,13 @@ module Args = struct
   let make input_format output_format output info list_tags mappings_file =
     { input_format; output_format; output; info; list_tags; mappings_file }
 end
+
+let detect_input_format file =
+  match Data.detect_input_format file with
+  | Some format -> format
+  | None ->
+      let ext = Filename.extension file in
+      invalid_arg (Format.sprintf "No parser for extension: %s" ext)
 
 let read_file file =
   let ic = open_in file in
@@ -47,59 +54,33 @@ let print_collection (file : string) (args : Args.t) (collection : Collection.t)
       |> String.concat "\n"
     else
       match args.output_format with
-      | Some `Yaml -> (
-          let len = 1024 * 1024 in
-          let yaml = yaml_of_t collection in
-          match Yaml.to_string ~len yaml with
-          | Ok s -> s
-          | Error (`Msg e) -> failwith e)
-      | Some `Html -> Collection.to_html collection
+      | Some format -> Data.format format collection
       | None -> failwith "Must specify an output format (-t) or analysis flag (--info, --list-tags)"
   in
   write_output output args.output
 
-let run (parse : string -> 'a) (to_collection : 'a -> Collection.t) (file : string) (args : Args.t)
-    : unit =
-  parse file |> to_collection |> update_collection args |> print_collection file args
-
-let collection_of_posts (posts : Pinboard.t list) : Collection.t =
-  let ret = Collection.create () in
-  let sorted = List.sort (fun a b -> String.compare (Pinboard.time a) (Pinboard.time b)) posts in
-  List.iter (fun post -> ignore Collection.(insert ret (Entity.of_pinboard post))) sorted;
-  ret
-
-let detect_input_format file =
-  match Filename.extension file with
-  | ".md" -> `Markdown
-  | ".xml" -> `Xml
-  | ".html" -> `Html
-  | ".json" -> `Json
-  | ext -> invalid_arg (Format.sprintf "No parser for extension: %s" ext)
-
 let process_file (args : Args.t) (file : string) : unit =
-  let run_md = run (Fun.compose Markdown.parse read_file) Fun.id in
-  let run_xml = run Pinboard.from_xml collection_of_posts in
-  let run_html = run Collection.from_html Fun.id in
-  let run_json = run Pinboard.from_json collection_of_posts in
   let input_format =
     match args.input_format with
     | Some format -> format
     | None -> detect_input_format file
   in
-  match input_format with
-  | `Markdown -> run_md file args
-  | `Xml -> run_xml file args
-  | `Html -> run_html file args
-  | `Json -> run_json file args
+  let content = read_file file in
+  let updated_args = { args with input_format = Some input_format } in
+  Data.parse input_format content
+  |> update_collection updated_args
+  |> print_collection file updated_args
 
 let from_format =
+  let open Data in
   let doc = "Input format" in
-  let formats = [ ("html", `Html); ("json", `Json); ("xml", `Xml); ("markdown", `Markdown) ] in
+  let formats = List.map (fun fmt -> (to_string fmt, fmt)) all_input_formats in
   Arg.(value & opt (some (enum formats)) None & info [ "f"; "from" ] ~docv:"FORMAT" ~doc)
 
 let to_format =
+  let open Data in
   let doc = "Output format" in
-  let formats = [ ("yaml", `Yaml); ("html", `Html) ] in
+  let formats = List.map (fun fmt -> (to_string fmt, fmt)) all_output_formats in
   Arg.(value & opt (some (enum formats)) None & info [ "t"; "to" ] ~docv:"FORMAT" ~doc)
 
 let output_file =

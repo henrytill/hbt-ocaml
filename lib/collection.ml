@@ -629,10 +629,9 @@ module Netscape = struct
     | "dl" -> `Dl
     | name -> `Other name
 
-  let from_html file =
-    let ic = open_in file in
-    let channel = Markup.channel ic in
-    let html = Markup.parse_html channel in
+  let from_html content =
+    let stream = Markup.string content in
+    let html = Markup.parse_html stream in
     let signals = Markup.signals html in
 
     let collection = create () in
@@ -724,7 +723,6 @@ module Netscape = struct
           continue := false
     done;
 
-    close_in ic;
     collection
 
   let to_html c =
