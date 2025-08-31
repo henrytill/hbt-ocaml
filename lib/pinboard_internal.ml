@@ -91,11 +91,11 @@ let from_xml content =
 
   while !continue do
     match Markup.next signals with
+    | None -> continue := false
     | Some (`Start_element ((_, "post"), attrs)) -> acc := t_of_attrs attrs :: !acc
     | Some (`Start_element ((_, "posts"), _)) -> ()
     | Some (`Start_element ((_, s), _)) -> failwith ("unexpected Start_element: " ^ s)
     | Some _ -> ()
-    | None -> continue := false
   done;
 
   !acc

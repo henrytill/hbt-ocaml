@@ -17,10 +17,8 @@ end
 
 let detect_input_format file =
   match Data.detect_input_format file with
+  | None -> invalid_arg (Format.sprintf "No parser for extension: %s" (Filename.extension file))
   | Some format -> format
-  | None ->
-      let ext = Filename.extension file in
-      invalid_arg (Format.sprintf "No parser for extension: %s" ext)
 
 let read_file file =
   let ic = open_in file in
@@ -30,16 +28,16 @@ let read_file file =
 
 let update_collection (args : Args.t) : Collection.t -> Collection.t =
   match args.mappings_file with
-  | Some file -> read_file file |> Yaml.of_string |> Result.get_ok |> Collection.update_labels
   | None -> Fun.id
+  | Some file -> read_file file |> Yaml.of_string |> Result.get_ok |> Collection.update_labels
 
 let write_output (content : string) (output_file : string option) : unit =
   match output_file with
+  | None -> print_string content
   | Some file ->
       let oc = open_out file in
       output_string oc content;
       close_out oc
-  | None -> print_string content
 
 let print_collection (file : string) (args : Args.t) (collection : Collection.t) : unit =
   let open Collection in
@@ -54,16 +52,16 @@ let print_collection (file : string) (args : Args.t) (collection : Collection.t)
       |> String.concat "\n"
     else
       match args.output_format with
-      | Some format -> Data.format format collection
       | None -> failwith "Must specify an output format (-t) or analysis flag (--info, --list-tags)"
+      | Some format -> Data.format format collection
   in
   write_output output args.output
 
 let process_file (args : Args.t) (file : string) : unit =
   let input_format =
     match args.input_format with
-    | Some format -> format
     | None -> detect_input_format file
+    | Some format -> format
   in
   let content = read_file file in
   let updated_args = { args with input_format = Some input_format } in

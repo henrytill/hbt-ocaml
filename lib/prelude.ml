@@ -31,14 +31,14 @@ end
 module Yaml_ext = struct
   let get_field ~key value =
     match Yaml.Util.find_exn key value with
-    | Some v -> v
     | None -> invalid_arg ("Missing field: " ^ key)
+    | Some v -> v
 
   let map_optional_field_exn ~key ~f value =
     let g = function
+      | None -> None
       | Some (`String "") -> None
       | Some other -> Some (f other)
-      | None -> None
     in
     g (Yaml.Util.find_exn key value)
 

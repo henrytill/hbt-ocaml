@@ -62,8 +62,8 @@ let block m ((c, st) : Collection.t * Fold_state.t) = function
   | Block.List (list, _) ->
       let st =
         match st.maybe_parent with
-        | Some parent -> { st with parents = parent :: st.parents }
         | None -> st
+        | Some parent -> { st with parents = parent :: st.parents }
       in
       let c, st =
         List.fold_left
@@ -101,6 +101,7 @@ let get_dest ld kf ks =
 let rec extract_string (inlines : Inline.t list) : string =
   (* TODO: handle more cases, rewrite as loop *)
   let rec go acc = function
+    | [] -> String.concat String.empty (List.rev acc)
     | Inline.Code_span (s, _) :: xs ->
         let a = Printf.sprintf "`%s`" (Inline.Code_span.code s) in
         go (a :: acc) xs
@@ -109,7 +110,6 @@ let rec extract_string (inlines : Inline.t list) : string =
         go (a :: acc) xs (* ugh *)
     | Inline.Text (t, _) :: xs -> go (t :: acc) xs
     | _ :: xs -> go acc xs
-    | [] -> String.concat String.empty (List.rev acc)
   in
   go [] inlines
 

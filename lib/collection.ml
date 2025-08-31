@@ -308,13 +308,13 @@ module Entity = struct
   let yaml_of_t entity =
     let maybe_extended =
       match entity.extended with
-      | Some extended -> [ ("extended", Extended.yaml_of_t extended) ]
       | None -> []
+      | Some extended -> [ ("extended", Extended.yaml_of_t extended) ]
     in
     let maybe_last_visit =
       match entity.last_visited_at with
-      | Some last_visit -> [ ("lastVisitedAt", Time.yaml_of_t last_visit) ]
       | None -> []
+      | Some last_visit -> [ ("lastVisitedAt", Time.yaml_of_t last_visit) ]
     in
     `O
       ([
@@ -417,6 +417,7 @@ let insert c e =
 
 let upsert c e =
   match id c (Entity.uri e) with
+  | None -> insert c e
   | Some id ->
       let existing = Dynarray.get c.nodes id in
       let updated = Entity.absorb e existing in
@@ -425,7 +426,6 @@ let upsert c e =
           Dynarray.(set c.nodes id updated)
       in
       id
-  | None -> insert c e
 
 let add_edge c from target =
   let from_edges = Dynarray.get c.edges from in
@@ -582,8 +582,8 @@ module Netscape = struct
 
   let parse_timestamp (attrs : Attrs.t) (key : string) : Time.t =
     match parse_timestamp_opt attrs key with
-    | Some time -> time
     | None -> Time.empty
+    | Some time -> time
 
   let create_bookmark (folder_labels : string list) (attrs : Attrs.t) (description : string option)
       (extended : string option) : Entity.t =
@@ -600,10 +600,10 @@ module Netscape = struct
     let extended = Option.map Extended.of_string extended in
     let shared =
       match Attrs.get_opt "private" attrs with
+      | None -> true
       | Some "1" -> false
       | Some "0" -> true
       | Some "" -> true
-      | None -> true
       | Some _ -> true
     in
     let to_read = Attrs.get "toread" attrs = "1" in
@@ -644,6 +644,9 @@ module Netscape = struct
 
     while !continue do
       match Markup.next signals with
+      | None ->
+          assert (Option.is_none !bookmark_attrs);
+          continue := false
       | Some (`Start_element ((_, name), _)) when element_of_string name = `H3 ->
           element_stack := `H3 :: !element_stack;
           waiting_for := `Folder_name
@@ -652,11 +655,11 @@ module Netscape = struct
           begin
             (* If we have a previous bookmark without extended description, create it now *)
             match !bookmark_attrs with
+            | None -> ()
             | Some attrs ->
                 add_pending collection !folder_stack attrs !bookmark_description None;
                 bookmark_attrs := None;
                 bookmark_description := None
-            | None -> ()
           end
       | Some (`Start_element ((_, name), attrs)) when element_of_string name = `A ->
           element_stack := `A :: !element_stack;
@@ -682,45 +685,33 @@ module Netscape = struct
           | `Extended_description ->
               begin
                 match !bookmark_attrs with
+                | None -> ()
                 | Some attrs ->
                     let extended = Some (String.trim (String.concat String.empty xs)) in
                     add_pending collection !folder_stack attrs !bookmark_description extended;
                     bookmark_attrs := None;
                     bookmark_description := None
-                | None -> ()
               end;
               waiting_for := `Nothing
           | `Nothing -> ()
         end
       | Some `End_element -> begin
           match !element_stack with
+          | [] -> ()
           | `Dl :: rest ->
               element_stack := rest;
               begin
                 match !bookmark_attrs with
+                | None -> ()
                 | Some attrs ->
                     add_pending collection !folder_stack attrs !bookmark_description None;
                     bookmark_attrs := None;
                     bookmark_description := None
-                | None -> ()
               end;
               folder_stack := List.drop 1 !folder_stack
           | _ :: rest -> element_stack := rest
-          | [] -> ()
         end
       | Some _ -> () (* Skip other nodes *)
-      | None ->
-          begin
-            (* End of parsing - create any pending bookmark *)
-            match !bookmark_attrs with
-            | Some attrs ->
-                add_pending collection !folder_stack attrs !bookmark_description None;
-                bookmark_attrs := None;
-                bookmark_description := None
-            | None -> ()
-          end;
-          (* Prepare to exit the loop *)
-          continue := false
     done;
 
     collection
