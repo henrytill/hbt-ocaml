@@ -16,11 +16,20 @@ module List_ext = struct
   let hd_opt = function
     | [] -> None
     | x :: _ -> Some x
+
+  let drop1 = function
+    | [] -> []
+    | _ :: tl -> tl
+
+  let uncons = function
+    | [] -> (None, [])
+    | x :: xs -> (Some x, xs)
 end
 
 module Markup_ext = struct
   module Attrs = struct
-    type t = ((string * string) * string) list
+    type elt = (string * string) * string
+    type t = elt list
 
     let is_empty (attrs : t) = List.is_empty attrs
   end

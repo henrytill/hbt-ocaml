@@ -64,8 +64,7 @@ let pp fmt p =
 
 let to_string = Format.asprintf "%a" pp
 
-let accumulate_pinboard_attr (pinboard : t)
-    (((_namespace, key), value) : (string * string) * string) : t =
+let accumulate_pinboard_attr (pinboard : t) (((_, key), value) : Attrs.elt) : t =
   match String.lowercase_ascii key with
   | "href" -> { pinboard with href = value }
   | "time" -> { pinboard with time = value }

@@ -498,9 +498,7 @@ module Netscape = struct
     | None -> Time.empty
     | Some timestamp -> (timestamp, Unix.gmtime timestamp)
 
-  let accumulate_entity_attr (entity : Entity.t)
-      (((_namespace, key), value) : (string * string) * string) : Entity.t =
-    let open Entity in
+  let accumulate_entity_attr (entity : Entity.t) (((_, key), value) : Attrs.elt) : Entity.t =
     match String.lowercase_ascii key with
     | "href" -> { entity with uri = Uri.canonicalize (Uri.of_string value) }
     | "add_date" -> { entity with created_at = parse_timestamp value }
@@ -514,7 +512,7 @@ module Netscape = struct
         let tag_list = Str.split (Str.regexp "[,]+") value in
         let filtered = List.filter (( <> ) "toread") tag_list in
         let labels = Label_set.of_list (List.map Label.of_string filtered) in
-        let to_read = List.mem "toread" tag_list in
+        let to_read = entity.to_read || List.mem "toread" tag_list in
         { entity with labels; to_read }
     | "private" -> { entity with shared = value <> "1" }
     | "toread" -> { entity with to_read = value = "1" }
@@ -604,15 +602,13 @@ module Netscape = struct
               waiting_for := `Nothing
           | `Nothing -> ()
         end
-      | Some `End_element -> begin
-          match !element_stack with
-          | [] -> ()
-          | `Dl :: rest ->
-              element_stack := rest;
-              unless (Attrs.is_empty !attributes) add_pending;
-              folder_stack := List.drop 1 !folder_stack
-          | _ :: rest -> element_stack := rest
-        end
+      | Some `End_element ->
+          let maybe_head, tail = List_ext.uncons !element_stack in
+          element_stack := tail;
+          if maybe_head = Some `Dl then begin
+            unless (Attrs.is_empty !attributes) add_pending;
+            folder_stack := List_ext.drop1 !folder_stack
+          end
       | Some _ -> ()
     done;
 
