@@ -36,9 +36,11 @@ module Markup_ext = struct
 end
 
 module Yaml_ext = struct
+  exception Missing_field of string
+
   let get_field ~key value =
     match Yaml.Util.find_exn key value with
-    | None -> invalid_arg ("Missing field: " ^ key)
+    | None -> raise (Missing_field key)
     | Some v -> v
 
   let map_optional_field_exn ~key ~f value =
