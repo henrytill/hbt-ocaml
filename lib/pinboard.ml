@@ -64,20 +64,6 @@ let pp fmt p =
 
 let to_string = Format.asprintf "%a" pp
 
-module Tags = struct
-  include Set.Make (String)
-
-  let pp fmt tags =
-    let open Format in
-    let pp_sep fmt () = fprintf fmt ";@ " in
-    let pp_elem fmt elem = fprintf fmt "%S" elem in
-    fprintf fmt "@[<2>{@ %a@ }@]" (pp_print_list ~pp_sep pp_elem) (elements tags)
-
-  let to_string = Format.asprintf "%a" pp
-end
-
-let tags = List.fold_left (fun acc post -> Tags.(union acc (of_list post.tag))) Tags.empty
-
 let accumulate_pinboard_attr (pinboard : t)
     (((_namespace, key), value) : (string * string) * string) : t =
   match String.lowercase_ascii key with
