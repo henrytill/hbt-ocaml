@@ -13,6 +13,9 @@ type _ t =
 type input = [ `Input ] t
 type output = [ `Output ] t
 
+let all_input_formats : input list = [ Json; Xml; Markdown; Html ]
+let all_output_formats : output list = [ Html; Yaml ]
+
 let to_string : type a. a t -> string = function
   | Json -> "json"
   | Xml -> "xml"
@@ -22,9 +25,6 @@ let to_string : type a. a t -> string = function
 
 let pp : type a. Format.formatter -> a t -> unit =
   fun fmt format -> Format.pp_print_string fmt (to_string format)
-
-let all_input_formats : input list = [ Json; Xml; Markdown; Html ]
-let all_output_formats : output list = [ Html; Yaml ]
 
 let detect_input_format (filename : string) : input option =
   match Filename.extension filename with
