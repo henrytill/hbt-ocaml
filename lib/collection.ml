@@ -498,27 +498,27 @@ module Template_entity = struct
   type t = {
     uri : string;
     title : string;
-    createdAt : string;
-    lastModified : string option;
+    created_at : string;
+    last_modified : string option;
     tags : string option;
     description : string option;
-    lastVisit : string option;
+    last_visit : string option;
     shared : bool;
-    toRead : bool;
-    isFeed : bool;
+    to_read : bool;
+    is_feed : bool;
   }
 
   let of_entity (entity : Entity.t) : t =
-    let uri_string = Uri.to_string (Entity.uri entity) in
-    let createdAt = Time.to_string (Entity.created_at entity) in
+    let uri = Uri.to_string (Entity.uri entity) in
+    let created_at = Time.to_string (Entity.created_at entity) in
     let title =
       match Name_set.elements (Entity.names entity) with
-      | [] -> uri_string
+      | [] -> uri
       | names ->
           let name_strings = List.map Name.to_string names in
           List.hd (List.sort String.compare name_strings)
     in
-    let lastModified =
+    let last_modified =
       match Entity.updated_at entity with
       | [] -> None
       | times ->
@@ -532,28 +532,28 @@ module Template_entity = struct
       | _ -> Some (String.concat "," (List.map Label.to_string labels))
     in
     let description = Option.map Extended.to_string (Entity.extended entity) in
-    let lastVisit = Option.map Time.to_string (Entity.last_visited_at entity) in
+    let last_visit = Option.map Time.to_string (Entity.last_visited_at entity) in
     {
-      uri = uri_string;
+      uri;
       title;
-      createdAt;
-      lastModified;
+      created_at;
+      last_modified;
       tags;
       description;
-      lastVisit;
+      last_visit;
       shared = Entity.shared entity;
-      toRead = Entity.to_read entity;
-      isFeed = Entity.is_feed entity;
+      to_read = Entity.to_read entity;
+      is_feed = Entity.is_feed entity;
     }
 
   let yaml_of_t template_entity =
     let base_fields =
       [
         ("uri", `String template_entity.uri);
-        ("createdAt", `String template_entity.createdAt);
+        ("createdAt", `String template_entity.created_at);
         ("shared", `Bool template_entity.shared);
-        ("toRead", `Bool template_entity.toRead);
-        ("isFeed", `Bool template_entity.isFeed);
+        ("toRead", `Bool template_entity.to_read);
+        ("isFeed", `Bool template_entity.is_feed);
         ("title", `String template_entity.title);
       ]
     in
@@ -561,10 +561,10 @@ module Template_entity = struct
       List.filter_map
         Fun.id
         [
-          Option.map (fun v -> ("lastModified", `String v)) template_entity.lastModified;
+          Option.map (fun v -> ("lastModified", `String v)) template_entity.last_modified;
           Option.map (fun v -> ("tags", `String v)) template_entity.tags;
           Option.map (fun v -> ("description", `String v)) template_entity.description;
-          Option.map (fun v -> ("lastVisit", `String v)) template_entity.lastVisit;
+          Option.map (fun v -> ("lastVisit", `String v)) template_entity.last_visit;
         ]
     in
     `O (base_fields @ optional_fields)
