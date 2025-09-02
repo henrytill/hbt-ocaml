@@ -10,11 +10,13 @@ let generate_rules base =
 (rule
  (package hbt)
  (target %s_out.yaml)
- (deps (:source ../%s.input.html))
+ (deps
+  (:source ../%s.input.html)
+  (:hbt %%{bin:hbt}))
  (action
   (with-stdout-to
    %%{target}
-   (run %%{bin:hbt} -t yaml %%{source}))))
+   (run %%{hbt} -t yaml %%{source}))))
 
 (rule
  (package hbt)
@@ -44,11 +46,13 @@ let generate_html_export_rules base =
 (rule
  (package hbt)
  (target %s_export_out.html)
- (deps (:source ../%s.input.html))
+ (deps
+  (:source ../%s.input.html)
+  (:hbt %%{bin:hbt}))
  (action
   (with-stdout-to
    %%{target}
-   (run %%{bin:hbt} -t html %%{source}))))
+   (run %%{hbt} -t html %%{source}))))
 
 (rule
  (package hbt)

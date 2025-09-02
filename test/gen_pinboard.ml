@@ -10,11 +10,13 @@ let generate_xml_rule base =
 (rule
  (package hbt)
  (target %s_out.yaml)
- (deps (:source ../%s.input.xml))
+ (deps
+  (:source ../%s.input.xml)
+  (:hbt %%{bin:hbt}))
  (action
   (with-stdout-to
    %%{target}
-   (setenv TZ UTC (run %%{bin:hbt} -t yaml %%{source})))))
+   (setenv TZ UTC (run %%{hbt} -t yaml %%{source})))))
 
 (rule
  (package hbt)
@@ -44,11 +46,13 @@ let generate_json_rule base =
 (rule
  (package hbt)
  (target %s_out.yaml)
- (deps (:source ../%s.input.json))
+ (deps
+  (:source ../%s.input.json)
+  (:hbt %%{bin:hbt}))
  (action
   (with-stdout-to
    %%{target}
-   (setenv TZ UTC (run %%{bin:hbt} -t yaml %%{source})))))
+   (setenv TZ UTC (run %%{hbt} -t yaml %%{source})))))
 
 (rule
  (package hbt)
