@@ -671,7 +671,7 @@ module Netscape = struct
         is_feed = Entity.is_feed entity;
       }
 
-    let yaml_of_t template_entity =
+    let yaml_of_t (template_entity : t) : Yaml.value =
       let base_fields =
         [
           ("uri", `String template_entity.uri);
@@ -696,9 +696,8 @@ module Netscape = struct
   end
 
   let to_html c =
-    let entities_array = entities c in
-    let template_entities = Array.to_list (Array.map Template_entity.of_entity entities_array) in
-    let entities_mustache = List.map Template_entity.yaml_of_t template_entities in
+    let f e acc = Template_entity.(yaml_of_t (of_entity e)) :: acc in
+    let entities_mustache = Array.fold_right f (entities c) [] in
     let json = `O [ ("entities", `A entities_mustache) ] in
     let template = Mustache.of_string Templates.netscape_bookmarks in
     Mustache.render ~strict:false template json
