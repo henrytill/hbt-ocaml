@@ -25,7 +25,9 @@ let generate_xml_rule base =
   (:generated %s_out.yaml))
  (alias runtest)%s
  (action
-  (diff %%{reference} %%{generated})))
+  (progn
+   (echo "Test XML→YAML: %s\n")
+   (diff %%{reference} %%{generated}))))
 |}
     base
     base
@@ -33,6 +35,7 @@ let generate_xml_rule base =
     base
     base
     enabled_if
+    base
 
 let generate_json_rule base =
   let is_problematic = Test_filter.is_problematic_base ~dir:"pinboard" ~ext:".json" base in
@@ -61,7 +64,9 @@ let generate_json_rule base =
   (:generated %s_out.yaml))
  (alias runtest)%s
  (action
-  (diff %%{reference} %%{generated})))
+  (progn
+   (echo "Test JSON→YAML: %s\n")
+   (diff %%{reference} %%{generated}))))
 |}
     base
     base
@@ -69,6 +74,7 @@ let generate_json_rule base =
     base
     base
     enabled_if
+    base
 
 let () =
   let xml_files =

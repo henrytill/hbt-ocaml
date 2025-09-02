@@ -25,7 +25,9 @@ let generate_rules base =
   (:generated %s_out.yaml))
  (alias runtest)%s
  (action
-  (diff %%{reference} %%{generated})))
+  (progn
+   (echo "Test HTML→YAML: %s\n")
+   (diff %%{reference} %%{generated}))))
 |}
     base
     base
@@ -33,6 +35,7 @@ let generate_rules base =
     base
     base
     enabled_if
+    base
 
 let generate_html_export_rules base =
   let is_problematic = Test_filter.is_problematic_base ~dir:"html" ~ext:".html" base in
@@ -61,7 +64,9 @@ let generate_html_export_rules base =
   (:generated %s_export_out.html))
  (alias runtest)%s
  (action
-  (diff %%{reference} %%{generated})))
+  (progn
+   (echo "Test HTML→HTML: %s\n")
+   (diff %%{reference} %%{generated}))))
 |}
     base
     base
@@ -69,6 +74,7 @@ let generate_html_export_rules base =
     base
     base
     enabled_if
+    base
 
 let () =
   let html_files =

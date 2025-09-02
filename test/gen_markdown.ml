@@ -25,7 +25,9 @@ let generate_rule base =
   (:generated %s_out.yaml))
  (alias runtest)%s
  (action
-  (diff %%{reference} %%{generated})))
+  (progn
+   (echo "Test Markdown→YAML: %s\n")
+   (diff %%{reference} %%{generated}))))
 |}
     base
     base
@@ -33,6 +35,7 @@ let generate_rule base =
     base
     base
     enabled_if
+    base
 
 let () =
   Sys.readdir ".."
