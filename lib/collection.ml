@@ -494,82 +494,6 @@ let update_labels (yaml : Yaml.value) : t -> t =
   let f label = Option.value ~default:label (Label_map.find_opt label mapping) in
   map_labels (Label_set.map f)
 
-module Template_entity = struct
-  type t = {
-    uri : string;
-    title : string;
-    created_at : string;
-    last_modified : string option;
-    tags : string option;
-    description : string option;
-    last_visit : string option;
-    shared : bool;
-    to_read : bool;
-    is_feed : bool;
-  }
-
-  let of_entity (entity : Entity.t) : t =
-    let uri = Uri.to_string (Entity.uri entity) in
-    let created_at = Time.to_string (Entity.created_at entity) in
-    let title =
-      match Name_set.elements (Entity.names entity) with
-      | [] -> uri
-      | names ->
-          let name_strings = List.map Name.to_string names in
-          List.hd (List.sort String.compare name_strings)
-    in
-    let last_modified =
-      match Entity.updated_at entity with
-      | [] -> None
-      | times ->
-          let latest = List.hd (List.sort (fun a b -> Time.compare b a) times) in
-          Some (Time.to_string latest)
-    in
-    let tags =
-      let labels = Label_set.elements (Entity.labels entity) in
-      match labels with
-      | [] -> None
-      | _ -> Some (String.concat "," (List.map Label.to_string labels))
-    in
-    let description = Option.map Extended.to_string (Entity.extended entity) in
-    let last_visit = Option.map Time.to_string (Entity.last_visited_at entity) in
-    {
-      uri;
-      title;
-      created_at;
-      last_modified;
-      tags;
-      description;
-      last_visit;
-      shared = Entity.shared entity;
-      to_read = Entity.to_read entity;
-      is_feed = Entity.is_feed entity;
-    }
-
-  let yaml_of_t template_entity =
-    let base_fields =
-      [
-        ("uri", `String template_entity.uri);
-        ("createdAt", `String template_entity.created_at);
-        ("shared", `Bool template_entity.shared);
-        ("toRead", `Bool template_entity.to_read);
-        ("isFeed", `Bool template_entity.is_feed);
-        ("title", `String template_entity.title);
-      ]
-    in
-    let optional_fields =
-      List.filter_map
-        Fun.id
-        [
-          Option.map (fun v -> ("lastModified", `String v)) template_entity.last_modified;
-          Option.map (fun v -> ("tags", `String v)) template_entity.tags;
-          Option.map (fun v -> ("description", `String v)) template_entity.description;
-          Option.map (fun v -> ("lastVisit", `String v)) template_entity.last_visit;
-        ]
-    in
-    `O (base_fields @ optional_fields)
-end
-
 module Netscape = struct
   open Prelude
   module Attrs = Markup_ext.Attrs
@@ -698,6 +622,82 @@ module Netscape = struct
     done;
 
     collection
+
+  module Template_entity = struct
+    type t = {
+      uri : string;
+      title : string;
+      created_at : string;
+      last_modified : string option;
+      tags : string option;
+      description : string option;
+      last_visit : string option;
+      shared : bool;
+      to_read : bool;
+      is_feed : bool;
+    }
+
+    let of_entity (entity : Entity.t) : t =
+      let uri = Uri.to_string (Entity.uri entity) in
+      let created_at = Time.to_string (Entity.created_at entity) in
+      let title =
+        match Name_set.elements (Entity.names entity) with
+        | [] -> uri
+        | names ->
+            let name_strings = List.map Name.to_string names in
+            List.hd (List.sort String.compare name_strings)
+      in
+      let last_modified =
+        match Entity.updated_at entity with
+        | [] -> None
+        | times ->
+            let latest = List.hd (List.sort (fun a b -> Time.compare b a) times) in
+            Some (Time.to_string latest)
+      in
+      let tags =
+        let labels = Label_set.elements (Entity.labels entity) in
+        match labels with
+        | [] -> None
+        | _ -> Some (String.concat "," (List.map Label.to_string labels))
+      in
+      let description = Option.map Extended.to_string (Entity.extended entity) in
+      let last_visit = Option.map Time.to_string (Entity.last_visited_at entity) in
+      {
+        uri;
+        title;
+        created_at;
+        last_modified;
+        tags;
+        description;
+        last_visit;
+        shared = Entity.shared entity;
+        to_read = Entity.to_read entity;
+        is_feed = Entity.is_feed entity;
+      }
+
+    let yaml_of_t template_entity =
+      let base_fields =
+        [
+          ("uri", `String template_entity.uri);
+          ("createdAt", `String template_entity.created_at);
+          ("shared", `Bool template_entity.shared);
+          ("toRead", `Bool template_entity.to_read);
+          ("isFeed", `Bool template_entity.is_feed);
+          ("title", `String template_entity.title);
+        ]
+      in
+      let optional_fields =
+        List.filter_map
+          Fun.id
+          [
+            Option.map (fun v -> ("lastModified", `String v)) template_entity.last_modified;
+            Option.map (fun v -> ("tags", `String v)) template_entity.tags;
+            Option.map (fun v -> ("description", `String v)) template_entity.description;
+            Option.map (fun v -> ("lastVisit", `String v)) template_entity.last_visit;
+          ]
+      in
+      `O (base_fields @ optional_fields)
+  end
 
   let to_html c =
     let entities_array = entities c in
