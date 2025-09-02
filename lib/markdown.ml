@@ -74,7 +74,7 @@ let block m ((c, st) : Collection.t * Fold_state.t) = function
           (c, st)
           (Block.List'.items list)
       in
-      let st = { st with maybe_parent = None; parents = List.drop 1 st.parents } in
+      let st = { st with maybe_parent = None; parents = List_ext.drop1 st.parents } in
       Folder.ret (c, st)
   | _ -> Folder.default
 
