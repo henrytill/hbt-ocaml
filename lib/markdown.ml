@@ -41,21 +41,24 @@ module Fold_state = struct
     | _ -> None
 end
 
-let get_heading_text (h : Block.Heading.t) kf ks =
+let kdefault () : 'a Folder.result = Folder.default
+
+let get_heading_text (h : Block.Heading.t) (kf : unit -> 'a Folder.result)
+    (ks : string -> 'a Folder.result) : 'a Folder.result =
   match Block.Heading.inline h with
   | Inline.Text (t, _) -> ks t
   | _ -> kf ()
 
 let block m ((c, st) : Collection.t * Fold_state.t) = function
   | Block.Heading (heading, _) when Block.Heading.level heading = 1 ->
-      let@ heading_text = get_heading_text heading (fun () -> Folder.default) in
+      let@ heading_text = get_heading_text heading kdefault in
       let time = Some (Collection.Time.of_string heading_text) in
       let st = { st with time; maybe_parent = None; labels = [] } in
       Folder.ret (c, st)
   | Block.Heading (heading, _) ->
       let heading_level = Block.Heading.level heading in
       let labels = List.take (heading_level - 2) st.labels in
-      let@ heading_text = get_heading_text heading (fun () -> Folder.default) in
+      let@ heading_text = get_heading_text heading kdefault in
       let labels = Collection.Label.of_string heading_text :: labels in
       let st = { st with labels } in
       Folder.ret (c, st)
@@ -88,12 +91,12 @@ let handle_autolink (link : Inline.Autolink.t) ((c, st) : Collection.t * Fold_st
   let st = { st with uri } in
   save_entity c st
 
-let get_def l kf ks =
+let get_def (l : Inline.Link.t) (kf : unit -> 'a) (ks : Link_definition.t -> 'a) : 'a =
   match Inline.Link.reference l with
   | `Inline (link_def, _) -> ks link_def
   | _ -> kf ()
 
-let get_dest ld kf ks =
+let get_dest (ld : Link_definition.t) (kf : unit -> 'a) (ks : string -> 'a) : 'a =
   match Link_definition.dest ld with
   | Some (link_dest, _) -> ks link_dest
   | _ -> kf ()
@@ -122,9 +125,8 @@ let get_text (link : Inline.Link.t) : string option =
   |> option_of_string
 
 let handle_link (link : Inline.Link.t) ((c, st) : Collection.t * Fold_state.t) =
-  let kf () = Folder.default in
-  let@ link_def = get_def link kf in
-  let@ link_dest = get_dest link_def kf in
+  let@ link_def = get_def link kdefault in
+  let@ link_dest = get_dest link_def kdefault in
   let link_text = get_text link in
   let uri = Some (Uri.of_string link_dest) in
   let name = Option.map Collection.Name.of_string link_text in
