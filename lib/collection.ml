@@ -286,20 +286,23 @@ module Entity = struct
     fprintf fmt "@;<1 2>@[is_feed =@ %a@];" pp_print_bool e.is_feed;
     fprintf fmt "@;<1 0>}@]"
 
+  let accumulate_entity (entity : t) ((key, value) : string * Yaml.value) : t =
+    match key with
+    | "uri" -> { entity with uri = Uri.of_string (Yaml.Util.to_string_exn value) }
+    | "createdAt" -> { entity with created_at = Time.t_of_yaml value }
+    | "updatedAt" -> { entity with updated_at = Yaml_ext.map_array_exn Time.t_of_yaml value }
+    | "names" -> { entity with names = Name_set.t_of_yaml value }
+    | "labels" -> { entity with labels = Label_set.t_of_yaml value }
+    | "extended" -> { entity with extended = Prelude.option_of_string (Extended.t_of_yaml value) }
+    | "shared" -> { entity with shared = Yaml.Util.to_bool_exn value }
+    | "toRead" -> { entity with to_read = Yaml.Util.to_bool_exn value }
+    | "lastVisitedAt" -> { entity with last_visited_at = Some (Time.t_of_yaml value) }
+    | "isFeed" -> { entity with is_feed = Yaml.Util.to_bool_exn value }
+    | _ -> entity
+
   let t_of_yaml value =
     let open Yaml_ext in
-    {
-      uri = get_field ~key:"uri" value |> Yaml.Util.to_string_exn |> Uri.of_string;
-      created_at = get_field ~key:"createdAt" value |> Time.t_of_yaml;
-      updated_at = get_field ~key:"updatedAt" value |> map_array_exn Time.t_of_yaml;
-      names = get_field ~key:"names" value |> Name_set.t_of_yaml;
-      labels = get_field ~key:"labels" value |> Label_set.t_of_yaml;
-      extended = map_optional_field_exn ~key:"extended" ~f:Extended.t_of_yaml value;
-      shared = get_field ~key:"shared" value |> Yaml.Util.to_bool_exn;
-      to_read = get_field ~key:"toRead" value |> Yaml.Util.to_bool_exn;
-      last_visited_at = map_optional_field_exn ~key:"lastVisitedAt" ~f:Time.t_of_yaml value;
-      is_feed = get_field ~key:"isFeed" value |> Yaml.Util.to_bool_exn;
-    }
+    fold_object_exn accumulate_entity empty value
 
   let yaml_of_t entity =
     let maybe_extended =

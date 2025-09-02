@@ -96,17 +96,25 @@ let from_xml content =
   done;
   !acc
 
+let accumulate_pinboard_yaml (pinboard : t) ((key, value) : string * Yaml.value) : t =
+  match key with
+  | "href" -> { pinboard with href = Yaml.Util.to_string_exn value }
+  | "time" -> { pinboard with time = Yaml.Util.to_string_exn value }
+  | "description" ->
+      { pinboard with description = Prelude.option_of_string (Yaml.Util.to_string_exn value) }
+  | "extended" ->
+      { pinboard with extended = Prelude.option_of_string (Yaml.Util.to_string_exn value) }
+  | "tags" ->
+      let tags = Yaml.Util.to_string_exn value in
+      let tag = Str.split (Str.regexp "[ \t]+") tags in
+      { pinboard with tag }
+  | "hash" -> { pinboard with hash = Prelude.option_of_string (Yaml.Util.to_string_exn value) }
+  | "shared" -> { pinboard with shared = Yaml.Util.to_string_exn value = "yes" }
+  | "toread" -> { pinboard with toread = Yaml.Util.to_string_exn value = "yes" }
+  | _ -> pinboard
+
 let t_of_yaml (value : Yaml.value) : t =
   let open Yaml_ext in
-  let href = get_field ~key:"href" value |> Yaml.Util.to_string_exn in
-  let time = get_field ~key:"time" value |> Yaml.Util.to_string_exn in
-  let description = map_optional_field_exn ~key:"description" ~f:Yaml.Util.to_string_exn value in
-  let extended = map_optional_field_exn ~key:"extended" ~f:Yaml.Util.to_string_exn value in
-  let tags = get_field ~key:"tags" value |> Yaml.Util.to_string_exn in
-  let tag = Str.split (Str.regexp "[ \t]+") tags in
-  let hash = map_optional_field_exn ~key:"hash" ~f:Yaml.Util.to_string_exn value in
-  let shared = get_field ~key:"shared" value |> Yaml.Util.to_string_exn = "yes" in
-  let toread = get_field ~key:"toread" value |> Yaml.Util.to_string_exn = "yes" in
-  { href; time; description; extended; tag; hash; shared; toread }
+  fold_object_exn accumulate_pinboard_yaml empty value
 
 let from_json content = Ezjsonm.from_string content |> Yaml_ext.map_array_exn t_of_yaml

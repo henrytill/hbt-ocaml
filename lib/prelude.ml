@@ -43,14 +43,6 @@ module Yaml_ext = struct
     | None -> raise (Missing_field key)
     | Some v -> v
 
-  let map_optional_field_exn ~key ~f value =
-    let g = function
-      | None -> None
-      | Some (`String "") -> None
-      | Some other -> Some (f other)
-    in
-    g (Yaml.Util.find_exn key value)
-
   let map_array_exn f = function
     | `A items -> List.map f items
     | _ -> raise (Yaml.Util.Value_error "Expected a value array")
