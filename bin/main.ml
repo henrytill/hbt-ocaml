@@ -1,6 +1,8 @@
 open Cmdliner
 open Hbt
 
+exception Missing_output_specification
+
 module Args = struct
   type t = {
     input_format : Data.input option;
@@ -17,7 +19,7 @@ end
 
 let detect_input_format file =
   match Data.detect_input_format file with
-  | None -> invalid_arg (Format.sprintf "No parser for extension: %s" (Filename.extension file))
+  | None -> raise (Data.Unsupported_file_format (Filename.extension file))
   | Some format -> format
 
 let read_file file =
@@ -52,7 +54,7 @@ let print_collection (file : string) (args : Args.t) (collection : Collection.t)
       |> String.concat "\n"
     else
       match args.output_format with
-      | None -> failwith "Must specify an output format (-t) or analysis flag (--info, --list-tags)"
+      | None -> raise Missing_output_specification
       | Some format -> Data.format format collection
   in
   write_output output args.output

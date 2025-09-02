@@ -77,6 +77,8 @@ module Label_map = Map.Make (Label)
 module Time = struct
   type t = float * Unix.tm
 
+  exception Invalid_month_name of string
+
   let empty =
     let t = 0.0 in
     (t, Unix.gmtime t)
@@ -94,7 +96,7 @@ module Time = struct
     | "October" -> 9
     | "November" -> 10
     | "December" -> 11
-    | _ -> invalid_arg "Time.int_of_month: invalid month name"
+    | month -> raise (Invalid_month_name month)
 
   let parse_date s =
     Scanf.sscanf s "%s %d, %d" (fun month day year -> (int_of_month month, day, year))

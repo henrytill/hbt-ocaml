@@ -1,6 +1,8 @@
 open Prelude
 module Attrs = Markup_ext.Attrs
 
+exception Unexpected_xml_element of string
+
 type t = {
   href : string;
   time : string;
@@ -91,7 +93,7 @@ let from_xml content =
     | None -> continue := false
     | Some (`Start_element ((_, "post"), attrs)) -> acc := t_of_attrs attrs :: !acc
     | Some (`Start_element ((_, "posts"), _)) -> ()
-    | Some (`Start_element ((_, s), _)) -> failwith ("unexpected Start_element: " ^ s)
+    | Some (`Start_element ((_, s), _)) -> raise (Unexpected_xml_element s)
     | Some _ -> ()
   done;
   !acc

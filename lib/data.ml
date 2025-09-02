@@ -1,3 +1,6 @@
+exception Unsupported_file_format of string
+exception Yaml_conversion_error of string
+
 type _ t =
   | Json : [ `Input ] t
   | Xml : [ `Input ] t
@@ -48,7 +51,7 @@ let format (format : output) : Collection.t -> string =
     let yaml = Collection.yaml_of_t collection in
     match Yaml.to_string ~len yaml with
     | Ok s -> s
-    | Error (`Msg e) -> failwith e
+    | Error (`Msg e) -> raise (Yaml_conversion_error e)
   in
   match format with
   | Html -> Collection.to_html
