@@ -72,8 +72,8 @@ let accumulate_pinboard_attr (pinboard : t)
   | "description" when value <> "" -> { pinboard with description = Some value }
   | "extended" when value <> "" -> { pinboard with extended = Some value }
   | "tag" when value <> "" ->
-      let tag_list = Str.split (Str.regexp "[ \t]+") value in
-      { pinboard with tag = tag_list }
+      let tag = Str.split (Str.regexp "[ \t]+") value in
+      { pinboard with tag }
   | "hash" when value <> "" -> { pinboard with hash = Some value }
   | "shared" -> { pinboard with shared = value = "yes" }
   | "toread" -> { pinboard with toread = value = "yes" }
