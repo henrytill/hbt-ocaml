@@ -571,55 +571,50 @@ module Template_entity = struct
 end
 
 module Netscape = struct
-  module Attrs = Prelude.Markup_ext.Attrs
+  open Prelude
+  module Attrs = Markup_ext.Attrs
 
-  let parse_timestamp_opt (attrs : Attrs.t) (key : string) : Time.t option =
-    match Attrs.get_opt key attrs with
-    | Some timestamp_str when timestamp_str <> "" ->
-        let timestamp = Float.of_string timestamp_str in
-        Some (timestamp, Unix.gmtime timestamp)
-    | _ -> None
-
-  let parse_timestamp (attrs : Attrs.t) (key : string) : Time.t =
-    match parse_timestamp_opt attrs key with
+  let parse_timestamp (value : string) : Time.t =
+    match Float.of_string_opt value with
     | None -> Time.empty
-    | Some time -> time
+    | Some timestamp -> (timestamp, Unix.gmtime timestamp)
 
-  let create_bookmark (folder_labels : string list) (attrs : Attrs.t) (description : string option)
-      (extended : string option) : Entity.t =
-    let href = Attrs.get "href" attrs in
-    let uri = Uri.of_string href in
-    let created_at = parse_timestamp attrs "add_date" in
-    let last_modified = parse_timestamp_opt attrs "last_modified" in
-    let last_visited_at = parse_timestamp_opt attrs "last_visit" in
-    let tag_string = Attrs.get "tags" attrs in
-    let tag = if tag_string = "" then [] else Str.split (Str.regexp "[,]+") tag_string in
-    let filtered_tags = List.filter (fun t -> t <> "toread") tag in
-    let label_strings = filtered_tags @ folder_labels in
-    let labels = Label_set.of_list (List.map Label.of_string label_strings) in
-    let extended = Option.map Extended.of_string extended in
-    let shared =
-      match Attrs.get_opt "private" attrs with
-      | None -> true
-      | Some "1" -> false
-      | Some "0" -> true
-      | Some "" -> true
-      | Some _ -> true
-    in
-    let to_read = Attrs.get "toread" attrs = "1" in
-    let is_feed =
-      match Attrs.get_opt "feed" attrs with
-      | Some "true" -> true
-      | _ -> false
-    in
-    let base_entity = Entity.make uri created_at (Option.map Name.of_string description) labels in
-    let updated_at = Option.to_list last_modified in
-    { base_entity with updated_at; extended; shared; to_read; last_visited_at; is_feed }
+  let accumulate_entity_attr (entity : Entity.t)
+      (((_namespace, key), value) : (string * string) * string) : Entity.t =
+    let open Entity in
+    match String.lowercase_ascii key with
+    | "href" -> { entity with uri = Uri.canonicalize (Uri.of_string value) }
+    | "add_date" -> { entity with created_at = parse_timestamp value }
+    | "last_modified" when value <> "" ->
+        let time = parse_timestamp value in
+        { entity with updated_at = [ time ] }
+    | "last_visit" when value <> "" ->
+        let time = parse_timestamp value in
+        { entity with last_visited_at = Some time }
+    | "tags" when value <> "" ->
+        let tag_list = Str.split (Str.regexp "[,]+") value in
+        let filtered = List.filter (( <> ) "toread") tag_list in
+        let labels = Label_set.of_list (List.map Label.of_string filtered) in
+        let to_read = List.mem "toread" tag_list in
+        { entity with labels; to_read }
+    | "private" -> { entity with shared = value <> "1" }
+    | "toread" -> { entity with to_read = value = "1" }
+    | "feed" -> { entity with is_feed = value = "true" }
+    | _ -> entity
 
-  let add_pending (collection : t) (folder_stack : string list) (attrs : Attrs.t)
-      (bookmark_description : string option) (extended : string option) : unit =
-    let entity = create_bookmark folder_stack attrs bookmark_description extended in
-    ignore (upsert collection entity)
+  let create_entity (attributes : Attrs.t) (maybe_description : string option)
+      (folder_stack : string list) (maybe_extended : string option) : Entity.t =
+    let entity = Entity.{ empty with shared = true } in
+    let entity = List.fold_left accumulate_entity_attr entity attributes in
+    let labels = Label_set.of_list (List.map Label.of_string folder_stack) in
+    let labels = Label_set.union entity.labels labels in
+    let names =
+      match maybe_description with
+      | None -> Name_set.empty
+      | Some desc -> Name_set.singleton (Name.of_string desc)
+    in
+    let extended = Option.map Extended.of_string maybe_extended in
+    { entity with labels; names; extended }
 
   let element_of_string = function
     | "h3" -> `H3
@@ -630,46 +625,46 @@ module Netscape = struct
     | name -> `Other name
 
   let from_html content =
+    let collection = create () in
+    let maybe_description = ref None in
+    let maybe_extended = ref None in
+    let attributes = ref [] in
+    let folder_stack = ref [] in
+    let waiting_for = ref `Nothing in
+
+    let add_pending () =
+      let entity = create_entity !attributes !maybe_description !folder_stack !maybe_extended in
+      ignore (upsert collection entity);
+      attributes := [];
+      maybe_description := None;
+      maybe_extended := None
+    in
+
     let stream = Markup.string content in
     let html = Markup.parse_html stream in
     let signals = Markup.signals html in
 
-    let collection = create () in
-    let bookmark_attrs = ref None in
-    let bookmark_description = ref None in
-    let waiting_for = ref `Nothing in
     let element_stack = ref [] in
-    let folder_stack = ref [] in
     let continue = ref true in
 
     while !continue do
       match Markup.next signals with
       | None ->
-          assert (Option.is_none !bookmark_attrs);
+          assert (Attrs.is_empty !attributes);
           continue := false
       | Some (`Start_element ((_, name), _)) when element_of_string name = `H3 ->
           element_stack := `H3 :: !element_stack;
           waiting_for := `Folder_name
       | Some (`Start_element ((_, name), _)) when element_of_string name = `Dt ->
           element_stack := `Dt :: !element_stack;
-          begin
-            (* If we have a previous bookmark without extended description, create it now *)
-            match !bookmark_attrs with
-            | None -> ()
-            | Some attrs ->
-                add_pending collection !folder_stack attrs !bookmark_description None;
-                bookmark_attrs := None;
-                bookmark_description := None
-          end
+          unless (Attrs.is_empty !attributes) add_pending
       | Some (`Start_element ((_, name), attrs)) when element_of_string name = `A ->
           element_stack := `A :: !element_stack;
-          bookmark_attrs := Some attrs;
+          attributes := attrs;
           waiting_for := `Bookmark_description
-      | Some (`Start_element ((_, name), _))
-        when element_of_string name = `Dd && Option.is_some !bookmark_attrs ->
-          (* DD elements contain extended descriptions and should only be processed
-             when we have pending bookmark_attrs from a previous DT>A sequence *)
+      | Some (`Start_element ((_, name), _)) when element_of_string name = `Dd ->
           element_stack := `Dd :: !element_stack;
+          let@ () = unless (Attrs.is_empty !attributes) in
           waiting_for := `Extended_description
       | Some (`Start_element ((_, name), _)) ->
           element_stack := element_of_string name :: !element_stack
@@ -680,18 +675,13 @@ module Netscape = struct
               folder_stack := folder_name :: !folder_stack;
               waiting_for := `Nothing
           | `Bookmark_description ->
-              bookmark_description := Some (String.trim (String.concat String.empty xs));
+              let description = String.trim (String.concat String.empty xs) in
+              maybe_description := Some description;
               waiting_for := `Nothing
           | `Extended_description ->
-              begin
-                match !bookmark_attrs with
-                | None -> ()
-                | Some attrs ->
-                    let extended = Some (String.trim (String.concat String.empty xs)) in
-                    add_pending collection !folder_stack attrs !bookmark_description extended;
-                    bookmark_attrs := None;
-                    bookmark_description := None
-              end;
+              let extended = String.trim (String.concat String.empty xs) in
+              maybe_extended := Some extended;
+              unless (Attrs.is_empty !attributes) add_pending;
               waiting_for := `Nothing
           | `Nothing -> ()
         end
@@ -700,18 +690,11 @@ module Netscape = struct
           | [] -> ()
           | `Dl :: rest ->
               element_stack := rest;
-              begin
-                match !bookmark_attrs with
-                | None -> ()
-                | Some attrs ->
-                    add_pending collection !folder_stack attrs !bookmark_description None;
-                    bookmark_attrs := None;
-                    bookmark_description := None
-              end;
+              unless (Attrs.is_empty !attributes) add_pending;
               folder_stack := List.drop 1 !folder_stack
           | _ :: rest -> element_stack := rest
         end
-      | Some _ -> () (* Skip other nodes *)
+      | Some _ -> ()
     done;
 
     collection

@@ -1,4 +1,5 @@
-module Yaml_ext = Prelude.Yaml_ext
+open Prelude
+module Attrs = Markup_ext.Attrs
 
 type t = {
   href : string;
@@ -10,6 +11,18 @@ type t = {
   shared : bool;
   toread : bool;
 }
+
+let empty =
+  {
+    href = "";
+    time = "";
+    description = None;
+    extended = None;
+    tag = [];
+    hash = None;
+    shared = false;
+    toread = false;
+  }
 
 let make ~href ~time ?(description = None) ?(extended = None) ?(tag = []) ?(hash = None)
     ?(shared = false) ?(toread = false) () =
@@ -69,18 +82,22 @@ end
 
 let tags = List.fold_left (fun acc post -> Tags.(union acc (of_list post.tag))) Tags.empty
 
-module Attrs = Prelude.Markup_ext.Attrs
+let accumulate_pinboard_attr (pinboard : t)
+    (((_namespace, key), value) : (string * string) * string) : t =
+  match String.lowercase_ascii key with
+  | "href" -> { pinboard with href = value }
+  | "time" -> { pinboard with time = value }
+  | "description" when value <> "" -> { pinboard with description = Some value }
+  | "extended" when value <> "" -> { pinboard with extended = Some value }
+  | "tag" when value <> "" ->
+      let tag_list = Str.split (Str.regexp "[ \t]+") value in
+      { pinboard with tag = tag_list }
+  | "hash" when value <> "" -> { pinboard with hash = Some value }
+  | "shared" -> { pinboard with shared = value = "yes" }
+  | "toread" -> { pinboard with toread = value = "yes" }
+  | _ -> pinboard
 
-let t_of_attrs (attrs : Attrs.t) : t =
-  let href = Attrs.get "href" attrs in
-  let time = Attrs.get "time" attrs in
-  let description = Attrs.get_opt "description" attrs in
-  let extended = Attrs.get_opt "extended" attrs in
-  let tag = Str.split (Str.regexp "[ \t]+") (Attrs.get "tag" attrs) in
-  let hash = Attrs.get_opt "hash" attrs in
-  let shared = Attrs.get "shared" attrs = "yes" in
-  let toread = Attrs.get "toread" attrs = "yes" in
-  { href; time; description; extended; tag; hash; shared; toread }
+let t_of_attrs (attrs : Attrs.t) : t = List.fold_left accumulate_pinboard_attr empty attrs
 
 let from_xml content =
   let stream = Markup.string content in
@@ -88,7 +105,6 @@ let from_xml content =
   let signals = Markup.signals xml in
   let continue = ref true in
   let acc = ref [] in
-
   while !continue do
     match Markup.next signals with
     | None -> continue := false
@@ -97,7 +113,6 @@ let from_xml content =
     | Some (`Start_element ((_, s), _)) -> failwith ("unexpected Start_element: " ^ s)
     | Some _ -> ()
   done;
-
   !acc
 
 let t_of_yaml (value : Yaml.value) : t =

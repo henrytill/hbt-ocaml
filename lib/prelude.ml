@@ -6,6 +6,10 @@ let option_of_string s =
   else
     Some s
 
+let unless (cond : bool) (f : unit -> 'a) : 'a =
+  if not cond then
+    f ()
+
 module List_ext = struct
   let singleton x = [ x ]
 
@@ -18,13 +22,7 @@ module Markup_ext = struct
   module Attrs = struct
     type t = ((string * string) * string) list
 
-    let get_opt (k : string) (attrs : t) : string option =
-      let foo = List.assoc_opt (String.empty, k) attrs in
-      match foo with
-      | Some "" -> None
-      | other -> other
-
-    let get (k : string) (attrs : t) : string = Option.value ~default:String.empty (get_opt k attrs)
+    let is_empty (attrs : t) = List.is_empty attrs
   end
 end
 
