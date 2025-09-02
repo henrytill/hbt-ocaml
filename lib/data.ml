@@ -1,8 +1,3 @@
-(** Data format type system with phantom types for compile-time safety.
-
-    This module provides type-safe format handling using GADTs with direct polymorphic variant
-    annotations, preventing format direction misuse at compile time. *)
-
 type _ t =
   | Json : [ `Input ] t
   | Xml : [ `Input ] t

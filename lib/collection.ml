@@ -101,18 +101,15 @@ module Time = struct
 
   let parse_iso8601 s =
     try
-      (* Try to parse ISO 8601ish format *)
       let f year month day hour min sec = (year, month - 1, day, hour, min, sec) in
       Scanf.sscanf s "%d-%d-%dT%d:%d:%dZ" f
     with _ ->
-      (* Fallback to a date without time *)
       let f year month day = (year, month - 1, day, 0, 0, 0) in
       Scanf.sscanf s "%d-%d-%d" f
 
   let of_string (s : string) : t =
     let open Unix in
     try
-      (* Try ISO 8601ish format first (for Pinboard XML) *)
       let year, tm_mon, tm_mday, tm_hour, tm_min, tm_sec = parse_iso8601 s in
       let tm_year = year - 1900 in
       let tm =
@@ -130,7 +127,6 @@ module Time = struct
       in
       mktime tm
     with _ ->
-      (* Fallback to original format "Month Day, Year" *)
       let tm_mon, tm_mday, year = parse_date s in
       let tm_year = year - 1900 in
       let tm =
@@ -369,7 +365,6 @@ module Uri_hashtbl = Hashtbl.Make (struct
   let equal = Uri.equal
 
   let hash uri =
-    (* force thunk *)
     let _ = Uri.query uri in
     Hashtbl.hash uri
 end)

@@ -102,7 +102,6 @@ let get_dest (ld : Link_definition.t) (kf : unit -> 'a) (ks : string -> 'a) : 'a
   | _ -> kf ()
 
 let rec extract_string (inlines : Inline.t list) : string =
-  (* TODO: handle more cases, rewrite as loop *)
   let rec go acc = function
     | [] -> String.concat String.empty (List.rev acc)
     | Inline.Code_span (s, _) :: xs ->
@@ -110,7 +109,7 @@ let rec extract_string (inlines : Inline.t list) : string =
         go (a :: acc) xs
     | Inline.Inlines (is, _) :: xs ->
         let a = extract_string is in
-        go (a :: acc) xs (* ugh *)
+        go (a :: acc) xs
     | Inline.Text (t, _) :: xs -> go (t :: acc) xs
     | _ :: xs -> go acc xs
   in

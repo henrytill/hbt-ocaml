@@ -1,7 +1,3 @@
-(** Utilities for testing. *)
-
-(** [with_temp_file contents f] creates a temporary file with the given contents and calls [f] with
-    the filename. The file is deleted after [f] returns. *)
 let with_temp_file contents f =
   let filename, oc = Filename.open_temp_file "test-" String.empty in
   try

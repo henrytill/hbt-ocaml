@@ -1,5 +1,3 @@
-(* https://dune.readthedocs.io/en/stable/howto/rule-generation.html#using-dynamic-include *)
-
 let generate_rules base =
   let is_problematic = Test_filter.is_problematic_base ~dir:"html" ~ext:".html" base in
   let enabled_if =

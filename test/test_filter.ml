@@ -1,5 +1,3 @@
-(** Test filtering utilities for handling known conformance issues. *)
-
 let issues_file = "../../../issues"
 
 let read_issues_file () =
@@ -15,7 +13,6 @@ let read_issues_file () =
    with End_of_file -> close_in ic);
   List.rev !issues
 
-(** Check if a base filename should be filtered out due to known conformance issues *)
 let is_problematic_base ~dir ~ext base =
   let issues = read_issues_file () in
   let full_path = dir ^ "/" ^ base ^ ".input" ^ ext in
