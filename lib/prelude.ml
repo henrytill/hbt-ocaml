@@ -24,6 +24,14 @@ module List_ext = struct
   let uncons = function
     | [] -> (None, [])
     | x :: xs -> (Some x, xs)
+
+  let[@tail_mod_cons] rec filter_some = function
+    | [] -> []
+    | x :: l -> begin
+        match x with
+        | None -> filter_some l
+        | Some v -> v :: filter_some l
+      end
 end
 
 module Markup_ext = struct

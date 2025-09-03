@@ -620,6 +620,8 @@ module Netscape = struct
     collection
 
   module Template_entity = struct
+    open Prelude
+
     type t = {
       uri : string;
       title : string;
@@ -683,8 +685,7 @@ module Netscape = struct
         ]
       in
       let optional_fields =
-        List.filter_map
-          Fun.id
+        List_ext.filter_some
           [
             Option.map (fun v -> ("lastModified", `String v)) template_entity.last_modified;
             Option.map (fun v -> ("tags", `String v)) template_entity.tags;
