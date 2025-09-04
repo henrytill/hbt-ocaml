@@ -47,6 +47,7 @@ let print_collection (file : string) (args : Args.t) (collection : Collection.t)
     if args.info then
       Printf.sprintf "%s: %d entities\n" file (length collection)
     else if args.list_tags then
+      let open Entity in
       entities collection
       |> Array.fold_left (fun acc et -> Label_set.union acc (Entity.labels et)) Label_set.empty
       |> Label_set.elements

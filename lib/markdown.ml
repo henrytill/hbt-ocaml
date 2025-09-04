@@ -3,10 +3,10 @@ open Cmarkit
 
 module Fold_state = struct
   type t = {
-    name : Collection.Name.t option;
-    time : Collection.Time.t option;
+    name : Entity.Name.t option;
+    time : Entity.Time.t option;
     uri : Uri.t option;
-    labels : Collection.Label.t list;
+    labels : Entity.Label.t list;
     maybe_parent : Collection.Id.t option;
     parents : Collection.Id.t list;
   }
@@ -18,10 +18,10 @@ module Fold_state = struct
     let open Format in
     let none fmt () = fprintf fmt "None" in
     let pp_sep fmt () = fprintf fmt ";@;<1 2>" in
-    let pp_print_name = pp_print_option ~none Collection.Name.pp in
-    let pp_print_time = pp_print_option ~none Collection.Time.pp in
+    let pp_print_name = pp_print_option ~none Entity.Name.pp in
+    let pp_print_time = pp_print_option ~none Entity.Time.pp in
     let pp_print_uri = pp_print_option ~none Uri.pp in
-    let pp_print_labels = pp_print_list ~pp_sep Collection.Label.pp in
+    let pp_print_labels = pp_print_list ~pp_sep Entity.Label.pp in
     let pp_print_maybe_parent = pp_print_option ~none Collection.Id.pp in
     let pp_print_parents = pp_print_list ~pp_sep Collection.Id.pp in
     fprintf fmt "@[<hv>{";
@@ -36,8 +36,8 @@ module Fold_state = struct
   let to_entity st =
     match (st.uri, st.time) with
     | Some uri, Some time ->
-        let labels = Collection.Label_set.of_list st.labels in
-        Some (Collection.Entity.make uri time st.name labels)
+        let labels = Entity.Label_set.of_list st.labels in
+        Some (Entity.make uri time st.name labels)
     | _ -> None
 end
 
@@ -52,14 +52,14 @@ let get_heading_text (h : Block.Heading.t) (kf : unit -> 'a Folder.result)
 let block m ((c, st) : Collection.t * Fold_state.t) = function
   | Block.Heading (heading, _) when Block.Heading.level heading = 1 ->
       let@ heading_text = get_heading_text heading kdefault in
-      let time = Some (Collection.Time.of_string heading_text) in
+      let time = Some (Entity.Time.of_string heading_text) in
       let st = { st with time; maybe_parent = None; labels = [] } in
       Folder.ret (c, st)
   | Block.Heading (heading, _) ->
       let heading_level = Block.Heading.level heading in
       let labels = List.take (heading_level - 2) st.labels in
       let@ heading_text = get_heading_text heading kdefault in
-      let labels = Collection.Label.of_string heading_text :: labels in
+      let labels = Entity.Label.of_string heading_text :: labels in
       let st = { st with labels } in
       Folder.ret (c, st)
   | Block.List (list, _) ->
@@ -128,7 +128,7 @@ let handle_link (link : Inline.Link.t) ((c, st) : Collection.t * Fold_state.t) =
   let@ link_dest = get_dest link_def kdefault in
   let link_text = get_text link in
   let uri = Some (Uri.of_string link_dest) in
-  let name = Option.map Collection.Name.of_string link_text in
+  let name = Option.map Entity.Name.of_string link_text in
   let st = { st with uri; name } in
   save_entity c st
 

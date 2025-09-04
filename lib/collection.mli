@@ -9,94 +9,6 @@ module Id : sig
   val yaml_of_t : t -> Yaml.value
 end
 
-module Name : sig
-  type t
-
-  val of_string : string -> t
-  val to_string : t -> string
-  val equal : t -> t -> bool
-  val compare : t -> t -> int
-  val pp : Format.formatter -> t -> unit
-  val t_of_yaml : Yaml.value -> t
-  val yaml_of_t : t -> Yaml.value
-end
-
-module Name_set : sig
-  include Set.S with type elt = Name.t
-
-  val pp : Format.formatter -> t -> unit
-  val t_of_yaml : Yaml.value -> t
-  val yaml_of_t : t -> Yaml.value
-end
-
-module Label : sig
-  type t
-
-  val of_string : string -> t
-  val to_string : t -> string
-  val equal : t -> t -> bool
-  val compare : t -> t -> int
-  val pp : Format.formatter -> t -> unit
-  val t_of_yaml : Yaml.value -> t
-  val yaml_of_t : t -> Yaml.value
-end
-
-module Label_set : sig
-  include Set.S with type elt = Label.t
-
-  val pp : Format.formatter -> t -> unit
-  val t_of_yaml : Yaml.value -> t
-  val yaml_of_t : t -> Yaml.value
-end
-
-module Label_map : Map.S with type key = Label.t
-
-module Time : sig
-  type t
-
-  val of_string : string -> t
-  val equal : t -> t -> bool
-  val compare : t -> t -> int
-  val pp : Format.formatter -> t -> unit
-  val t_of_yaml : Yaml.value -> t
-  val yaml_of_t : t -> Yaml.value
-end
-
-module Extended : sig
-  type t
-
-  val of_string : string -> t
-  val to_string : t -> string
-  val equal : t -> t -> bool
-  val compare : t -> t -> int
-  val pp : Format.formatter -> t -> unit
-  val t_of_yaml : Yaml.value -> t
-  val yaml_of_t : t -> Yaml.value
-end
-
-module Entity : sig
-  type t
-
-  val make : Uri.t -> Time.t -> Name.t option -> Label_set.t -> t
-  val of_pinboard : Pinboard.t -> t
-  val equal : t -> t -> bool
-  val pp : Format.formatter -> t -> unit
-  val update : Time.t -> Name_set.t -> Label_set.t -> t -> t
-  val absorb : t -> t -> t
-  val uri : t -> Uri.t
-  val created_at : t -> Time.t
-  val updated_at : t -> Time.t list
-  val names : t -> Name_set.t
-  val labels : t -> Label_set.t
-  val extended : t -> Extended.t option
-  val shared : t -> bool
-  val to_read : t -> bool
-  val last_visited_at : t -> Time.t option
-  val is_feed : t -> bool
-  val t_of_yaml : Yaml.value -> t
-  val yaml_of_t : t -> Yaml.value
-end
-
 type t
 
 val create : unit -> t
@@ -114,7 +26,7 @@ val edges : t -> Id.t -> Id.t array
 val entities : t -> Entity.t array
 val t_of_yaml : Yaml.value -> t
 val yaml_of_t : t -> Yaml.value
-val map_labels : (Label_set.t -> Label_set.t) -> t -> t
+val map_labels : (Entity.Label_set.t -> Entity.Label_set.t) -> t -> t
 val update_labels : Yaml.value -> t -> t
 val to_html : t -> string
 val from_html : string -> t

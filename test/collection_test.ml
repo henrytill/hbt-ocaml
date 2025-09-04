@@ -1,10 +1,11 @@
+open Hbt
 open Hbt.Collection
 
 let testable_id = Alcotest.testable Id.pp Id.equal
 let testable_uri = Alcotest.testable Uri.pp Uri.equal
-let testable_time = Alcotest.testable Time.pp Time.equal
-let testable_name_set = Alcotest.testable Name_set.pp Name_set.equal
-let testable_label_set = Alcotest.testable Label_set.pp Label_set.equal
+let testable_time = Alcotest.testable Entity.Time.pp Entity.Time.equal
+let testable_name_set = Alcotest.testable Entity.Name_set.pp Entity.Name_set.equal
+let testable_label_set = Alcotest.testable Entity.Label_set.pp Entity.Label_set.equal
 let testable_entity = Alcotest.testable Entity.pp Entity.equal
 let same_uri = "same uri"
 let same_created_at = "same created_at"
@@ -16,6 +17,7 @@ let same_entity = "same entity"
 let same_edges = "same edges"
 
 let test_entity_equal () =
+  let open Entity in
   let uri = Uri.of_string "https://foo.org" in
   let name = Name.of_string "foo" in
   let created = Time.of_string "September 2, 2024" in
@@ -25,6 +27,7 @@ let test_entity_equal () =
   Alcotest.(check testable_entity) same_entity a b
 
 let test_entity_update () =
+  let open Entity in
   let uri = Uri.of_string "https://foo.org" in
   let name = Name.of_string "foo" in
   let created = Time.of_string "September 2, 2024" in
@@ -47,6 +50,7 @@ let test_entity_update () =
     (Entity.labels a)
 
 let test_entity_absorb () =
+  let open Entity in
   let uri = Uri.of_string "https://foo.org" in
   let name = Name.of_string "foo" in
   let created_a = Time.of_string "September 4, 2024" in
@@ -66,6 +70,7 @@ let test_entity_absorb () =
     (Entity.labels a)
 
 let test_collection_upsert () =
+  let open Entity in
   let uri = Uri.of_string "https://foo.org" in
   let name = Name.of_string "foo" in
   let created_a = Time.of_string "September 4, 2024" in
@@ -91,6 +96,7 @@ let test_collection_upsert () =
     (Entity.labels e)
 
 let test_collection_add_edge () =
+  let open Entity in
   let uri_a = Uri.of_string "https://foo.org" in
   let uri_b = Uri.of_string "https://foo.net" in
   let created_a = Time.of_string "September 4, 2024" in

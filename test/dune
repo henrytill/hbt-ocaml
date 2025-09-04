@@ -2,12 +2,6 @@
  (deps %{bin:hbt})
  (package hbt))
 
-(mdx
- (deps
-  (package hbt-core))
- (package hbt-core)
- (libraries unix))
-
 (test
  (name collection_test)
  (modules collection_test)
