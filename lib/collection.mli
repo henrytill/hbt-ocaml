@@ -28,5 +28,3 @@ val t_of_yaml : Yaml.value -> t
 val yaml_of_t : t -> Yaml.value
 val map_labels : (Entity.Label_set.t -> Entity.Label_set.t) -> t -> t
 val update_labels : Yaml.value -> t -> t
-val to_html : t -> string
-val from_html : string -> t

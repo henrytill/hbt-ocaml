@@ -43,7 +43,7 @@ let parse (format : input) (content : string) : Collection.t =
   | Json -> Pinboard.from_json content |> collection_of_posts
   | Xml -> Pinboard.from_xml content |> collection_of_posts
   | Markdown -> Markdown.parse content
-  | Html -> Collection.from_html content
+  | Html -> Html.collection_of_string content
 
 let format (format : output) : Collection.t -> string =
   let to_yaml collection =
@@ -54,5 +54,5 @@ let format (format : output) : Collection.t -> string =
     | Error (`Msg e) -> raise (Yaml_conversion_error e)
   in
   match format with
-  | Html -> Collection.to_html
+  | Html -> Html.collection_to_string
   | Yaml -> to_yaml
