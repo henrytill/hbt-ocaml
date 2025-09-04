@@ -2,8 +2,6 @@
 
 (subst disabled)
 
-(using mdx 0.4)
-
 (name hbt)
 
 (version 0.1.0)
@@ -40,10 +38,6 @@
    (>= 3.3.0))
   (markup
    (>= 1.0.3))
-  (mdx
-   (and
-    :with-test
-    (>= 2.4.1)))
   (semver
    (>= 0.2.1))
   (uri
