@@ -1,7 +1,5 @@
 (lang dune 3.17)
 
-(subst disabled)
-
 (name hbt)
 
 (version 0.1.0)
