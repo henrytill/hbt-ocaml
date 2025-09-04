@@ -551,7 +551,7 @@ module Netscape = struct
     let collection = create () in
     let maybe_description = ref None in
     let maybe_extended = ref None in
-    let attributes = ref [] in
+    let attributes = ref Attrs.empty in
     let folder_stack = Stack.create () in
     let waiting_for = ref `Nothing in
 
@@ -559,7 +559,7 @@ module Netscape = struct
       let folder_labels = Stack.fold mk_labels Label_set.empty folder_stack in
       let entity = create_entity !attributes !maybe_description folder_labels !maybe_extended in
       ignore (upsert collection entity);
-      attributes := [];
+      attributes := Attrs.empty;
       maybe_description := None;
       maybe_extended := None
     in

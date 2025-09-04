@@ -39,6 +39,7 @@ module Markup_ext = struct
     type elt = (string * string) * string
     type t = elt list
 
+    let empty = []
     let is_empty (attrs : t) = List.is_empty attrs
   end
 end
