@@ -33,15 +33,9 @@ let detect_input_format (filename : string) : input option =
   | _ -> None
 
 let parse (format : input) (content : string) : Collection.t =
-  let collection_of_posts (posts : Pinboard.t list) : Collection.t =
-    let ret = Collection.create () in
-    let sorted = List.sort (fun a b -> String.compare (Pinboard.time a) (Pinboard.time b)) posts in
-    List.iter (fun post -> ignore Collection.(insert ret (Entity.of_pinboard post))) sorted;
-    ret
-  in
   match format with
-  | Json -> Pinboard.from_json content |> collection_of_posts
-  | Xml -> Pinboard.from_xml content |> collection_of_posts
+  | Json -> Collection.of_posts (Pinboard.from_json content)
+  | Xml -> Collection.of_posts (Pinboard.from_xml content)
   | Markdown -> Markdown.parse content
   | Html -> Html.collection_of_string content
 
