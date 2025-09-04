@@ -364,16 +364,10 @@ module Html = struct
     | "feed" -> { entity with is_feed = value = "true" }
     | _ -> entity
 
-  let create_entity (attributes : Attrs.t) (maybe_description : string option)
-      (folder_labels : Label_set.t) (maybe_extended : string option) : t =
+  let entity_of_attrs (attributes : Attrs.t) (names : Name_set.t) (folder_labels : Label_set.t)
+      (extended : Extended.t option) : t =
     let entity = { empty with shared = true } in
     let entity = List.fold_left accumulate_entity_attr entity attributes in
     let labels = Label_set.union entity.labels folder_labels in
-    let names =
-      match maybe_description with
-      | None -> Name_set.empty
-      | Some desc -> Name_set.singleton (Name.of_string desc)
-    in
-    let extended = Option.map Extended.of_string maybe_extended in
-    { entity with labels; names; extended }
+    { entity with names; labels; extended }
 end

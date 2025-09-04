@@ -20,9 +20,13 @@ let collection_of_string content =
   let waiting_for = ref `Nothing in
 
   let add_pending () =
-    let folder_labels = Stack.fold mk_labels Entity.Label_set.empty folder_stack in
     let entity =
-      Entity.Html.create_entity !attributes !maybe_description folder_labels !maybe_extended
+      let open Entity in
+      let some s = Name_set.singleton (Name.of_string s) in
+      let names = Option.fold ~none:Name_set.empty ~some !maybe_description in
+      let folder_labels = Stack.fold mk_labels Entity.Label_set.empty folder_stack in
+      let extended = Option.map Extended.of_string !maybe_extended in
+      Html.entity_of_attrs !attributes names folder_labels extended
     in
     ignore (Collection.upsert collection entity);
     attributes := Attrs.empty;

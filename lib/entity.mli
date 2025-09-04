@@ -90,7 +90,5 @@ val yaml_of_t : t -> Yaml.value
 module Html : sig
   module Attrs = Prelude.Markup_ext.Attrs
 
-  val parse_timestamp : string -> Time.t
-  val accumulate_entity_attr : t -> Attrs.elt -> t
-  val create_entity : Attrs.t -> string option -> Label_set.t -> string option -> t
+  val entity_of_attrs : Attrs.t -> Name_set.t -> Label_set.t -> Extended.t option -> t
 end
