@@ -364,8 +364,7 @@ module Html = struct
     | "feed" -> { entity with is_feed = value = "true" }
     | _ -> entity
 
-  let entity_of_attrs (attributes : Attrs.t) (names : Name_set.t) (folder_labels : Label_set.t)
-      (extended : Extended.t option) : t =
+  let entity_of_attrs attributes names folder_labels extended : t =
     let entity = { empty with shared = true } in
     let entity = List.fold_left accumulate_entity_attr entity attributes in
     let labels = Label_set.union entity.labels folder_labels in
