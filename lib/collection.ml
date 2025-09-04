@@ -525,11 +525,10 @@ module Netscape = struct
     | _ -> entity
 
   let create_entity (attributes : Attrs.t) (maybe_description : string option)
-      (folder_stack : string list) (maybe_extended : string option) : Entity.t =
+      (folder_labels : Label_set.t) (maybe_extended : string option) : Entity.t =
     let entity = Entity.{ empty with shared = true } in
     let entity = List.fold_left accumulate_entity_attr entity attributes in
-    let labels = Label_set.of_list (List.map Label.of_string folder_stack) in
-    let labels = Label_set.union entity.labels labels in
+    let labels = Label_set.union entity.labels folder_labels in
     let names =
       match maybe_description with
       | None -> Name_set.empty
@@ -546,16 +545,19 @@ module Netscape = struct
     | "dl" -> `Dl
     | name -> `Other name
 
+  let mk_labels ls s = Label_set.add (Label.of_string s) ls
+
   let from_html content =
     let collection = create () in
     let maybe_description = ref None in
     let maybe_extended = ref None in
     let attributes = ref [] in
-    let folder_stack = ref [] in
+    let folder_stack = Stack.create () in
     let waiting_for = ref `Nothing in
 
     let add_pending () =
-      let entity = create_entity !attributes !maybe_description !folder_stack !maybe_extended in
+      let folder_labels = Stack.fold mk_labels Label_set.empty folder_stack in
+      let entity = create_entity !attributes !maybe_description folder_labels !maybe_extended in
       ignore (upsert collection entity);
       attributes := [];
       maybe_description := None;
@@ -566,7 +568,7 @@ module Netscape = struct
     let html = Markup.parse_html stream in
     let signals = Markup.signals html in
 
-    let element_stack = ref [] in
+    let element_stack = Stack.create () in
     let continue = ref true in
 
     while !continue do
@@ -575,26 +577,25 @@ module Netscape = struct
           assert (Attrs.is_empty !attributes);
           continue := false
       | Some (`Start_element ((_, name), _)) when element_of_string name = `H3 ->
-          element_stack := `H3 :: !element_stack;
+          Stack.push `H3 element_stack;
           waiting_for := `Folder_name
       | Some (`Start_element ((_, name), _)) when element_of_string name = `Dt ->
-          element_stack := `Dt :: !element_stack;
+          Stack.push `Dt element_stack;
           unless (Attrs.is_empty !attributes) add_pending
       | Some (`Start_element ((_, name), attrs)) when element_of_string name = `A ->
-          element_stack := `A :: !element_stack;
+          Stack.push `A element_stack;
           attributes := attrs;
           waiting_for := `Bookmark_description
       | Some (`Start_element ((_, name), _)) when element_of_string name = `Dd ->
-          element_stack := `Dd :: !element_stack;
+          Stack.push `Dd element_stack;
           let@ () = unless (Attrs.is_empty !attributes) in
           waiting_for := `Extended_description
-      | Some (`Start_element ((_, name), _)) ->
-          element_stack := element_of_string name :: !element_stack
+      | Some (`Start_element ((_, name), _)) -> Stack.push (element_of_string name) element_stack
       | Some (`Text xs) -> begin
           match !waiting_for with
           | `Folder_name ->
               let folder_name = String.trim (String.concat String.empty xs) in
-              folder_stack := folder_name :: !folder_stack;
+              Stack.push folder_name folder_stack;
               waiting_for := `Nothing
           | `Bookmark_description ->
               let description = String.trim (String.concat String.empty xs) in
@@ -608,11 +609,10 @@ module Netscape = struct
           | `Nothing -> ()
         end
       | Some `End_element ->
-          let maybe_head, tail = List_ext.uncons !element_stack in
-          element_stack := tail;
+          let maybe_head = Stack.pop_opt element_stack in
           if maybe_head = Some `Dl then begin
             unless (Attrs.is_empty !attributes) add_pending;
-            folder_stack := List_ext.drop1 !folder_stack
+            ignore (Stack.pop_opt folder_stack)
           end
       | Some _ -> ()
     done;
