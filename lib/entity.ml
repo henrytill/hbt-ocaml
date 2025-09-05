@@ -144,16 +144,16 @@ module Extended = struct
 end
 
 type t = {
-  uri : Uri.t;
-  created_at : Time.t;
-  updated_at : Time.t list;
-  names : Name_set.t;
-  labels : Label_set.t;
-  extended : Extended.t option;
-  shared : bool;
-  to_read : bool;
-  last_visited_at : Time.t option;
-  is_feed : bool;
+  mutable uri : Uri.t;
+  mutable created_at : Time.t;
+  mutable updated_at : Time.t list;
+  mutable names : Name_set.t;
+  mutable labels : Label_set.t;
+  mutable extended : Extended.t option;
+  mutable shared : bool;
+  mutable to_read : bool;
+  mutable last_visited_at : Time.t option;
+  mutable is_feed : bool;
 }
 
 let make uri created_at maybe_name labels =
@@ -178,29 +178,21 @@ let make uri created_at maybe_name labels =
     is_feed;
   }
 
-let empty =
-  let uri = Uri.empty in
-  let created_at = Time.empty in
-  let updated_at = [] in
-  let names = Name_set.empty in
-  let labels = Label_set.empty in
-  let extended = None in
-  let shared = false in
-  let to_read = false in
-  let last_visited_at = None in
-  let is_feed = false in
+let fresh () =
   {
-    uri;
-    created_at;
-    updated_at;
-    names;
-    labels;
-    extended;
-    shared;
-    to_read;
-    last_visited_at;
-    is_feed;
+    uri = Uri.empty;
+    created_at = Time.empty;
+    updated_at = [];
+    names = Name_set.empty;
+    labels = Label_set.empty;
+    extended = None;
+    shared = false;
+    to_read = false;
+    last_visited_at = None;
+    is_feed = false;
   }
+
+let empty = fresh ()
 
 let of_pinboard (p : Pinboard.t) : t =
   let open Pinboard in
@@ -260,23 +252,34 @@ let pp fmt e =
   fprintf fmt "@;<1 2>@[is_feed =@ %a@];" pp_print_bool e.is_feed;
   fprintf fmt "@;<1 0>}@]"
 
-let accumulate_entity (entity : t) ((key, value) : string * Yaml.value) : t =
-  match key with
-  | "uri" -> { entity with uri = Uri.of_string (Yaml.Util.to_string_exn value) }
-  | "createdAt" -> { entity with created_at = Time.t_of_yaml value }
-  | "updatedAt" -> { entity with updated_at = Yaml_ext.map_array_exn Time.t_of_yaml value }
-  | "names" -> { entity with names = Name_set.t_of_yaml value }
-  | "labels" -> { entity with labels = Label_set.t_of_yaml value }
-  | "extended" -> { entity with extended = Prelude.option_of_string (Extended.t_of_yaml value) }
-  | "shared" -> { entity with shared = Yaml.Util.to_bool_exn value }
-  | "toRead" -> { entity with to_read = Yaml.Util.to_bool_exn value }
-  | "lastVisitedAt" -> { entity with last_visited_at = Some (Time.t_of_yaml value) }
-  | "isFeed" -> { entity with is_feed = Yaml.Util.to_bool_exn value }
-  | _ -> entity
-
 let t_of_yaml value =
-  let open Yaml_ext in
-  fold_object_exn accumulate_entity empty value
+  let remaining =
+    match value with
+    | `O assoc -> ref assoc
+    | _ -> raise (Yaml.Util.Value_error "Expected an object")
+  in
+  let entity = fresh () in
+  while not (List.is_empty !remaining) do
+    let head_opt, tail = Prelude.List_ext.uncons !remaining in
+    remaining := tail;
+    match head_opt with
+    | Some (key, value) -> begin
+        match key with
+        | "uri" -> entity.uri <- Uri.of_string (Yaml.Util.to_string_exn value)
+        | "createdAt" -> entity.created_at <- Time.t_of_yaml value
+        | "updatedAt" -> entity.updated_at <- Yaml_ext.map_array_exn Time.t_of_yaml value
+        | "names" -> entity.names <- Name_set.t_of_yaml value
+        | "labels" -> entity.labels <- Label_set.t_of_yaml value
+        | "extended" -> entity.extended <- Prelude.option_of_string (Extended.t_of_yaml value)
+        | "shared" -> entity.shared <- Yaml.Util.to_bool_exn value
+        | "toRead" -> entity.to_read <- Yaml.Util.to_bool_exn value
+        | "lastVisitedAt" -> entity.last_visited_at <- Some (Time.t_of_yaml value)
+        | "isFeed" -> entity.is_feed <- Yaml.Util.to_bool_exn value
+        | _ -> ()
+      end
+    | None -> ()
+  done;
+  entity
 
 let yaml_of_t entity =
   let maybe_extended =
@@ -343,30 +346,41 @@ module Html = struct
     | None -> Time.empty
     | Some timestamp -> (timestamp, Unix.gmtime timestamp)
 
-  let accumulate_entity_attr (entity : t) (((_, key), value) : Attrs.elt) : t =
-    match String.lowercase_ascii key with
-    | "href" -> { entity with uri = Uri.canonicalize (Uri.of_string value) }
-    | "add_date" -> { entity with created_at = parse_timestamp value }
-    | "last_modified" when value <> "" ->
-        let time = parse_timestamp value in
-        { entity with updated_at = [ time ] }
-    | "last_visit" when value <> "" ->
-        let time = parse_timestamp value in
-        { entity with last_visited_at = Some time }
-    | "tags" when value <> "" ->
-        let tag_list = Str.split (Str.regexp "[,]+") value in
-        let filtered = List.filter (( <> ) "toread") tag_list in
-        let labels = Label_set.of_list (List.map Label.of_string filtered) in
-        let to_read = entity.to_read || List.mem "toread" tag_list in
-        { entity with labels; to_read }
-    | "private" -> { entity with shared = value <> "1" }
-    | "toread" -> { entity with to_read = value = "1" }
-    | "feed" -> { entity with is_feed = value = "true" }
-    | _ -> entity
-
   let entity_of_attrs attributes names folder_labels extended : t =
-    let entity = { empty with shared = true } in
-    let entity = List.fold_left accumulate_entity_attr entity attributes in
+    let entity = fresh () in
+    entity.shared <- true;
+    let remaining = ref attributes in
+    while not (List.is_empty !remaining) do
+      let head_opt, tail = Prelude.List_ext.uncons !remaining in
+      remaining := tail;
+      match head_opt with
+      | Some ((_, key), value) -> begin
+          match String.lowercase_ascii key with
+          | "href" -> entity.uri <- Uri.canonicalize (Uri.of_string value)
+          | "add_date" -> entity.created_at <- parse_timestamp value
+          | "last_modified" when value <> "" ->
+              let time = parse_timestamp value in
+              entity.updated_at <- [ time ]
+          | "last_visit" when value <> "" ->
+              let time = parse_timestamp value in
+              entity.last_visited_at <- Some time
+          | "tags" when value <> "" ->
+              let tag_list = Str.split (Str.regexp "[,]+") value in
+              let filtered = List.filter (( <> ) "toread") tag_list in
+              let labels = Label_set.of_list (List.map Label.of_string filtered) in
+              let to_read = entity.to_read || List.mem "toread" tag_list in
+              entity.labels <- labels;
+              entity.to_read <- to_read
+          | "private" -> entity.shared <- value <> "1"
+          | "toread" -> entity.to_read <- value = "1"
+          | "feed" -> entity.is_feed <- value = "true"
+          | _ -> ()
+        end
+      | None -> ()
+    done;
     let labels = Label_set.union entity.labels folder_labels in
-    { entity with names; labels; extended }
+    entity.labels <- labels;
+    entity.names <- names;
+    entity.extended <- extended;
+    entity
 end

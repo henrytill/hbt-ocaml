@@ -4,17 +4,17 @@ module Attrs = Markup_ext.Attrs
 exception Unexpected_xml_element of string
 
 type t = {
-  href : string;
-  time : string;
-  description : string option;
-  extended : string option;
-  tag : string list;
-  hash : string option;
-  shared : bool;
-  toread : bool;
+  mutable href : string;
+  mutable time : string;
+  mutable description : string option;
+  mutable extended : string option;
+  mutable tag : string list;
+  mutable hash : string option;
+  mutable shared : bool;
+  mutable toread : bool;
 }
 
-let empty =
+let fresh () =
   {
     href = String.empty;
     time = String.empty;
@@ -66,21 +66,30 @@ let pp fmt p =
 
 let to_string = Format.asprintf "%a" pp
 
-let accumulate_pinboard_attr (pinboard : t) (((_, key), value) : Attrs.elt) : t =
-  match String.lowercase_ascii key with
-  | "href" -> { pinboard with href = value }
-  | "time" -> { pinboard with time = value }
-  | "description" when value <> "" -> { pinboard with description = Some value }
-  | "extended" when value <> "" -> { pinboard with extended = Some value }
-  | "tag" when value <> "" ->
-      let tag = Str.split (Str.regexp "[ \t]+") value in
-      { pinboard with tag }
-  | "hash" when value <> "" -> { pinboard with hash = Some value }
-  | "shared" -> { pinboard with shared = value = "yes" }
-  | "toread" -> { pinboard with toread = value = "yes" }
-  | _ -> pinboard
-
-let t_of_attrs (attrs : Attrs.t) : t = List.fold_left accumulate_pinboard_attr empty attrs
+let t_of_attrs (attrs : Attrs.t) : t =
+  let pinboard = fresh () in
+  let remaining = ref attrs in
+  while not (List.is_empty !remaining) do
+    let head_opt, tail = Prelude.List_ext.uncons !remaining in
+    remaining := tail;
+    match head_opt with
+    | Some ((_, key), value) -> begin
+        match String.lowercase_ascii key with
+        | "href" -> pinboard.href <- value
+        | "time" -> pinboard.time <- value
+        | "description" when value <> "" -> pinboard.description <- Some value
+        | "extended" when value <> "" -> pinboard.extended <- Some value
+        | "tag" when value <> "" ->
+            let tag = Str.split (Str.regexp "[ \t]+") value in
+            pinboard.tag <- tag
+        | "hash" when value <> "" -> pinboard.hash <- Some value
+        | "shared" -> pinboard.shared <- value = "yes"
+        | "toread" -> pinboard.toread <- value = "yes"
+        | _ -> ()
+      end
+    | None -> ()
+  done;
+  pinboard
 
 let from_xml content =
   let stream = Markup.string content in
@@ -98,25 +107,36 @@ let from_xml content =
   done;
   !acc
 
-let accumulate_pinboard_yaml (pinboard : t) ((key, value) : string * Yaml.value) : t =
-  match key with
-  | "href" -> { pinboard with href = Yaml.Util.to_string_exn value }
-  | "time" -> { pinboard with time = Yaml.Util.to_string_exn value }
-  | "description" ->
-      { pinboard with description = Prelude.option_of_string (Yaml.Util.to_string_exn value) }
-  | "extended" ->
-      { pinboard with extended = Prelude.option_of_string (Yaml.Util.to_string_exn value) }
-  | "tags" ->
-      let tags = Yaml.Util.to_string_exn value in
-      let tag = Str.split (Str.regexp "[ \t]+") tags in
-      { pinboard with tag }
-  | "hash" -> { pinboard with hash = Prelude.option_of_string (Yaml.Util.to_string_exn value) }
-  | "shared" -> { pinboard with shared = Yaml.Util.to_string_exn value = "yes" }
-  | "toread" -> { pinboard with toread = Yaml.Util.to_string_exn value = "yes" }
-  | _ -> pinboard
-
 let t_of_yaml (value : Yaml.value) : t =
-  let open Yaml_ext in
-  fold_object_exn accumulate_pinboard_yaml empty value
+  let remaining =
+    match value with
+    | `O assoc -> ref assoc
+    | _ -> raise (Yaml.Util.Value_error "Expected an object")
+  in
+  let pinboard = fresh () in
+  while not (List.is_empty !remaining) do
+    let head_opt, tail = Prelude.List_ext.uncons !remaining in
+    remaining := tail;
+    match head_opt with
+    | Some (key, value) -> begin
+        match key with
+        | "href" -> pinboard.href <- Yaml.Util.to_string_exn value
+        | "time" -> pinboard.time <- Yaml.Util.to_string_exn value
+        | "description" ->
+            pinboard.description <- Prelude.option_of_string (Yaml.Util.to_string_exn value)
+        | "extended" ->
+            pinboard.extended <- Prelude.option_of_string (Yaml.Util.to_string_exn value)
+        | "tags" ->
+            let tags = Yaml.Util.to_string_exn value in
+            let tag = Str.split (Str.regexp "[ \t]+") tags in
+            pinboard.tag <- tag
+        | "hash" -> pinboard.hash <- Prelude.option_of_string (Yaml.Util.to_string_exn value)
+        | "shared" -> pinboard.shared <- Yaml.Util.to_string_exn value = "yes"
+        | "toread" -> pinboard.toread <- Yaml.Util.to_string_exn value = "yes"
+        | _ -> ()
+      end
+    | None -> ()
+  done;
+  pinboard
 
-let from_json content = Ezjsonm.from_string content |> Yaml_ext.map_array_exn t_of_yaml
+let from_json content = Yaml_ext.map_array_exn t_of_yaml (Ezjsonm.from_string content)
