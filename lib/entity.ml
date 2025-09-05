@@ -157,25 +157,17 @@ type t = {
 }
 
 let make uri created_at maybe_name labels =
-  let uri = Uri.canonicalize uri in
-  let updated_at = [] in
-  let names = Option.fold ~none:Name_set.empty ~some:Name_set.singleton maybe_name in
-  let extended = None in
-  let shared = false in
-  let to_read = false in
-  let last_visited_at = None in
-  let is_feed = false in
   {
-    uri;
+    uri = Uri.canonicalize uri;
     created_at;
-    updated_at;
-    names;
+    updated_at = [];
+    names = Option.fold ~none:Name_set.empty ~some:Name_set.singleton maybe_name;
     labels;
-    extended;
-    shared;
-    to_read;
-    last_visited_at;
-    is_feed;
+    extended = None;
+    shared = false;
+    to_read = false;
+    last_visited_at = None;
+    is_feed = false;
   }
 
 let fresh () =
@@ -196,27 +188,17 @@ let empty = fresh ()
 
 let of_pinboard (p : Pinboard.t) : t =
   let open Pinboard in
-  let uri = Uri.of_string (href p) in
-  let created_at = Time.of_string (time p) in
-  let updated_at = [] in
-  let names = Option.fold ~none:Name_set.empty ~some:Name_set.singleton (description p) in
-  let labels = Label_set.of_list (tag p) in
-  let extended = Option.map Extended.of_string (extended p) in
-  let shared = shared p in
-  let to_read = toread p in
-  let last_visited_at = None in
-  let is_feed = false in
   {
-    uri;
-    created_at;
-    updated_at;
-    names;
-    labels;
-    extended;
-    shared;
-    to_read;
-    last_visited_at;
-    is_feed;
+    uri = Uri.of_string (href p);
+    created_at = Time.of_string (time p);
+    updated_at = [];
+    names = Option.fold ~none:Name_set.empty ~some:Name_set.singleton (description p);
+    labels = Label_set.of_list (tag p);
+    extended = Option.map Extended.of_string (extended p);
+    shared = shared p;
+    to_read = toread p;
+    last_visited_at = None;
+    is_feed = false;
   }
 
 let equal x y =
