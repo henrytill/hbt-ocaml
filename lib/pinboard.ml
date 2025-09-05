@@ -105,7 +105,7 @@ let from_xml content =
     | Some (`Start_element ((_, s), _)) -> raise (Unexpected_xml_element s)
     | Some _ -> ()
   done;
-  !acc
+  List.rev !acc
 
 let t_of_yaml (value : Yaml.value) : t =
   let remaining =
