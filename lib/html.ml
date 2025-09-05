@@ -108,7 +108,6 @@ module Template_entity = struct
   let of_entity (entity : Entity.t) : t =
     let open Entity in
     let uri = Uri.to_string (Entity.uri entity) in
-    let created_at = Time.to_string (Entity.created_at entity) in
     let title =
       match Name_set.elements (Entity.names entity) with
       | [] -> uri
@@ -129,16 +128,14 @@ module Template_entity = struct
       | [] -> None
       | _ -> Some (String.concat "," (List.map Label.to_string labels))
     in
-    let description = Option.map Extended.to_string (Entity.extended entity) in
-    let last_visit = Option.map Time.to_string (Entity.last_visited_at entity) in
     {
       uri;
       title;
-      created_at;
+      created_at = Time.to_string (Entity.created_at entity);
       last_modified;
       tags;
-      description;
-      last_visit;
+      description = Option.map Extended.to_string (Entity.extended entity);
+      last_visit = Option.map Time.to_string (Entity.last_visited_at entity);
       shared = Entity.shared entity;
       to_read = Entity.to_read entity;
       is_feed = Entity.is_feed entity;
