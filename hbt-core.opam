@@ -19,6 +19,7 @@ depends: [
   "markup" {>= "1.0.3"}
   "semver" {>= "0.2.1"}
   "uri" {>= "4.4.0"}
+  "xmlm" {>= "1.4.0"}
   "yaml" {>= "3.2.0"}
   "odoc" {with-doc}
 ]

@@ -146,20 +146,25 @@ module Xml = struct
     pinboard
 
   let from_xml content =
-    let stream = Markup.string content in
-    let xml = Markup.parse_xml stream in
-    let signals = Markup.signals xml in
-    let continue = ref true in
-    let acc = ref [] in
-    while !continue do
-      match Markup.next signals with
-      | None -> continue := false
-      | Some (`Start_element ((_, "post"), attrs)) -> acc := t_of_attrs attrs :: !acc
-      | Some (`Start_element ((_, "posts"), _)) -> ()
-      | Some (`Start_element ((_, s), _)) -> raise (Unexpected_xml_element s)
-      | Some _ -> ()
-    done;
-    List.rev !acc
+    if String.length content = 0 then
+      []
+    else
+      let input = Xmlm.make_input (`String (0, content)) in
+      let continue = ref true in
+      let acc = ref [] in
+      while !continue do
+        if Xmlm.eoi input then
+          continue := false
+        else
+          match Xmlm.input input with
+          | `El_start ((_, "post"), attrs) -> acc := t_of_attrs attrs :: !acc
+          | `El_start ((_, "posts"), _) -> ()
+          | `El_start ((_, s), _) -> raise (Unexpected_xml_element s)
+          | `El_end -> ()
+          | `Data _ -> ()
+          | `Dtd _ -> ()
+      done;
+      List.rev !acc
 
   let parse content = to_collection (from_xml content)
 end
