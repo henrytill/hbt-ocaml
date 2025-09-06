@@ -66,9 +66,21 @@ end
 
 type t
 
-val make : Uri.t -> Time.t -> Name.t option -> Label_set.t -> t
+val make :
+  Uri.t ->
+  Time.t ->
+  ?updated_at:Time.t list ->
+  ?maybe_name:Name.t option ->
+  ?labels:Label_set.t ->
+  ?extended:Extended.t option ->
+  ?shared:bool ->
+  ?to_read:bool ->
+  ?last_visited_at:Time.t option ->
+  ?is_feed:bool ->
+  unit ->
+  t
+
 val empty : t
-val of_pinboard : Pinboard.t -> t
 val equal : t -> t -> bool
 val pp : Format.formatter -> t -> unit
 val update : Time.t -> Name_set.t -> Label_set.t -> t -> t

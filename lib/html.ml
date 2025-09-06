@@ -11,7 +11,7 @@ let element_of_string = function
 
 let mk_labels ls s = Entity.(Label_set.add (Label.of_string s) ls)
 
-let collection_of_string content =
+let parse content =
   let collection = Collection.create () in
   let maybe_description = ref None in
   let maybe_extended = ref None in
@@ -164,7 +164,7 @@ module Template_entity = struct
     `O (base_fields @ optional_fields)
 end
 
-let collection_to_string c =
+let format c =
   let f e acc = Template_entity.(yaml_of_t (of_entity e)) :: acc in
   let entities_mustache = Array.fold_right f (Collection.entities c) [] in
   let json = `O [ ("entities", `A entities_mustache) ] in

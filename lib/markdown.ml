@@ -37,7 +37,7 @@ module Fold_state = struct
     match (st.uri, st.time) with
     | Some uri, Some time ->
         let labels = Entity.Label_set.of_list st.labels in
-        Some (Entity.make uri time st.name labels)
+        Some (Entity.make uri time ~maybe_name:st.name ~labels ())
     | _ -> None
 end
 

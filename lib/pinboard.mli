@@ -11,5 +11,11 @@ val toread : t -> bool
 val equal : t -> t -> bool
 val pp : Format.formatter -> t -> unit
 val to_string : t -> string
-val from_xml : string -> t list
-val from_json : string -> t list
+
+module Json : sig
+  val parse : string -> Collection.t
+end
+
+module Xml : sig
+  val parse : string -> Collection.t
+end

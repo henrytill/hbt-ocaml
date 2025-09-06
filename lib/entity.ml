@@ -156,18 +156,22 @@ type t = {
   mutable is_feed : bool;
 }
 
-let make uri created_at maybe_name labels =
+let make uri created_at ?(updated_at = []) ?(maybe_name = None) ?(labels = Label_set.empty)
+    ?(extended = None) ?(shared = false) ?(to_read = false) ?(last_visited_at = None)
+    ?(is_feed = false) () =
+  let uri = Uri.canonicalize uri in
+  let names = Option.fold ~none:Name_set.empty ~some:Name_set.singleton maybe_name in
   {
-    uri = Uri.canonicalize uri;
+    uri;
     created_at;
-    updated_at = [];
-    names = Option.fold ~none:Name_set.empty ~some:Name_set.singleton maybe_name;
+    updated_at;
+    names;
     labels;
-    extended = None;
-    shared = false;
-    to_read = false;
-    last_visited_at = None;
-    is_feed = false;
+    extended;
+    shared;
+    to_read;
+    last_visited_at;
+    is_feed;
   }
 
 let fresh () =
@@ -185,21 +189,6 @@ let fresh () =
   }
 
 let empty = fresh ()
-
-let of_pinboard (p : Pinboard.t) : t =
-  let open Pinboard in
-  {
-    uri = Uri.of_string (href p);
-    created_at = Time.of_string (time p);
-    updated_at = [];
-    names = Option.fold ~none:Name_set.empty ~some:Name_set.singleton (description p);
-    labels = Label_set.of_list (tag p);
-    extended = Option.map Extended.of_string (extended p);
-    shared = shared p;
-    to_read = toread p;
-    last_visited_at = None;
-    is_feed = false;
-  }
 
 let equal x y =
   Uri.equal x.uri y.uri

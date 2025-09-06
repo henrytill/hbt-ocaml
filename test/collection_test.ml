@@ -19,20 +19,20 @@ let same_edges = "same edges"
 let test_entity_equal () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
-  let name = Name.of_string "foo" in
+  let maybe_name = Some (Name.of_string "foo") in
   let created = Time.of_string "September 2, 2024" in
   let labels = Label_set.of_list [ Label.of_string "foo" ] in
-  let a = Entity.make uri created (Some name) labels in
-  let b = Entity.make uri created (Some name) labels in
+  let a = Entity.make uri created ~maybe_name ~labels () in
+  let b = Entity.make uri created ~maybe_name ~labels () in
   Alcotest.(check testable_entity) same_entity a b
 
 let test_entity_update () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
-  let name = Name.of_string "foo" in
+  let maybe_name = Some (Name.of_string "foo") in
   let created = Time.of_string "September 2, 2024" in
   let labels = Label_set.of_list [ Label.of_string "foo" ] in
-  let a = Entity.make uri created (Some name) labels in
+  let a = Entity.make uri created ~maybe_name ~labels () in
   let updated = Time.of_string "September 4, 2024" in
   let names_update = Name_set.of_list [ Name.of_string "Foo.org"; Name.of_string "F00" ] in
   let labels_update = Label_set.of_list [ Label.of_string "foozer"; Label.of_string "bar" ] in
@@ -42,7 +42,9 @@ let test_entity_update () =
   Alcotest.(check (list testable_time)) same_updated_at [ updated ] (Entity.updated_at a);
   Alcotest.(check testable_name_set)
     same_names
-    (Name_set.union (Name_set.of_list [ name ]) names_update)
+    (Name_set.union
+       (Option.fold ~none:Name_set.empty ~some:Name_set.singleton maybe_name)
+       names_update)
     (Entity.names a);
   Alcotest.(check testable_label_set)
     same_labels
@@ -57,8 +59,8 @@ let test_entity_absorb () =
   let created_b = Time.of_string "September 2, 2024" in
   let labels_foo = Label_set.of_list [ Label.of_string "foo" ] in
   let labels_bar = Label_set.of_list [ Label.of_string "bar" ] in
-  let a = Entity.make uri created_a None labels_foo in
-  let b = Entity.make uri created_b (Some name) labels_bar in
+  let a = Entity.make uri created_a ~labels:labels_foo () in
+  let b = Entity.make uri created_b ~maybe_name:(Some name) ~labels:labels_bar () in
   let a = Entity.absorb b a in
   Alcotest.(check testable_uri) same_uri (Uri.canonicalize uri) (Entity.uri a);
   Alcotest.(check testable_time) same_created_at created_b (Entity.created_at a);
@@ -77,8 +79,8 @@ let test_collection_upsert () =
   let created_b = Time.of_string "September 2, 2024" in
   let labels_foo = Label_set.of_list [ Label.of_string "foo" ] in
   let labels_bar = Label_set.of_list [ Label.of_string "bar" ] in
-  let a = Entity.make uri created_a None labels_foo in
-  let b = Entity.make uri created_b (Some name) labels_bar in
+  let a = Entity.make uri created_a ~labels:labels_foo () in
+  let b = Entity.make uri created_b ~maybe_name:(Some name) ~labels:labels_bar () in
   let collection = create () in
   let id_a = upsert collection a in
   let id_b = upsert collection b in
@@ -101,8 +103,8 @@ let test_collection_add_edge () =
   let uri_b = Uri.of_string "https://foo.net" in
   let created_a = Time.of_string "September 4, 2024" in
   let created_b = Time.of_string "September 2, 2024" in
-  let a = Entity.make uri_a created_a None Label_set.empty in
-  let b = Entity.make uri_b created_b None Label_set.empty in
+  let a = Entity.make uri_a created_a () in
+  let b = Entity.make uri_b created_b () in
   let collection = create () in
   let id_a = upsert collection a in
   let id_b = upsert collection b in

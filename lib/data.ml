@@ -1,5 +1,4 @@
 exception Unsupported_file_format of string
-exception Yaml_conversion_error of string
 
 type _ t =
   | Json : [ `Input ] t
@@ -32,21 +31,39 @@ let detect_input_format (filename : string) : input option =
   | ".json" -> Some Json
   | _ -> None
 
-let parse (format : input) (content : string) : Collection.t =
-  match format with
-  | Json -> Collection.of_posts (Pinboard.from_json content)
-  | Xml -> Collection.of_posts (Pinboard.from_xml content)
-  | Markdown -> Markdown.parse content
-  | Html -> Html.collection_of_string content
+module type PARSER = sig
+  val parse : string -> Collection.t
+end
 
-let format (format : output) : Collection.t -> string =
-  let to_yaml collection =
+module type FORMATTER = sig
+  val format : Collection.t -> string
+end
+
+let parse (format : input) (content : string) : Collection.t =
+  let (module Parser : PARSER) =
+    match format with
+    | Json -> (module Pinboard.Json)
+    | Xml -> (module Pinboard.Xml)
+    | Markdown -> (module Markdown)
+    | Html -> (module Html)
+  in
+  Parser.parse content
+
+module Yaml_formatter = struct
+  exception Yaml_conversion_error of string
+
+  let format collection =
     let len = 1024 * 1024 in
     let yaml = Collection.yaml_of_t collection in
     match Yaml.to_string ~len yaml with
     | Ok s -> s
     | Error (`Msg e) -> raise (Yaml_conversion_error e)
+end
+
+let format (format : output) : Collection.t -> string =
+  let (module Formatter : FORMATTER) =
+    match format with
+    | Html -> (module Html)
+    | Yaml -> (module Yaml_formatter)
   in
-  match format with
-  | Html -> Html.collection_to_string
-  | Yaml -> to_yaml
+  Formatter.format

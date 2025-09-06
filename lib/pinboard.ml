@@ -66,77 +66,100 @@ let pp fmt p =
 
 let to_string = Format.asprintf "%a" pp
 
-let t_of_attrs (attrs : Attrs.t) : t =
-  let pinboard = fresh () in
-  let remaining = ref attrs in
-  while not (List.is_empty !remaining) do
-    let head_opt, tail = Prelude.List_ext.uncons !remaining in
-    remaining := tail;
-    match head_opt with
-    | Some ((_, key), value) -> begin
-        match String.lowercase_ascii key with
-        | "href" -> pinboard.href <- value
-        | "time" -> pinboard.time <- value
-        | "description" when value <> "" -> pinboard.description <- Some value
-        | "extended" when value <> "" -> pinboard.extended <- Some value
-        | "tag" when value <> "" ->
-            let tag = Str.split (Str.regexp "[ \t]+") value in
-            pinboard.tag <- tag
-        | "hash" when value <> "" -> pinboard.hash <- Some value
-        | "shared" -> pinboard.shared <- value = "yes"
-        | "toread" -> pinboard.toread <- value = "yes"
-        | _ -> ()
-      end
-    | None -> ()
-  done;
-  pinboard
+let to_entity (p : t) : Entity.t =
+  let uri = Uri.of_string (href p) in
+  let created_at = Entity.Time.of_string (time p) in
+  let maybe_name = Option.map Entity.Name.of_string (description p) in
+  let labels = Entity.Label_set.of_list (List.map Entity.Label.of_string (tag p)) in
+  let extended = Option.map Entity.Extended.of_string (extended p) in
+  let shared = shared p in
+  let to_read = toread p in
+  Entity.make uri created_at ~maybe_name ~labels ~extended ~shared ~to_read ()
 
-let from_xml content =
-  let stream = Markup.string content in
-  let xml = Markup.parse_xml stream in
-  let signals = Markup.signals xml in
-  let continue = ref true in
-  let acc = ref [] in
-  while !continue do
-    match Markup.next signals with
-    | None -> continue := false
-    | Some (`Start_element ((_, "post"), attrs)) -> acc := t_of_attrs attrs :: !acc
-    | Some (`Start_element ((_, "posts"), _)) -> ()
-    | Some (`Start_element ((_, s), _)) -> raise (Unexpected_xml_element s)
-    | Some _ -> ()
-  done;
-  List.rev !acc
+let to_collection (posts : t list) : Collection.t =
+  let ret = Collection.create () in
+  let sorted = List.sort (fun a b -> String.compare a.time b.time) posts in
+  List.iter (fun post -> ignore (Collection.insert ret (to_entity post))) sorted;
+  ret
 
-let t_of_yaml (value : Yaml.value) : t =
-  let remaining =
-    match value with
-    | `O assoc -> ref assoc
-    | _ -> raise (Yaml.Util.Value_error "Expected an object")
-  in
-  let pinboard = fresh () in
-  while not (List.is_empty !remaining) do
-    let head_opt, tail = Prelude.List_ext.uncons !remaining in
-    remaining := tail;
-    match head_opt with
-    | Some (key, value) -> begin
-        match key with
-        | "href" -> pinboard.href <- Yaml.Util.to_string_exn value
-        | "time" -> pinboard.time <- Yaml.Util.to_string_exn value
-        | "description" ->
-            pinboard.description <- Prelude.option_of_string (Yaml.Util.to_string_exn value)
-        | "extended" ->
-            pinboard.extended <- Prelude.option_of_string (Yaml.Util.to_string_exn value)
-        | "tags" ->
-            let tags = Yaml.Util.to_string_exn value in
-            let tag = Str.split (Str.regexp "[ \t]+") tags in
-            pinboard.tag <- tag
-        | "hash" -> pinboard.hash <- Prelude.option_of_string (Yaml.Util.to_string_exn value)
-        | "shared" -> pinboard.shared <- Yaml.Util.to_string_exn value = "yes"
-        | "toread" -> pinboard.toread <- Yaml.Util.to_string_exn value = "yes"
-        | _ -> ()
-      end
-    | None -> ()
-  done;
-  pinboard
+module Json = struct
+  let t_of_yaml (value : Yaml.value) : t =
+    let remaining =
+      match value with
+      | `O assoc -> ref assoc
+      | _ -> raise (Yaml.Util.Value_error "Expected an object")
+    in
+    let pinboard = fresh () in
+    while not (List.is_empty !remaining) do
+      let head_opt, tail = Prelude.List_ext.uncons !remaining in
+      remaining := tail;
+      match head_opt with
+      | Some (key, value) -> begin
+          match key with
+          | "href" -> pinboard.href <- Yaml.Util.to_string_exn value
+          | "time" -> pinboard.time <- Yaml.Util.to_string_exn value
+          | "description" ->
+              pinboard.description <- Prelude.option_of_string (Yaml.Util.to_string_exn value)
+          | "extended" ->
+              pinboard.extended <- Prelude.option_of_string (Yaml.Util.to_string_exn value)
+          | "tags" ->
+              let tags = Yaml.Util.to_string_exn value in
+              let tag = Str.split (Str.regexp "[ \t]+") tags in
+              pinboard.tag <- tag
+          | "hash" -> pinboard.hash <- Prelude.option_of_string (Yaml.Util.to_string_exn value)
+          | "shared" -> pinboard.shared <- Yaml.Util.to_string_exn value = "yes"
+          | "toread" -> pinboard.toread <- Yaml.Util.to_string_exn value = "yes"
+          | _ -> ()
+        end
+      | None -> ()
+    done;
+    pinboard
 
-let from_json content = Yaml_ext.map_array_exn t_of_yaml (Ezjsonm.from_string content)
+  let from_json content = Yaml_ext.map_array_exn t_of_yaml (Ezjsonm.from_string content)
+  let parse content = to_collection (from_json content)
+end
+
+module Xml = struct
+  let t_of_attrs (attrs : Attrs.t) : t =
+    let pinboard = fresh () in
+    let remaining = ref attrs in
+    while not (List.is_empty !remaining) do
+      let head_opt, tail = Prelude.List_ext.uncons !remaining in
+      remaining := tail;
+      match head_opt with
+      | Some ((_, key), value) -> begin
+          match String.lowercase_ascii key with
+          | "href" -> pinboard.href <- value
+          | "time" -> pinboard.time <- value
+          | "description" when value <> "" -> pinboard.description <- Some value
+          | "extended" when value <> "" -> pinboard.extended <- Some value
+          | "tag" when value <> "" ->
+              let tag = Str.split (Str.regexp "[ \t]+") value in
+              pinboard.tag <- tag
+          | "hash" when value <> "" -> pinboard.hash <- Some value
+          | "shared" -> pinboard.shared <- value = "yes"
+          | "toread" -> pinboard.toread <- value = "yes"
+          | _ -> ()
+        end
+      | None -> ()
+    done;
+    pinboard
+
+  let from_xml content =
+    let stream = Markup.string content in
+    let xml = Markup.parse_xml stream in
+    let signals = Markup.signals xml in
+    let continue = ref true in
+    let acc = ref [] in
+    while !continue do
+      match Markup.next signals with
+      | None -> continue := false
+      | Some (`Start_element ((_, "post"), attrs)) -> acc := t_of_attrs attrs :: !acc
+      | Some (`Start_element ((_, "posts"), _)) -> ()
+      | Some (`Start_element ((_, s), _)) -> raise (Unexpected_xml_element s)
+      | Some _ -> ()
+    done;
+    List.rev !acc
+
+  let parse content = to_collection (from_xml content)
+end
