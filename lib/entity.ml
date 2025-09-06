@@ -253,29 +253,26 @@ let t_of_yaml value =
   entity
 
 let yaml_of_t entity =
-  let maybe_extended =
-    match entity.extended with
-    | None -> []
-    | Some extended -> [ ("extended", Extended.yaml_of_t extended) ]
+  let base_fields =
+    [
+      ("uri", `String (Uri.to_string entity.uri));
+      ("createdAt", Time.yaml_of_t entity.created_at);
+      ("updatedAt", `A (List.map Time.yaml_of_t entity.updated_at));
+      ("names", Name_set.yaml_of_t entity.names);
+      ("labels", Label_set.yaml_of_t entity.labels);
+      ("shared", `Bool entity.shared);
+      ("toRead", `Bool entity.to_read);
+      ("isFeed", `Bool entity.is_feed);
+    ]
   in
-  let maybe_last_visit =
-    match entity.last_visited_at with
-    | None -> []
-    | Some last_visit -> [ ("lastVisitedAt", Time.yaml_of_t last_visit) ]
+  let optional_fields =
+    Prelude.List_ext.filter_some
+      [
+        Option.map (fun e -> ("extended", Extended.yaml_of_t e)) entity.extended;
+        Option.map (fun t -> ("lastVisitedAt", Time.yaml_of_t t)) entity.last_visited_at;
+      ]
   in
-  `O
-    ([
-       ("uri", `String (Uri.to_string entity.uri));
-       ("createdAt", Time.yaml_of_t entity.created_at);
-       ("updatedAt", `A (List.map Time.yaml_of_t entity.updated_at));
-       ("names", Name_set.yaml_of_t entity.names);
-       ("labels", Label_set.yaml_of_t entity.labels);
-       ("shared", `Bool entity.shared);
-       ("toRead", `Bool entity.to_read);
-       ("isFeed", `Bool entity.is_feed);
-     ]
-    @ maybe_extended
-    @ maybe_last_visit)
+  `O (base_fields @ optional_fields)
 
 let update updated_at names labels e =
   let names = Name_set.union e.names names in
