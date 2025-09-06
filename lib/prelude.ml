@@ -6,9 +6,11 @@ let option_of_string s =
   else
     Some s
 
-let unless (cond : bool) (f : unit -> 'a) : 'a =
-  if not cond then
+let guard (cond : bool) (f : unit -> 'a) : 'a =
+  if cond then
     f ()
+
+let unless (cond : bool) (f : unit -> 'a) : 'a = guard (not cond) f
 
 module List_ext = struct
   let singleton x = [ x ]
