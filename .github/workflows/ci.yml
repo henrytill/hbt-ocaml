@@ -28,4 +28,5 @@ jobs:
         with:
           submodules: true
       - uses: cachix/install-nix-action@v31
-      - run: nix build -L --accept-flake-config
+      - run: nix build -L --accept-flake-config .#hbt -o result-hbt-ocaml
+      - run: nix build -L --accept-flake-config .#hbt-ox -o result-hbt-oxcaml

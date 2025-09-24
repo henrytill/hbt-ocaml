@@ -6,6 +6,10 @@
       url = "github:ocaml/opam-repository";
       flake = false;
     };
+    opam-repository-oxcaml = {
+      url = "github:oxcaml/opam-repository";
+      flake = false;
+    };
     opam-nix = {
       url = "github:tweag/opam-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -29,6 +33,8 @@
       flake-utils,
       opam-nix,
       nixpkgs,
+      opam-repository,
+      opam-repository-oxcaml,
       ...
     }@inputs:
     let
@@ -47,10 +53,39 @@
             nativeBuildInputs = as.nativeBuildInputs ++ [ pkgs.tzdata ];
           });
         };
+        scopeOx =
+          on.buildOpamProject'
+            {
+              repos = [
+                "${opam-repository}"
+                "${opam-repository-oxcaml}"
+              ];
+              resolveArgs.with-test = true;
+            }
+            ./.
+            {
+              ocaml-variants = "5.2.0+ox";
+            };
+        overlayOx = final: prev: {
+          hbt-core = prev.hbt-core.overrideAttrs (as: {
+            nativeBuildInputs = as.nativeBuildInputs ++ [ pkgs.tzdata ];
+          });
+          ocaml-variants = prev.ocaml-variants.overrideAttrs (as: {
+            preBuild = ''
+              sed -i "s|/usr/bin/env|${pkgs.coreutils}/bin/env|g" Makefile Makefile.* ocaml/Makefile.*
+            '';
+            nativeBuildInputs = as.nativeBuildInputs ++ [ pkgs.rsync ];
+          });
+        };
       in
       {
         legacyPackages = scope.overrideScope overlay;
-        packages.default = self.legacyPackages.${system}.${package};
+        legacyPackagesOx = scopeOx.overrideScope overlayOx;
+        packages = rec {
+          hbt = self.legacyPackages.${system}.${package};
+          hbt-ox = self.legacyPackagesOx.${system}.${package};
+          default = hbt;
+        };
       }
     );
 }
