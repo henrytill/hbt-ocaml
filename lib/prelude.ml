@@ -34,6 +34,15 @@ module List_ext = struct
         | None -> filter_some l
         | Some v -> v :: filter_some l
       end
+
+  let take n l =
+    let[@tail_mod_cons] rec aux n l =
+      match (n, l) with
+      | 0, _ | _, [] -> []
+      | n, x :: l -> x :: aux (n - 1) l
+    in
+    if n < 0 then invalid_arg "List_ext.take";
+    aux n l
 end
 
 module Markup_ext = struct

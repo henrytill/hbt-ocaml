@@ -22,7 +22,7 @@
   "A tool for parsing and transforming bookmarks from various sources")
  (depends
   (ocaml
-   (>= 5.3.0))
+   (>= 5.2.0))
   dune
   (alcotest
    (and

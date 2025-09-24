@@ -57,7 +57,7 @@ let block m ((c, st) : Collection.t * Fold_state.t) = function
       Folder.ret (c, st)
   | Block.Heading (heading, _) ->
       let heading_level = Block.Heading.level heading in
-      let labels = List.take (heading_level - 2) st.labels in
+      let labels = List_ext.take (heading_level - 2) st.labels in
       let@ heading_text = get_heading_text heading kdefault in
       let labels = Entity.Label.of_string heading_text :: labels in
       let st = { st with labels } in
