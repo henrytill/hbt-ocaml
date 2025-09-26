@@ -39,7 +39,7 @@ module type FORMATTER = sig
   val format : Collection.t -> string
 end
 
-let parse (format : input) (content : string) : Collection.t =
+let parse (format : input) : string -> Collection.t =
   let (module Parser : PARSER) =
     match format with
     | Json -> (module Pinboard.Json)
@@ -47,7 +47,7 @@ let parse (format : input) (content : string) : Collection.t =
     | Markdown -> (module Markdown)
     | Html -> (module Html)
   in
-  Parser.parse content
+  Parser.parse
 
 module Yaml_formatter = struct
   exception Yaml_conversion_error of string
