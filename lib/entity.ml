@@ -1,4 +1,4 @@
-module Yaml_ext = Prelude.Yaml_ext
+open Prelude
 
 let pp_print_set pp_item fmt items =
   let open Format in
@@ -231,7 +231,7 @@ let t_of_yaml value =
   in
   let entity = fresh () in
   while not (List.is_empty !remaining) do
-    let head_opt, tail = Prelude.List_ext.uncons !remaining in
+    let head_opt, tail = List_ext.uncons !remaining in
     remaining := tail;
     match head_opt with
     | Some (key, value) -> begin
@@ -241,7 +241,7 @@ let t_of_yaml value =
         | "updatedAt" -> entity.updated_at <- Yaml_ext.map_array_exn Time.t_of_yaml value
         | "names" -> entity.names <- Name_set.t_of_yaml value
         | "labels" -> entity.labels <- Label_set.t_of_yaml value
-        | "extended" -> entity.extended <- Prelude.option_of_string (Extended.t_of_yaml value)
+        | "extended" -> entity.extended <- option_of_string (Extended.t_of_yaml value)
         | "shared" -> entity.shared <- Yaml.Util.to_bool_exn value
         | "toRead" -> entity.to_read <- Yaml.Util.to_bool_exn value
         | "lastVisitedAt" -> entity.last_visited_at <- Some (Time.t_of_yaml value)
@@ -266,7 +266,7 @@ let yaml_of_t entity =
     ]
   in
   let optional_fields =
-    Prelude.List_ext.filter_some
+    List_ext.filter_some
       [
         Option.map (fun e -> ("extended", Extended.yaml_of_t e)) entity.extended;
         Option.map (fun t -> ("lastVisitedAt", Time.yaml_of_t t)) entity.last_visited_at;
@@ -319,7 +319,7 @@ module Html = struct
     entity.shared <- true;
     let remaining = ref attributes in
     while not (List.is_empty !remaining) do
-      let head_opt, tail = Prelude.List_ext.uncons !remaining in
+      let head_opt, tail = List_ext.uncons !remaining in
       remaining := tail;
       match head_opt with
       | Some ((_, key), value) -> begin

@@ -77,10 +77,10 @@ let to_entity (p : t) : Entity.t =
   Entity.make uri created_at ~maybe_name ~labels ~extended ~shared ~to_read ()
 
 let to_collection (posts : t list) : Collection.t =
-  let ret = Collection.create () in
+  let coll = Collection.create () in
   let sorted = List.sort (fun a b -> String.compare a.time b.time) posts in
-  List.iter (fun post -> ignore (Collection.insert ret (to_entity post))) sorted;
-  ret
+  List.iter (fun post -> ignore (Collection.insert coll (to_entity post))) sorted;
+  coll
 
 module Json = struct
   let t_of_yaml (value : Yaml.value) : t =
@@ -89,31 +89,29 @@ module Json = struct
       | `O assoc -> ref assoc
       | _ -> raise (Yaml.Util.Value_error "Expected an object")
     in
-    let pinboard = fresh () in
+    let post = fresh () in
     while not (List.is_empty !remaining) do
-      let head_opt, tail = Prelude.List_ext.uncons !remaining in
+      let head_opt, tail = List_ext.uncons !remaining in
       remaining := tail;
       match head_opt with
       | Some (key, value) -> begin
           match key with
-          | "href" -> pinboard.href <- Yaml.Util.to_string_exn value
-          | "time" -> pinboard.time <- Yaml.Util.to_string_exn value
-          | "description" ->
-              pinboard.description <- Prelude.option_of_string (Yaml.Util.to_string_exn value)
-          | "extended" ->
-              pinboard.extended <- Prelude.option_of_string (Yaml.Util.to_string_exn value)
+          | "href" -> post.href <- Yaml.Util.to_string_exn value
+          | "time" -> post.time <- Yaml.Util.to_string_exn value
+          | "description" -> post.description <- option_of_string (Yaml.Util.to_string_exn value)
+          | "extended" -> post.extended <- option_of_string (Yaml.Util.to_string_exn value)
           | "tags" ->
               let tags = Yaml.Util.to_string_exn value in
               let tag = Str.split (Str.regexp "[ \t]+") tags in
-              pinboard.tag <- tag
-          | "hash" -> pinboard.hash <- Prelude.option_of_string (Yaml.Util.to_string_exn value)
-          | "shared" -> pinboard.shared <- Yaml.Util.to_string_exn value = "yes"
-          | "toread" -> pinboard.toread <- Yaml.Util.to_string_exn value = "yes"
+              post.tag <- tag
+          | "hash" -> post.hash <- option_of_string (Yaml.Util.to_string_exn value)
+          | "shared" -> post.shared <- Yaml.Util.to_string_exn value = "yes"
+          | "toread" -> post.toread <- Yaml.Util.to_string_exn value = "yes"
           | _ -> ()
         end
       | None -> ()
     done;
-    pinboard
+    post
 
   let from_json content = Yaml_ext.map_array_exn t_of_yaml (Ezjsonm.from_string content)
   let parse content = to_collection (from_json content)
@@ -124,7 +122,7 @@ module Xml = struct
     let pinboard = fresh () in
     let remaining = ref attrs in
     while not (List.is_empty !remaining) do
-      let head_opt, tail = Prelude.List_ext.uncons !remaining in
+      let head_opt, tail = List_ext.uncons !remaining in
       remaining := tail;
       match head_opt with
       | Some ((_, key), value) -> begin

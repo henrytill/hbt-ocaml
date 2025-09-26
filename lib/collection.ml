@@ -110,7 +110,7 @@ let t_of_yaml value =
     Version.check version
   end;
   let length = get_field ~key:"length" value |> int_of_float_exn in
-  let ret = make length in
+  let coll = make length in
   let process_item pairs =
     let i = get_field ~key:"id" pairs |> int_of_float_exn in
     let entity = get_field ~key:"entity" pairs |> Entity.t_of_yaml in
@@ -118,12 +118,12 @@ let t_of_yaml value =
       get_field ~key:"edges" pairs |> map_array_exn int_of_float_exn |> Dynarray.of_list
     in
     let uri = Entity.uri entity in
-    Dynarray.set ret.nodes i entity;
-    Dynarray.set ret.edges i edges;
-    Uri_hashtbl.add ret.uris uri i
+    Dynarray.set coll.nodes i entity;
+    Dynarray.set coll.edges i edges;
+    Uri_hashtbl.add coll.uris uri i
   in
   get_field ~key:"value" value |> iter_array_exn process_item;
-  ret
+  coll
 
 let yaml_of_t c =
   let f i entity =

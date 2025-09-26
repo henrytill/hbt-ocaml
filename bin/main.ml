@@ -24,22 +24,20 @@ let detect_input_format file =
 
 let read_file file =
   let ic = open_in file in
-  let ret = In_channel.input_all ic in
-  close_in ic;
-  ret
+  let finally () = close_in ic in
+  Fun.protect ~finally (fun () -> really_input_string ic (in_channel_length ic))
 
 let update_collection (args : Args.t) : Collection.t -> Collection.t =
   match args.mappings_file with
   | None -> Fun.id
-  | Some file -> read_file file |> Yaml.of_string |> Result.get_ok |> Collection.update_labels
+  | Some file -> read_file file |> Yaml.of_string_exn |> Collection.update_labels
 
-let write_output (content : string) (output_file : string option) : unit =
-  match output_file with
+let write (content : string) : string option -> unit = function
   | None -> print_string content
   | Some file ->
       let oc = open_out file in
-      output_string oc content;
-      close_out oc
+      let finally () = close_out oc in
+      Fun.protect ~finally (fun () -> output_string oc content)
 
 let print_collection (file : string) (args : Args.t) (collection : Collection.t) : unit =
   let open Collection in
@@ -58,7 +56,7 @@ let print_collection (file : string) (args : Args.t) (collection : Collection.t)
       | None -> raise Missing_output_specification
       | Some format -> Data.format format collection
   in
-  write_output output args.output
+  write output args.output
 
 let process_file (args : Args.t) (file : string) : unit =
   let input_format =
