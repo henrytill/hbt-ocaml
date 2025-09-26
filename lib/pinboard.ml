@@ -157,7 +157,7 @@ module Xml = struct
           continue := false
         else
           match Xmlm.input input with
-          | `El_start ((_, "post"), attrs) -> acc := t_of_attrs attrs :: !acc
+          | `El_start ((_, "post"), attrs) -> acc %= List.cons (t_of_attrs attrs)
           | `El_start ((_, "posts"), _) -> ()
           | `El_start ((_, s), _) -> raise (Unexpected_xml_element s)
           | `El_end -> ()

@@ -1,5 +1,9 @@
 let ( let@ ) = ( @@ )
 
+let ( %= ) r f =
+  let d = !r in
+  r := f d
+
 let option_of_string s =
   if String.length s = 0 then
     None
