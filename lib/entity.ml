@@ -326,13 +326,13 @@ module Html = struct
           match String.lowercase_ascii key with
           | "href" -> entity.uri <- Uri.canonicalize (Uri.of_string value)
           | "add_date" -> entity.created_at <- parse_timestamp value
-          | "last_modified" when value <> "" ->
+          | "last_modified" when value <> String.empty ->
               let time = parse_timestamp value in
               entity.updated_at <- [ time ]
-          | "last_visit" when value <> "" ->
+          | "last_visit" when value <> String.empty ->
               let time = parse_timestamp value in
               entity.last_visited_at <- Some time
-          | "tags" when value <> "" ->
+          | "tags" when value <> String.empty ->
               let tag_list = Str.split (Str.regexp "[,]+") value in
               let filtered = List.filter (( <> ) "toread") tag_list in
               let labels = Label_set.of_list (List.map Label.of_string filtered) in

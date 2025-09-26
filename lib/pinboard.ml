@@ -131,12 +131,12 @@ module Xml = struct
           match String.lowercase_ascii key with
           | "href" -> pinboard.href <- value
           | "time" -> pinboard.time <- value
-          | "description" when value <> "" -> pinboard.description <- Some value
-          | "extended" when value <> "" -> pinboard.extended <- Some value
-          | "tag" when value <> "" ->
+          | "description" when value <> String.empty -> pinboard.description <- Some value
+          | "extended" when value <> String.empty -> pinboard.extended <- Some value
+          | "tag" when value <> String.empty ->
               let tag = Str.split (Str.regexp "[ \t]+") value in
               pinboard.tag <- tag
-          | "hash" when value <> "" -> pinboard.hash <- Some value
+          | "hash" when value <> String.empty -> pinboard.hash <- Some value
           | "shared" -> pinboard.shared <- value = "yes"
           | "toread" -> pinboard.toread <- value = "yes"
           | _ -> ()

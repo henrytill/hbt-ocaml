@@ -7,7 +7,7 @@ let read_issues_file () =
      while true do
        let line = input_line ic in
        let trimmed = String.trim line in
-       if trimmed <> "" && not (String.starts_with ~prefix:"#" trimmed) then
+       if trimmed <> String.empty && not (String.starts_with ~prefix:"#" trimmed) then
          issues := trimmed :: !issues
      done
    with End_of_file -> close_in ic);
