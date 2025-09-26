@@ -5,12 +5,12 @@ type _ t =
   | Xml : [ `Input ] t
   | Markdown : [ `Input ] t
   | Html : [< `Input | `Output ] t
-  | Yaml : [ `Output ] t
+  | Yaml : [< `Input | `Output ] t
 
 type input = [ `Input ] t
 type output = [ `Output ] t
 
-let all_input_formats : input list = [ Json; Xml; Markdown; Html ]
+let all_input_formats : input list = [ Json; Xml; Markdown; Html; Yaml ]
 let all_output_formats : output list = [ Html; Yaml ]
 
 let to_string : type a. a t -> string = function
@@ -29,6 +29,7 @@ let detect_input_format (filename : string) : input option =
   | ".xml" -> Some Xml
   | ".html" -> Some Html
   | ".json" -> Some Json
+  | ".yaml" -> Some Yaml
   | _ -> None
 
 module type PARSER = sig
@@ -39,6 +40,12 @@ module type FORMATTER = sig
   val format : Collection.t -> string
 end
 
+module Yaml_parser = struct
+  let parse input =
+    let yaml = Yaml.of_string_exn input in
+    Collection.t_of_yaml yaml
+end
+
 let parse (format : input) : string -> Collection.t =
   let (module Parser : PARSER) =
     match format with
@@ -46,6 +53,7 @@ let parse (format : input) : string -> Collection.t =
     | Xml -> (module Pinboard.Xml)
     | Markdown -> (module Markdown)
     | Html -> (module Html)
+    | Yaml -> (module Yaml_parser)
   in
   Parser.parse
 
