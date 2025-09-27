@@ -4,17 +4,17 @@ module Attrs = Markup_ext.Attrs
 exception Unexpected_xml_element of string
 
 type t = {
-  mutable href : string;
-  mutable time : string;
-  mutable description : string option;
-  mutable extended : string option;
-  mutable tag : string list;
-  mutable hash : string option;
-  mutable shared : bool;
-  mutable toread : bool;
+  href : string;
+  time : string;
+  description : string option;
+  extended : string option;
+  tag : string list;
+  hash : string option;
+  shared : bool;
+  toread : bool;
 }
 
-let fresh () =
+let empty =
   {
     href = String.empty;
     time = String.empty;
@@ -83,65 +83,49 @@ let to_collection (posts : t list) : Collection.t =
   coll
 
 module Json = struct
+  let build post (key, value) =
+    match key with
+    | "href" -> { post with href = Yaml.Util.to_string_exn value }
+    | "time" -> { post with time = Yaml.Util.to_string_exn value }
+    | "description" -> { post with description = option_of_string (Yaml.Util.to_string_exn value) }
+    | "extended" -> { post with extended = option_of_string (Yaml.Util.to_string_exn value) }
+    | "tags" ->
+        let tags = Yaml.Util.to_string_exn value in
+        let tag = Str.split (Str.regexp "[ \t]+") tags in
+        { post with tag }
+    | "hash" -> { post with hash = option_of_string (Yaml.Util.to_string_exn value) }
+    | "shared" -> { post with shared = Yaml.Util.to_string_exn value = "yes" }
+    | "toread" -> { post with toread = Yaml.Util.to_string_exn value = "yes" }
+    | _ -> post
+
   let t_of_yaml (value : Yaml.value) : t =
-    let remaining =
+    let assoc =
       match value with
-      | `O assoc -> ref assoc
+      | `O assoc -> assoc
       | _ -> raise (Yaml.Util.Value_error "Expected an object")
     in
-    let post = fresh () in
-    while not (List.is_empty !remaining) do
-      let head_opt, tail = List_ext.uncons !remaining in
-      remaining := tail;
-      match head_opt with
-      | Some (key, value) -> begin
-          match key with
-          | "href" -> post.href <- Yaml.Util.to_string_exn value
-          | "time" -> post.time <- Yaml.Util.to_string_exn value
-          | "description" -> post.description <- option_of_string (Yaml.Util.to_string_exn value)
-          | "extended" -> post.extended <- option_of_string (Yaml.Util.to_string_exn value)
-          | "tags" ->
-              let tags = Yaml.Util.to_string_exn value in
-              let tag = Str.split (Str.regexp "[ \t]+") tags in
-              post.tag <- tag
-          | "hash" -> post.hash <- option_of_string (Yaml.Util.to_string_exn value)
-          | "shared" -> post.shared <- Yaml.Util.to_string_exn value = "yes"
-          | "toread" -> post.toread <- Yaml.Util.to_string_exn value = "yes"
-          | _ -> ()
-        end
-      | None -> ()
-    done;
-    post
+    List.fold_left build empty assoc
 
   let from_json content = Yaml_ext.map_array_exn t_of_yaml (Ezjsonm.from_string content)
   let parse content = to_collection (from_json content)
 end
 
 module Xml = struct
-  let t_of_attrs (attrs : Attrs.t) : t =
-    let pinboard = fresh () in
-    let remaining = ref attrs in
-    while not (List.is_empty !remaining) do
-      let head_opt, tail = List_ext.uncons !remaining in
-      remaining := tail;
-      match head_opt with
-      | Some ((_, key), value) -> begin
-          match String.lowercase_ascii key with
-          | "href" -> pinboard.href <- value
-          | "time" -> pinboard.time <- value
-          | "description" when value <> String.empty -> pinboard.description <- Some value
-          | "extended" when value <> String.empty -> pinboard.extended <- Some value
-          | "tag" when value <> String.empty ->
-              let tag = Str.split (Str.regexp "[ \t]+") value in
-              pinboard.tag <- tag
-          | "hash" when value <> String.empty -> pinboard.hash <- Some value
-          | "shared" -> pinboard.shared <- value = "yes"
-          | "toread" -> pinboard.toread <- value = "yes"
-          | _ -> ()
-        end
-      | None -> ()
-    done;
-    pinboard
+  let build pinboard ((_, key), value) =
+    match String.lowercase_ascii key with
+    | "href" -> { pinboard with href = value }
+    | "time" -> { pinboard with time = value }
+    | "description" when value <> String.empty -> { pinboard with description = Some value }
+    | "extended" when value <> String.empty -> { pinboard with extended = Some value }
+    | "tag" when value <> String.empty ->
+        let tag = Str.split (Str.regexp "[ \t]+") value in
+        { pinboard with tag }
+    | "hash" when value <> String.empty -> { pinboard with hash = Some value }
+    | "shared" -> { pinboard with shared = value = "yes" }
+    | "toread" -> { pinboard with toread = value = "yes" }
+    | _ -> pinboard
+
+  let t_of_attrs (attrs : Attrs.t) : t = List.fold_left build empty attrs
 
   let from_xml content =
     if String.length content = 0 then
