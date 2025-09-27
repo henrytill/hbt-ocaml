@@ -317,8 +317,12 @@ module Html = struct
         { entity with last_visited_at = Some time }
     | "tags" when value <> String.empty ->
         let tag_list = Str.split (Str.regexp "[,]+") value in
-        let filtered = List.filter (( <> ) "toread") tag_list in
-        let labels = Label_set.of_list (List.map Label.of_string filtered) in
+        let labels =
+          Label_set.of_list
+            (List.filter_map
+               (fun tag -> if tag <> "toread" then Some (Label.of_string tag) else None)
+               tag_list)
+        in
         let to_read = entity.to_read || List.mem "toread" tag_list in
         { entity with labels; to_read }
     | "private" -> { entity with shared = value <> "1" }
