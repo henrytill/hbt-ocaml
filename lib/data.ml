@@ -25,10 +25,10 @@ let pp : type a. Format.formatter -> a t -> unit =
 
 let detect_input_format (filename : string) : input option =
   match Filename.extension filename with
-  | ".md" -> Some Markdown
-  | ".xml" -> Some Xml
-  | ".html" -> Some Html
   | ".json" -> Some Json
+  | ".xml" -> Some Xml
+  | ".md" -> Some Markdown
+  | ".html" -> Some Html
   | ".yaml" -> Some Yaml
   | _ -> None
 
