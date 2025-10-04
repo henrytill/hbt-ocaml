@@ -7,7 +7,7 @@ let element_of_string = function
   | "a" -> `A
   | "dd" -> `Dd
   | "dl" -> `Dl
-  | name -> `Other name
+  | _ -> `Other
 
 let mk_labels ls s = Entity.(Label_set.add (Label.of_string s) ls)
 
