@@ -1,10 +1,12 @@
 (rule
- (deps templates/netscape_bookmarks.mustache)
- (targets templates.ml)
+ (target templates.ml)
+ (deps
+  (:template templates/netscape_bookmarks.mustache)
+  (:script embed.ml))
  (action
   (with-stdout-to
-   %{targets}
-   (run %{dep:gen_template.exe} %{dep:templates/netscape_bookmarks.mustache}))))
+   %{target}
+   (run %{bin:ocaml} %{script} %{template}))))
 
 (rule
  (target version.ml)
@@ -21,12 +23,6 @@
    %{template}
    -o
    %{target})))
-
-(executable
- (public_name gen-template)
- (name gen_template)
- (package hbt-core)
- (modules gen_template))
 
 (library
  (name hbt)
