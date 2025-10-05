@@ -15,7 +15,7 @@
   (:header %{workspace_root}/project.h))
  (action
   (run
-   cpp
+   %{bin:cpp}
    -include
    %{header}
    %{env:CPP_FLAGS=-D__UNUSED__}
