@@ -12,7 +12,7 @@ let element_of_string = function
 let mk_labels ls s = Entity.(Label_set.add (Label.of_string s) ls)
 
 let parse content =
-  let collection = Collection.create () in
+  let coll = Collection.create () in
   let maybe_description = ref None in
   let maybe_extended = ref None in
   let attributes = ref Attrs.empty in
@@ -28,7 +28,7 @@ let parse content =
       let extended = Option.map Extended.of_string !maybe_extended in
       Html.entity_of_attrs !attributes names folder_labels extended
     in
-    ignore (Collection.upsert collection entity);
+    ignore (Collection.upsert coll entity);
     attributes := Attrs.empty;
     maybe_description := None;
     maybe_extended := None
@@ -87,7 +87,7 @@ let parse content =
     | Some _ -> ()
   done;
 
-  collection
+  coll
 
 module Template_entity = struct
   open Prelude

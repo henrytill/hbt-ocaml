@@ -81,13 +81,13 @@ let test_collection_upsert () =
   let labels_bar = Label_set.of_list [ Label.of_string "bar" ] in
   let a = Entity.make uri created_a ~labels:labels_foo () in
   let b = Entity.make uri created_b ~maybe_name:(Some name) ~labels:labels_bar () in
-  let collection = create () in
-  let id_a = upsert collection a in
-  let id_b = upsert collection b in
+  let coll = create () in
+  let id_a = upsert coll a in
+  let id_b = upsert coll b in
   let expected_length = 1 in
-  Alcotest.(check int) same_length expected_length (length collection);
+  Alcotest.(check int) same_length expected_length (length coll);
   Alcotest.(check testable_id) "same id" id_a id_b;
-  let e = entity collection id_a in
+  let e = entity coll id_a in
   Alcotest.(check testable_uri) same_uri (Uri.canonicalize uri) (Entity.uri e);
   Alcotest.(check testable_time) same_created_at created_b (Entity.created_at e);
   Alcotest.(check (list testable_time)) same_updated_at [ created_a ] (Entity.updated_at e);
@@ -105,22 +105,22 @@ let test_collection_add_edge () =
   let created_b = Time.of_string "September 2, 2024" in
   let a = Entity.make uri_a created_a () in
   let b = Entity.make uri_b created_b () in
-  let collection = create () in
-  let id_a = upsert collection a in
-  let id_b = upsert collection b in
+  let coll = create () in
+  let id_a = upsert coll a in
+  let id_b = upsert coll b in
   let expected_length = 2 in
-  Alcotest.(check int) same_length expected_length (length collection);
-  let () = add_edge collection id_a id_b in
-  let () = add_edge collection id_b id_a in
+  Alcotest.(check int) same_length expected_length (length coll);
+  let () = add_edge coll id_a id_b in
+  let () = add_edge coll id_b id_a in
   Alcotest.(check (neg testable_id)) "different id" id_a id_b;
   let edges_a = [| id_b |] in
   let edges_b = [| id_a |] in
-  Alcotest.(check (array testable_id)) same_edges edges_a (edges collection id_a);
-  Alcotest.(check (array testable_id)) same_edges edges_b (edges collection id_b);
-  let () = add_edge collection id_a id_b in
-  let () = add_edge collection id_b id_a in
-  Alcotest.(check (array testable_id)) same_edges edges_a (edges collection id_a);
-  Alcotest.(check (array testable_id)) same_edges edges_b (edges collection id_b)
+  Alcotest.(check (array testable_id)) same_edges edges_a (edges coll id_a);
+  Alcotest.(check (array testable_id)) same_edges edges_b (edges coll id_b);
+  let () = add_edge coll id_a id_b in
+  let () = add_edge coll id_b id_a in
+  Alcotest.(check (array testable_id)) same_edges edges_a (edges coll id_a);
+  Alcotest.(check (array testable_id)) same_edges edges_b (edges coll id_b)
 
 let tests =
   let open Alcotest in

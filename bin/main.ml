@@ -29,7 +29,7 @@ let read_file file =
   let finally () = close_in ic in
   Fun.protect ~finally (fun () -> really_input_string ic (in_channel_length ic))
 
-let update_collection (args : Args.t) : Collection.t -> Collection.t =
+let update (args : Args.t) : Collection.t -> Collection.t =
   match args.mappings_file with
   | None -> Fun.id
   | Some file -> read_file file |> Yaml.of_string_exn |> Collection.update_labels
@@ -41,22 +41,22 @@ let write (content : string) : string option -> unit = function
       let finally () = close_out oc in
       Fun.protect ~finally (fun () -> output_string oc content)
 
-let print_collection (file : string) (args : Args.t) (collection : Collection.t) : unit =
+let print (file : string) (args : Args.t) (coll : Collection.t) : unit =
   let open Collection in
   let output =
     if args.info then
-      Printf.sprintf "%s: %d entities\n" file (length collection)
+      Printf.sprintf "%s: %d entities\n" file (length coll)
     else if args.list_tags then
       let open Entity in
-      entities collection
-      |> Array.fold_left (fun acc et -> Label_set.union acc (Entity.labels et)) Label_set.empty
+      entities coll
+      |> Array.fold_left (fun acc ent -> Label_set.union acc (labels ent)) Label_set.empty
       |> Label_set.elements
       |> List.map Label.to_string
       |> String.concat "\n"
     else
       match args.output_format with
       | None -> raise Missing_output_specification
-      | Some format -> Data.format format collection
+      | Some format -> Data.format format coll
   in
   write output args.output
 
@@ -68,9 +68,7 @@ let process_file (args : Args.t) (file : string) : unit =
   in
   let content = read_file file in
   let updated_args = { args with input_format = Some input_format } in
-  Data.parse input_format content
-  |> update_collection updated_args
-  |> print_collection file updated_args
+  Data.parse input_format content |> update updated_args |> print file updated_args
 
 let from_format =
   let open Data in

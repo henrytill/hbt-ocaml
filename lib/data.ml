@@ -60,9 +60,9 @@ let parse (format : input) : string -> Collection.t =
 module Yaml_formatter = struct
   exception Yaml_conversion_error of string
 
-  let format collection =
+  let format coll =
     let len = 1024 * 1024 in
-    let yaml = Collection.yaml_of_t collection in
+    let yaml = Collection.yaml_of_t coll in
     match Yaml.to_string ~len yaml with
     | Ok s -> s
     | Error (`Msg e) -> raise (Yaml_conversion_error e)
