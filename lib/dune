@@ -6,6 +6,22 @@
    %{targets}
    (run %{dep:gen_template.exe} %{dep:templates/netscape_bookmarks.mustache}))))
 
+(rule
+ (target version.ml)
+ (deps
+  (:template version.ml.in)
+  (:header %{workspace_root}/project.h))
+ (action
+  (run
+   cpp
+   -include
+   %{header}
+   %{env:CPP_FLAGS=-D__UNUSED__}
+   -P
+   %{template}
+   -o
+   %{target})))
+
 (executable
  (public_name gen-template)
  (name gen_template)
@@ -16,4 +32,13 @@
  (name hbt)
  (public_name hbt-core)
  (libraries cmarkit ezjsonm markup mustache semver str unix uri xmlm yaml)
- (modules collection data entity html markdown pinboard prelude templates))
+ (modules
+  collection
+  data
+  entity
+  html
+  markdown
+  pinboard
+  prelude
+  templates
+  version))

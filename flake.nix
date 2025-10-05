@@ -45,6 +45,34 @@
       let
         on = opam-nix.lib.${system};
 
+        version = "0.1.0-${self.shortRev or self.dirtyShortRev}";
+
+        applyOverrides = pkgs: isStatic: final: prev: {
+          hbt-core = prev.hbt-core.overrideAttrs (as: {
+            CPP_FLAGS = ''-DVERSION="${version}"'';
+            nativeBuildInputs = as.nativeBuildInputs ++ [ pkgs.tzdata ];
+          });
+          hbt = prev.hbt.overrideAttrs (
+            as:
+            pkgs.lib.optionalAttrs isStatic {
+              buildPhase = ''
+                runHook preBuild
+                dune build -p hbt --profile static -j $NIX_BUILD_CORES
+                runHook postBuild
+              '';
+            }
+          );
+        };
+
+        applyOxOverrides = pkgs: final: prev: {
+          ocaml-variants = prev.ocaml-variants.overrideAttrs (as: {
+            preBuild = ''
+              sed -i "s|/usr/bin/env|${pkgs.coreutils}/bin/env|g" Makefile Makefile.* ocaml/Makefile.*
+            '';
+            nativeBuildInputs = as.nativeBuildInputs ++ [ pkgs.rsync ];
+          });
+        };
+
         mkRegularScope =
           isStatic:
           let
@@ -57,21 +85,7 @@
               inherit pkgs;
               resolveArgs.with-test = true;
             } ./. { ocaml-base-compiler = "5.3.0"; };
-            overlay = final: prev: {
-              hbt-core = prev.hbt-core.overrideAttrs (as: {
-                nativeBuildInputs = as.nativeBuildInputs ++ [ pkgs.tzdata ];
-              });
-              hbt = prev.hbt.overrideAttrs (
-                _:
-                pkgs.lib.optionalAttrs isStatic {
-                  buildPhase = ''
-                    runHook preBuild
-                    dune build -p hbt --profile static -j $NIX_BUILD_CORES
-                    runHook postBuild
-                  '';
-                }
-              );
-            };
+            overlay = applyOverrides pkgs isStatic;
           in
           scope.overrideScope overlay;
 
@@ -91,27 +105,7 @@
               ];
               resolveArgs.with-test = true;
             } ./. { ocaml-variants = "5.2.0+ox"; };
-            overlay = final: prev: {
-              hbt-core = prev.hbt-core.overrideAttrs (as: {
-                nativeBuildInputs = as.nativeBuildInputs ++ [ pkgs.tzdata ];
-              });
-              hbt = prev.hbt.overrideAttrs (
-                as:
-                pkgs.lib.optionalAttrs isStatic {
-                  buildPhase = ''
-                    runHook preBuild
-                    dune build -p hbt --profile static -j $NIX_BUILD_CORES
-                    runHook postBuild
-                  '';
-                }
-              );
-              ocaml-variants = prev.ocaml-variants.overrideAttrs (as: {
-                preBuild = ''
-                  sed -i "s|/usr/bin/env|${pkgs.coreutils}/bin/env|g" Makefile Makefile.* ocaml/Makefile.*
-                '';
-                nativeBuildInputs = as.nativeBuildInputs ++ [ pkgs.rsync ];
-              });
-            };
+            overlay = pkgs.lib.composeExtensions (applyOverrides pkgs isStatic) (applyOxOverrides pkgs);
           in
           scope.overrideScope overlay;
       in

@@ -1,0 +1,3 @@
+(* -*- mode: prog; -*- *)
+
+let version = VERSION

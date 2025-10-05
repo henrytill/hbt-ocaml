@@ -3,6 +3,8 @@ open Hbt
 
 exception Missing_output_specification
 
+let version = Version.version
+
 module Args = struct
   type t = {
     input_format : Data.input option;
@@ -118,7 +120,7 @@ let process_file_term =
 
 let cmd =
   let doc = "Process bookmark files in various formats" in
-  let info = Cmd.info "hbt" ~doc in
+  let info = Cmd.info "hbt" ~version ~doc in
   Cmd.v info process_file_term
 
 let () = exit (Cmd.eval cmd)
