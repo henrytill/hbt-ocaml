@@ -43,47 +43,89 @@
     flake-utils.lib.eachDefaultSystem (
       system:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
         on = opam-nix.lib.${system};
-        scope = on.buildOpamProject' { resolveArgs.with-test = true; } ./. {
-          ocaml-base-compiler = "5.3.0";
-        };
-        overlay = final: prev: {
-          hbt-core = prev.hbt-core.overrideAttrs (as: {
-            nativeBuildInputs = as.nativeBuildInputs ++ [ pkgs.tzdata ];
-          });
-        };
-        scopeOx =
-          on.buildOpamProject'
-            {
+
+        mkRegularScope =
+          isStatic:
+          let
+            pkgs =
+              let
+                ps = nixpkgs.legacyPackages.${system};
+              in
+              if isStatic then ps.pkgsMusl else ps;
+            scope = on.buildOpamProject' {
+              inherit pkgs;
+              resolveArgs.with-test = true;
+            } ./. { ocaml-base-compiler = "5.3.0"; };
+            overlay = final: prev: {
+              hbt-core = prev.hbt-core.overrideAttrs (as: {
+                nativeBuildInputs = as.nativeBuildInputs ++ [ pkgs.tzdata ];
+              });
+              hbt = prev.hbt.overrideAttrs (
+                _:
+                pkgs.lib.optionalAttrs isStatic {
+                  buildPhase = ''
+                    runHook preBuild
+                    dune build -p hbt --profile static -j $NIX_BUILD_CORES
+                    runHook postBuild
+                  '';
+                }
+              );
+            };
+          in
+          scope.overrideScope overlay;
+
+        mkOxScope =
+          isStatic:
+          let
+            pkgs =
+              let
+                ps = nixpkgs.legacyPackages.${system};
+              in
+              if isStatic then ps.pkgsMusl else ps;
+            scope = on.buildOpamProject' {
+              inherit pkgs;
               repos = [
                 "${opam-repository}"
                 "${opam-repository-oxcaml}"
               ];
               resolveArgs.with-test = true;
-            }
-            ./.
-            {
-              ocaml-variants = "5.2.0+ox";
+            } ./. { ocaml-variants = "5.2.0+ox"; };
+            overlay = final: prev: {
+              hbt-core = prev.hbt-core.overrideAttrs (as: {
+                nativeBuildInputs = as.nativeBuildInputs ++ [ pkgs.tzdata ];
+              });
+              hbt = prev.hbt.overrideAttrs (
+                as:
+                pkgs.lib.optionalAttrs isStatic {
+                  buildPhase = ''
+                    runHook preBuild
+                    dune build -p hbt --profile static -j $NIX_BUILD_CORES
+                    runHook postBuild
+                  '';
+                }
+              );
+              ocaml-variants = prev.ocaml-variants.overrideAttrs (as: {
+                preBuild = ''
+                  sed -i "s|/usr/bin/env|${pkgs.coreutils}/bin/env|g" Makefile Makefile.* ocaml/Makefile.*
+                '';
+                nativeBuildInputs = as.nativeBuildInputs ++ [ pkgs.rsync ];
+              });
             };
-        overlayOx = final: prev: {
-          hbt-core = prev.hbt-core.overrideAttrs (as: {
-            nativeBuildInputs = as.nativeBuildInputs ++ [ pkgs.tzdata ];
-          });
-          ocaml-variants = prev.ocaml-variants.overrideAttrs (as: {
-            preBuild = ''
-              sed -i "s|/usr/bin/env|${pkgs.coreutils}/bin/env|g" Makefile Makefile.* ocaml/Makefile.*
-            '';
-            nativeBuildInputs = as.nativeBuildInputs ++ [ pkgs.rsync ];
-          });
-        };
+          in
+          scope.overrideScope overlay;
       in
       {
-        legacyPackages = scope.overrideScope overlay;
-        legacyPackagesOx = scopeOx.overrideScope overlayOx;
+        legacyPackages = mkRegularScope false;
+        legacyPackagesOx = mkOxScope false;
+        legacyPackagesStatic = mkRegularScope true;
+        legacyPackagesOxStatic = mkOxScope true;
+
         packages = rec {
           hbt = self.legacyPackages.${system}.${package};
           hbt-ox = self.legacyPackagesOx.${system}.${package};
+          hbt-static = self.legacyPackagesStatic.${system}.${package};
+          hbt-ox-static = self.legacyPackagesOxStatic.${system}.${package};
           default = hbt;
         };
       }

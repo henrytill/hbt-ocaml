@@ -29,4 +29,10 @@ jobs:
           submodules: true
       - uses: cachix/install-nix-action@v31
       - run: nix build -L --accept-flake-config .#hbt -o result-hbt-ocaml
+      - run: nix build -L --accept-flake-config .#hbt-static -o result-hbt-ocaml-static
       - run: nix build -L --accept-flake-config .#hbt-ox -o result-hbt-oxcaml
+      - run: nix build -L --accept-flake-config .#hbt-ox-static -o result-hbt-oxaml-static
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hbt-x86_64-unknown-linux-musl
+          path: result-hbt-ocaml-static/bin/hbt
