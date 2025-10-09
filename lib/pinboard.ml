@@ -76,27 +76,27 @@ let to_entity (p : t) : Entity.t =
   let to_read = toread p in
   Entity.make uri created_at ~maybe_name ~labels ~extended ~shared ~to_read ()
 
-let to_collection (posts : t list) : Collection.t =
+let to_collection (ps : t list) : Collection.t =
   let coll = Collection.create () in
-  let sorted = List.sort (fun a b -> String.compare a.time b.time) posts in
+  let sorted = List.sort (fun a b -> String.compare a.time b.time) ps in
   List.iter (fun post -> ignore (Collection.insert coll (to_entity post))) sorted;
   coll
 
 module Json = struct
-  let build post (key, value) =
-    match key with
-    | "href" -> { post with href = Yaml.Util.to_string_exn value }
-    | "time" -> { post with time = Yaml.Util.to_string_exn value }
-    | "description" -> { post with description = option_of_string (Yaml.Util.to_string_exn value) }
-    | "extended" -> { post with extended = option_of_string (Yaml.Util.to_string_exn value) }
+  let build p (k, v) =
+    match k with
+    | "href" -> { p with href = Yaml.Util.to_string_exn v }
+    | "time" -> { p with time = Yaml.Util.to_string_exn v }
+    | "description" -> { p with description = option_of_string (Yaml.Util.to_string_exn v) }
+    | "extended" -> { p with extended = option_of_string (Yaml.Util.to_string_exn v) }
     | "tags" ->
-        let tags = Yaml.Util.to_string_exn value in
+        let tags = Yaml.Util.to_string_exn v in
         let tag = Str.split (Str.regexp "[ \t]+") tags in
-        { post with tag }
-    | "hash" -> { post with hash = option_of_string (Yaml.Util.to_string_exn value) }
-    | "shared" -> { post with shared = Yaml.Util.to_string_exn value = "yes" }
-    | "toread" -> { post with toread = Yaml.Util.to_string_exn value = "yes" }
-    | _ -> post
+        { p with tag }
+    | "hash" -> { p with hash = option_of_string (Yaml.Util.to_string_exn v) }
+    | "shared" -> { p with shared = Yaml.Util.to_string_exn v = "yes" }
+    | "toread" -> { p with toread = Yaml.Util.to_string_exn v = "yes" }
+    | _ -> p
 
   let t_of_yaml (value : Yaml.value) : t =
     let assoc =
@@ -111,19 +111,19 @@ module Json = struct
 end
 
 module Xml = struct
-  let build pinboard ((_, key), value) =
-    match String.lowercase_ascii key with
-    | "href" -> { pinboard with href = value }
-    | "time" -> { pinboard with time = value }
-    | "description" when value <> String.empty -> { pinboard with description = Some value }
-    | "extended" when value <> String.empty -> { pinboard with extended = Some value }
-    | "tag" when value <> String.empty ->
-        let tag = Str.split (Str.regexp "[ \t]+") value in
-        { pinboard with tag }
-    | "hash" when value <> String.empty -> { pinboard with hash = Some value }
-    | "shared" -> { pinboard with shared = value = "yes" }
-    | "toread" -> { pinboard with toread = value = "yes" }
-    | _ -> pinboard
+  let build p ((_, k), v) =
+    match String.lowercase_ascii k with
+    | "href" -> { p with href = v }
+    | "time" -> { p with time = v }
+    | "description" when v <> String.empty -> { p with description = Some v }
+    | "extended" when v <> String.empty -> { p with extended = Some v }
+    | "tag" when v <> String.empty ->
+        let tag = Str.split (Str.regexp "[ \t]+") v in
+        { p with tag }
+    | "hash" when v <> String.empty -> { p with hash = Some v }
+    | "shared" -> { p with shared = v = "yes" }
+    | "toread" -> { p with toread = v = "yes" }
+    | _ -> p
 
   let t_of_attrs (attrs : Attrs.t) : t = List.fold_left build empty attrs
 
