@@ -13,16 +13,12 @@
 (test
  (name test_data)
  (modules test_data)
- (libraries alcotest hbt-core yaml fpath bos)
+ (libraries alcotest bos fpath hbt-core yaml)
  (deps
-  (glob_files data/html/*.input.*)
-  (glob_files data/html/*.expected.*)
-  (glob_files data/markdown/*.input.*)
-  (glob_files data/markdown/*.expected.*)
-  (glob_files data/pinboard/xml/*.input.*)
-  (glob_files data/pinboard/xml/*.expected.*)
-  (glob_files data/pinboard/json/*.input.*)
-  (glob_files data/pinboard/json/*.expected.*))
+  (glob_files data/html/*)
+  (glob_files data/markdown/*)
+  (glob_files data/pinboard/xml/*)
+  (glob_files data/pinboard/json/*))
  (action
   (setenv
    TZ
