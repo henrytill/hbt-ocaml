@@ -32,6 +32,12 @@ let detect_input_format (filename : string) : input option =
   | ".yaml" -> Some Yaml
   | _ -> None
 
+let detect_output_format (filename : string) : output option =
+  match Filename.extension filename with
+  | ".html" -> Some Html
+  | ".yaml" -> Some Yaml
+  | _ -> None
+
 module type PARSER = sig
   val parse : string -> Collection.t
 end

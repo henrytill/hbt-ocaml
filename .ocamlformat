@@ -1,4 +1,5 @@
 version = 0.27.0
+ocaml-version = 5.2.0
 profile = conventional
 break-cases = toplevel
 break-infix = fit-or-vertical

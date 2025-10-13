@@ -26,6 +26,14 @@
    (and
     :with-test
     (>= 1.7.0)))
+  (bos
+   (and
+    :with-test
+    (>= 0.2.1)))
+  (fpath
+   (and
+    :with-test
+    (>= 0.7.3)))
   (cmarkit
    (>= 0.3.0))
   (ezjsonm
