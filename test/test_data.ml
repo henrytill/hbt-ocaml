@@ -38,14 +38,10 @@ let output_to_dir : Data.output -> Fpath.t option =
   | Html -> Some (base_dir / "html")
   | Yaml -> None
 
-let input_to_ext : Data.input -> string = function
+let format_to_ext : type a. a Data.t -> string = function
   | Json -> "json"
   | Xml -> "xml"
   | Markdown -> "md"
-  | Html -> "html"
-  | Yaml -> "yaml"
-
-let output_to_ext : Data.output -> string = function
   | Html -> "html"
   | Yaml -> "yaml"
 
@@ -74,7 +70,7 @@ let discover_input (format : Data.input) =
               Some { name; format; input = String.empty; expected }
           | Some entry -> Some { entry with expected }
         end
-      | [ "input"; ext ] when ext = input_to_ext format -> begin
+      | [ "input"; ext ] when ext = format_to_ext format -> begin
           let input = read_exn file in
           function
           | None ->
@@ -103,7 +99,7 @@ let discover_output (format : Data.output) =
     let name_thunk = lazy (Fpath.to_string stem) in
     let updater =
       match split ext with
-      | [ "expected"; ext ] when ext = output_to_ext format -> begin
+      | [ "expected"; ext ] when ext = format_to_ext format -> begin
           let expected = read_exn file in
           function
           | None ->
