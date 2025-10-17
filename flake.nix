@@ -37,9 +37,6 @@
       opam-repository-oxcaml,
       ...
     }@inputs:
-    let
-      package = "hbt";
-    in
     flake-utils.lib.eachDefaultSystem (
       system:
       let
@@ -73,6 +70,12 @@
           });
         };
 
+        devPackagesQuery = {
+          ocaml-lsp-server = "*";
+          ocamlformat = "*";
+          odig = "*";
+        };
+
         mkRegularScope =
           isStatic:
           let
@@ -81,10 +84,13 @@
                 ps = nixpkgs.legacyPackages.${system};
               in
               if isStatic then ps.pkgsMusl else ps;
+            query = devPackagesQuery // {
+              ocaml-base-compiler = "5.3.0";
+            };
             scope = on.buildOpamProject' {
               inherit pkgs;
               resolveArgs.with-test = true;
-            } ./. { ocaml-base-compiler = "5.3.0"; };
+            } ./. query;
             overlay = applyOverrides pkgs isStatic;
           in
           scope.overrideScope overlay;
@@ -108,20 +114,42 @@
             overlay = pkgs.lib.composeExtensions (applyOverrides pkgs isStatic) (applyOxOverrides pkgs);
           in
           scope.overrideScope overlay;
-      in
-      {
+
+        mkDevPackages =
+          s:
+          let
+            lib = nixpkgs.legacyPackages.${system}.lib;
+          in
+          builtins.attrValues (lib.getAttrs (builtins.attrNames devPackagesQuery) s);
+
+        mkShell =
+          s:
+          nixpkgs.legacyPackages.${system}.mkShell {
+            inputsFrom = [
+              s.hbt
+              s.hbt-core
+            ];
+            packages = mkDevPackages s ++ [ ];
+            shellHook = ''
+              export ODIG_CACHE_DIR=$(mktemp -d)
+            '';
+          };
+
         legacyPackages = mkRegularScope false;
         legacyPackagesOx = mkOxScope false;
         legacyPackagesStatic = mkRegularScope true;
         legacyPackagesOxStatic = mkOxScope true;
-
+      in
+      {
         packages = rec {
-          hbt = self.legacyPackages.${system}.${package};
-          hbt-ox = self.legacyPackagesOx.${system}.${package};
-          hbt-static = self.legacyPackagesStatic.${system}.${package};
-          hbt-ox-static = self.legacyPackagesOxStatic.${system}.${package};
+          hbt = legacyPackages.hbt;
+          hbt-ox = legacyPackagesOx.hbt;
+          hbt-static = legacyPackagesStatic.hbt;
+          hbt-ox-static = legacyPackagesOxStatic.hbt;
           default = hbt;
         };
+
+        devShells.default = mkShell legacyPackages;
       }
     );
 }
