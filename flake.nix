@@ -73,7 +73,7 @@
         devPackagesQuery = {
           ocaml-lsp-server = "*";
           ocamlformat = "*";
-          odig = "*";
+          ocp-browser = "*";
         };
 
         mkRegularScope =
@@ -124,15 +124,23 @@
 
         mkShell =
           s:
-          nixpkgs.legacyPackages.${system}.mkShell {
+          let
+            pkgs = nixpkgs.legacyPackages.${system};
+            docEnv = pkgs.buildEnv {
+              name = "doc-env";
+              paths = s.hbt.buildInputs ++ s.hbt.propagatedBuildInputs;
+            };
+            ocp-browser-wrapped = pkgs.writeShellScriptBin "ocp-browser" ''
+              exec ${s.ocp-browser}/bin/ocp-browser --no-opamlib -I "${docEnv}/lib/ocaml/${s.ocaml.version}/site-lib" "$@"
+            '';
+            devPackages = pkgs.lib.filter (p: p != s.ocp-browser) (mkDevPackages s);
+          in
+          pkgs.mkShell {
             inputsFrom = [
               s.hbt
               s.hbt-core
             ];
-            packages = mkDevPackages s ++ [ ];
-            shellHook = ''
-              export ODIG_CACHE_DIR=$(mktemp -d)
-            '';
+            packages = devPackages ++ [ ocp-browser-wrapped ];
           };
 
         legacyPackages = mkRegularScope false;
