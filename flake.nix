@@ -89,7 +89,9 @@
             };
             scope = on.buildOpamProject' {
               inherit pkgs;
-              resolveArgs.with-test = true;
+              resolveArgs = {
+                with-test = true;
+              };
             } ./. query;
             overlay = applyOverrides pkgs isStatic;
           in
@@ -109,7 +111,9 @@
                 "${opam-repository}"
                 "${opam-repository-oxcaml}"
               ];
-              resolveArgs.with-test = true;
+              resolveArgs = {
+                with-test = true;
+              };
             } ./. { ocaml-variants = "5.2.0+ox"; };
             overlay = pkgs.lib.composeExtensions (applyOverrides pkgs isStatic) (applyOxOverrides pkgs);
           in
