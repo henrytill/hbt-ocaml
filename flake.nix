@@ -18,7 +18,7 @@
       flake = false;
     };
     opam-nix = {
-      url = "github:henrytill/opam-nix/install-toplevel-files";
+      url = "github:tweag/opam-nix";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.opam-repository.follows = "opam-repository";
     };
