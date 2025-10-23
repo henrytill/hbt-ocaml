@@ -1,0 +1,21 @@
+#directory "+compiler-libs";;
+
+let () =
+  try
+    let path = Sys.getenv "OCAML_TOPLEVEL_PATH" in
+    let paths = String.split_on_char ':' path in
+    List.iter Topdirs.dir_directory paths
+  with Not_found -> ()
+;;
+
+#use "topfind";;
+#thread;;
+
+#use_output "if [ -f dune-project ]; then dune top; fi";;
+
+#use "down.top";;
+
+(* Local Variables: *)
+(* mode: tuareg *)
+(* eval: (merlin-mode 0) *)
+(* End: *)

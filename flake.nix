@@ -18,7 +18,7 @@
       flake = false;
     };
     opam-nix = {
-      url = "github:tweag/opam-nix";
+      url = "github:henrytill/opam-nix/install-toplevel-files";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.opam-repository.follows = "opam-repository";
     };
@@ -74,6 +74,8 @@
           ocaml-lsp-server = "*";
           ocamlformat = "*";
           ocp-browser = "*";
+          ocp-index = "*";
+          down = "*";
         };
 
         mkRegularScope =
@@ -130,21 +132,48 @@
           s:
           let
             pkgs = nixpkgs.legacyPackages.${system};
-            docEnv = pkgs.buildEnv {
-              name = "doc-env";
+            ocpEnv = pkgs.buildEnv {
+              name = "ocp-env";
               paths = s.hbt.buildInputs ++ s.hbt.propagatedBuildInputs;
             };
             ocp-browser-wrapped = pkgs.writeShellScriptBin "ocp-browser" ''
-              exec ${s.ocp-browser}/bin/ocp-browser --no-opamlib -I "${docEnv}/lib/ocaml/${s.ocaml.version}/site-lib" "$@"
+              exec ${s.ocp-browser}/bin/ocp-browser --no-opamlib -I "${ocpEnv}/lib/ocaml/${s.ocaml.version}/site-lib" "$@"
             '';
-            devPackages = pkgs.lib.filter (p: p != s.ocp-browser) (mkDevPackages s);
+            ocp-index-wrapped = pkgs.writeShellScriptBin "ocp-index" ''
+              if [ $# -eq 0 ]; then
+                exec ${s.ocp-index}/bin/ocp-index
+              else
+                cmd="$1"
+                shift
+                exec ${s.ocp-index}/bin/ocp-index "$cmd" --no-opamlib -I "${ocpEnv}/lib/ocaml/${s.ocaml.version}/site-lib" "$@"
+              fi
+            '';
+            devPackages = pkgs.lib.filter (p: p != s.ocp-browser && p != s.ocp-index) (mkDevPackages s);
+
+            mkToplevelPath =
+              ps:
+              let
+                toplevelDir = pkg: "${pkg}/lib/ocaml/${s.ocaml.version}/site-lib/toplevel";
+              in
+              pkgs.lib.concatStringsSep ":" (map toplevelDir ps);
+
+            toplevelPath = mkToplevelPath [
+              s.ocamlfind
+              s.down
+            ];
           in
           pkgs.mkShell {
             inputsFrom = [
               s.hbt
               s.hbt-core
             ];
-            packages = devPackages ++ [ ocp-browser-wrapped ];
+            packages = devPackages ++ [
+              ocp-browser-wrapped
+              ocp-index-wrapped
+            ];
+            shellHook = ''
+              export OCAML_TOPLEVEL_PATH="${toplevelPath}"
+            '';
           };
 
         legacyPackages = mkRegularScope false;
