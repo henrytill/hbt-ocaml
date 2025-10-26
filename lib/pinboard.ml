@@ -132,15 +132,19 @@ module Xml = struct
       []
     else
       let input = Xmlm.make_input (`String (0, content)) in
+      let continue = ref true in
       let acc = ref [] in
-      while not (Xmlm.eoi input) do
-        match Xmlm.input input with
-        | `El_start ((_, "post"), attrs) -> acc := t_of_attrs attrs :: !acc
-        | `El_start ((_, "posts"), _) -> ()
-        | `El_start ((_, s), _) -> raise (Unexpected_xml_element s)
-        | `El_end -> ()
-        | `Data _ -> ()
-        | `Dtd _ -> ()
+      while !continue do
+        if Xmlm.eoi input then
+          continue := false
+        else
+          match Xmlm.input input with
+          | `El_start ((_, "post"), attrs) -> acc := t_of_attrs attrs :: !acc
+          | `El_start ((_, "posts"), _) -> ()
+          | `El_start ((_, s), _) -> raise (Unexpected_xml_element s)
+          | `El_end -> ()
+          | `Data _ -> ()
+          | `Dtd _ -> ()
       done;
       List.rev !acc
 
