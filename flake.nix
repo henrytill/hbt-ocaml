@@ -61,15 +61,6 @@
           );
         };
 
-        applyOxOverrides = pkgs: final: prev: {
-          ocaml-variants = prev.ocaml-variants.overrideAttrs (as: {
-            preBuild = ''
-              sed -i "s|/usr/bin/env|${pkgs.coreutils}/bin/env|g" Makefile Makefile.* ocaml/Makefile.*
-            '';
-            nativeBuildInputs = as.nativeBuildInputs ++ [ pkgs.rsync ];
-          });
-        };
-
         devPackagesQuery = {
           ocaml-lsp-server = "*";
           ocamlformat = "*";
@@ -96,28 +87,6 @@
               };
             } ./. query;
             overlay = applyOverrides pkgs isStatic;
-          in
-          scope.overrideScope overlay;
-
-        mkOxScope =
-          isStatic:
-          let
-            pkgs =
-              let
-                ps = nixpkgs.legacyPackages.${system};
-              in
-              if isStatic then ps.pkgsMusl else ps;
-            scope = on.buildOpamProject' {
-              inherit pkgs;
-              repos = [
-                "${opam-repository}"
-                "${opam-repository-oxcaml}"
-              ];
-              resolveArgs = {
-                with-test = true;
-              };
-            } ./. { ocaml-variants = "5.2.0+ox"; };
-            overlay = pkgs.lib.composeExtensions (applyOverrides pkgs isStatic) (applyOxOverrides pkgs);
           in
           scope.overrideScope overlay;
 
@@ -177,16 +146,12 @@
           };
 
         legacyPackages = mkRegularScope false;
-        legacyPackagesOx = mkOxScope false;
         legacyPackagesStatic = mkRegularScope true;
-        legacyPackagesOxStatic = mkOxScope true;
       in
       {
         packages = rec {
           hbt = legacyPackages.hbt;
-          hbt-ox = legacyPackagesOx.hbt;
           hbt-static = legacyPackagesStatic.hbt;
-          hbt-ox-static = legacyPackagesOxStatic.hbt;
           default = hbt;
         };
 
