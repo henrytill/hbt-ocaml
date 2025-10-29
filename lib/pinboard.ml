@@ -9,6 +9,7 @@ type t = {
   description : string option;
   extended : string option;
   tag : string list;
+  meta : string option;
   hash : string option;
   shared : bool;
   toread : bool;
@@ -21,6 +22,7 @@ let empty =
     description = None;
     extended = None;
     tag = [];
+    meta = None;
     hash = None;
     shared = false;
     toread = false;
@@ -31,6 +33,7 @@ let time p = p.time
 let description p = p.description
 let extended p = p.extended
 let tag p = p.tag
+let meta p = p.meta
 let hash p = p.hash
 let shared p = p.shared
 let toread p = p.toread
@@ -41,6 +44,7 @@ let equal x y =
   && Option.equal String.equal x.description y.description
   && Option.equal String.equal x.extended y.extended
   && List.equal String.equal x.tag y.tag
+  && Option.equal String.equal x.meta y.meta
   && Option.equal String.equal x.hash y.hash
   && Bool.equal x.shared y.shared
   && Bool.equal x.toread y.toread
@@ -59,6 +63,7 @@ let pp fmt p =
   fprintf fmt "@;<1 2>@[description =@ %a@];" pp_string_option p.description;
   fprintf fmt "@;<1 2>@[extended =@ %a@];" pp_string_option p.extended;
   fprintf fmt "@;<1 2>@[tag =@ @[<hv>[@;<0 2>%a@;<0 0>]@]@];" pp_tag p.tag;
+  fprintf fmt "@;<1 2>@[meta =@ %a@];" pp_string_option p.meta;
   fprintf fmt "@;<1 2>@[hash =@ %a@];" pp_string_option p.hash;
   fprintf fmt "@;<1 2>@[shared =@ %B@];" p.shared;
   fprintf fmt "@;<1 2>@[toread =@ %B@];" p.toread;
@@ -93,6 +98,7 @@ module Json = struct
         let tags = Yaml.Util.to_string_exn v in
         let tag = Str.split (Str.regexp "[ \t]+") tags in
         { p with tag }
+    | "meta" -> { p with meta = option_of_string (Yaml.Util.to_string_exn v) }
     | "hash" -> { p with hash = option_of_string (Yaml.Util.to_string_exn v) }
     | "shared" -> { p with shared = Yaml.Util.to_string_exn v = "yes" }
     | "toread" -> { p with toread = Yaml.Util.to_string_exn v = "yes" }
@@ -120,6 +126,7 @@ module Xml = struct
     | "tag" when v <> String.empty ->
         let tag = Str.split (Str.regexp "[ \t]+") v in
         { p with tag }
+    | "meta" when v <> String.empty -> { p with meta = Some v }
     | "hash" when v <> String.empty -> { p with hash = Some v }
     | "shared" -> { p with shared = v = "yes" }
     | "toread" -> { p with toread = v = "yes" }

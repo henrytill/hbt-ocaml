@@ -5,6 +5,7 @@ val time : t -> string
 val description : t -> string option
 val extended : t -> string option
 val tag : t -> string list
+val meta : t -> string option
 val hash : t -> string option
 val shared : t -> bool
 val toread : t -> bool
