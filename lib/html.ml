@@ -1,7 +1,7 @@
 open Prelude
 module Attrs = Markup_ext.Attrs
 
-let element_of_string = function
+let elt_of_string = function
   | "h3" -> `H3
   | "dt" -> `Dt
   | "a" -> `A
@@ -38,7 +38,7 @@ let parse content =
   let html = Markup.parse_html stream in
   let signals = Markup.signals html in
 
-  let element_stack = Stack.create () in
+  let elt_stack = Stack.create () in
   let continue = ref true in
 
   while !continue do
@@ -46,21 +46,21 @@ let parse content =
     | None ->
         assert (Attrs.is_empty !attributes);
         continue := false
-    | Some (`Start_element ((_, name), _)) when element_of_string name = `H3 ->
-        Stack.push `H3 element_stack;
+    | Some (`Start_element ((_, name), _)) when elt_of_string name = `H3 ->
+        Stack.push `H3 elt_stack;
         waiting_for := `Folder_name
-    | Some (`Start_element ((_, name), _)) when element_of_string name = `Dt ->
-        Stack.push `Dt element_stack;
+    | Some (`Start_element ((_, name), _)) when elt_of_string name = `Dt ->
+        Stack.push `Dt elt_stack;
         unless (Attrs.is_empty !attributes) add_pending
-    | Some (`Start_element ((_, name), attrs)) when element_of_string name = `A ->
-        Stack.push `A element_stack;
+    | Some (`Start_element ((_, name), attrs)) when elt_of_string name = `A ->
+        Stack.push `A elt_stack;
         attributes := attrs;
         waiting_for := `Bookmark_description
-    | Some (`Start_element ((_, name), _)) when element_of_string name = `Dd ->
-        Stack.push `Dd element_stack;
+    | Some (`Start_element ((_, name), _)) when elt_of_string name = `Dd ->
+        Stack.push `Dd elt_stack;
         let@ () = unless (Attrs.is_empty !attributes) in
         waiting_for := `Extended_description
-    | Some (`Start_element ((_, name), _)) -> Stack.push (element_of_string name) element_stack
+    | Some (`Start_element ((_, name), _)) -> Stack.push (elt_of_string name) elt_stack
     | Some (`Text xs) -> begin
         match !waiting_for with
         | `Folder_name ->
@@ -79,7 +79,7 @@ let parse content =
         | `Nothing -> ()
       end
     | Some `End_element ->
-        let maybe_head = Stack.pop_opt element_stack in
+        let maybe_head = Stack.pop_opt elt_stack in
         if maybe_head = Some `Dl then begin
           unless (Attrs.is_empty !attributes) add_pending;
           ignore (Stack.pop_opt folder_stack)
