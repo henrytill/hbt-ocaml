@@ -54,7 +54,12 @@ let print (file : string) (args : Args.t) (coll : Collection.t) : unit =
       |> List.map Label.to_string
       |> String.concat "\n"
     else
-      match args.output_format with
+      let output_format =
+        match args.output_format with
+        | Some format -> Some format
+        | None -> Option.bind args.output Data.detect_output_format
+      in
+      match output_format with
       | None -> raise Missing_output_specification
       | Some format -> Data.format format coll
   in

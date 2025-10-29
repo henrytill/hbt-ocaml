@@ -179,6 +179,47 @@ Test with missing mappings file:
        
   [125]
 
+Test output format auto-detection from file extension:
+
+  $ hbt input.md -o output.yaml
+  $ head -10 output.yaml
+  version: 0.1.0
+  length: 3
+  value:
+  - id: 0
+    entity:
+      uri: https://ocaml.org/
+      createdAt: 1700006400
+      updatedAt: []
+      names:
+      - OCaml Website
+
+  $ hbt input.md -o output.html
+  $ head -5 output.html
+  <!DOCTYPE NETSCAPE-Bookmark-file-1>
+  <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+  <TITLE>Bookmarks</TITLE>
+  <H1>Bookmarks</H1>
+  <DL><p>
+
+Test that explicit format overrides auto-detection:
+
+  $ hbt input.md -t yaml -o explicit.html
+  $ head -5 explicit.html
+  version: 0.1.0
+  length: 3
+  value:
+  - id: 0
+    entity:
+
+Test that unrecognized extension fails without explicit format:
+
+  $ hbt input.md -o output.txt
+  hbt: internal error, uncaught exception:
+       Dune__exe__Main.Missing_output_specification
+       
+  [125]
+
 # Local Variables:
 # mode: prog
 # tab-width: 2
