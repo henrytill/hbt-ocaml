@@ -5,7 +5,7 @@ module Fold_state = struct
   type t = {
     name : Entity.Name.t option;
     time : Entity.Time.t option;
-    uri : Uri.t option;
+    uri : Entity.Uri.t option;
     labels : Entity.Label.t list;
     maybe_parent : Collection.Id.t option;
     parents : Collection.Id.t list;
@@ -20,7 +20,7 @@ module Fold_state = struct
     let pp_sep fmt () = fprintf fmt ";@;<1 2>" in
     let pp_print_name = pp_print_option ~none Entity.Name.pp in
     let pp_print_time = pp_print_option ~none Entity.Time.pp in
-    let pp_print_uri = pp_print_option ~none Uri.pp in
+    let pp_print_uri = pp_print_option ~none Entity.Uri.pp in
     let pp_print_labels = pp_print_list ~pp_sep Entity.Label.pp in
     let pp_print_maybe_parent = pp_print_option ~none Collection.Id.pp in
     let pp_print_parents = pp_print_list ~pp_sep Collection.Id.pp in
@@ -87,7 +87,7 @@ let save_entity c st =
 
 let handle_autolink (link : Inline.Autolink.t) ((c, st) : Collection.t * Fold_state.t) =
   let link_text, _ = Inline.Autolink.link link in
-  let uri = Some (Uri.of_string link_text) in
+  let uri = Some (Entity.Uri.of_string link_text) in
   let st = { st with uri } in
   save_entity c st
 
@@ -127,7 +127,7 @@ let handle_link (link : Inline.Link.t) ((c, st) : Collection.t * Fold_state.t) =
   let@ link_def = get_def link kdefault in
   let@ link_dest = get_dest link_def kdefault in
   let link_text = get_text link in
-  let uri = Some (Uri.of_string link_dest) in
+  let uri = Some (Entity.Uri.of_string link_dest) in
   let name = Option.map Entity.Name.of_string link_text in
   let st = { st with uri; name } in
   save_entity c st

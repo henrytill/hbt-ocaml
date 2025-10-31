@@ -15,8 +15,8 @@ val create : unit -> t
 val make : int -> t
 val length : t -> int
 val is_empty : t -> bool
-val contains : t -> Uri.t -> bool
-val id : t -> Uri.t -> Id.t option
+val contains : t -> Entity.Uri.t -> bool
+val id : t -> Entity.Uri.t -> Id.t option
 val insert : t -> Entity.t -> Id.t
 val upsert : t -> Entity.t -> Id.t
 val add_edge : t -> Id.t -> Id.t -> unit

@@ -27,15 +27,7 @@ module Id = struct
   let yaml_of_t id = Yaml.Util.float (float_of_int id)
 end
 
-module Uri_hashtbl = Hashtbl.Make (struct
-  type t = Uri.t
-
-  let equal = Uri.equal
-
-  let hash uri =
-    let _ = Uri.query uri in
-    Hashtbl.hash uri
-end)
+module Uri_hashtbl = Hashtbl.Make (Entity.Uri)
 
 type edges = Id.t Dynarray.t
 

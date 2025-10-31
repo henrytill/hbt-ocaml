@@ -5,6 +5,25 @@ let pp_print_set pp_item fmt items =
   let pp_sep fmt () = fprintf fmt ";@ " in
   fprintf fmt "@[<h>{%a}@]" (pp_print_list ~pp_sep pp_item) items
 
+module Uri = struct
+  type t = Uri.t
+
+  let empty = Uri.empty
+  let of_string = Uri.of_string
+  let to_string uri = Uri.to_string uri
+  let canonicalize = Uri.canonicalize
+  let equal = Uri.equal
+  let compare x y = String.compare (to_string x) (to_string y)
+  let pp = Uri.pp
+
+  let hash uri =
+    let _ = Uri.query uri in
+    Hashtbl.hash uri
+
+  let t_of_yaml value = of_string (Yaml.Util.to_string_exn value)
+  let yaml_of_t uri = Yaml.Util.string (to_string uri)
+end
+
 module Name = struct
   type t = string
 
@@ -223,7 +242,7 @@ let pp fmt e =
 
 let build entity (key, value) =
   match key with
-  | "uri" -> { entity with uri = Uri.of_string (Yaml.Util.to_string_exn value) }
+  | "uri" -> { entity with uri = Uri.t_of_yaml value }
   | "createdAt" -> { entity with created_at = Time.t_of_yaml value }
   | "updatedAt" -> { entity with updated_at = Yaml_ext.map_array_exn Time.t_of_yaml value }
   | "names" -> { entity with names = Name_set.t_of_yaml value }
@@ -246,7 +265,7 @@ let t_of_yaml value =
 let yaml_of_t entity =
   let base_fields =
     [
-      ("uri", `String (Uri.to_string entity.uri));
+      ("uri", Uri.yaml_of_t entity.uri);
       ("createdAt", Time.yaml_of_t entity.created_at);
       ("updatedAt", `A (List.map Time.yaml_of_t entity.updated_at));
       ("names", Name_set.yaml_of_t entity.names);

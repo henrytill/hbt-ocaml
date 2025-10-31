@@ -2,7 +2,7 @@ open Hbt
 open Hbt.Collection
 
 let testable_id = Alcotest.testable Id.pp Id.equal
-let testable_uri = Alcotest.testable Uri.pp Uri.equal
+let testable_uri = Alcotest.testable Entity.Uri.pp Entity.Uri.equal
 let testable_time = Alcotest.testable Entity.Time.pp Entity.Time.equal
 let testable_name_set = Alcotest.testable Entity.Name_set.pp Entity.Name_set.equal
 let testable_label_set = Alcotest.testable Entity.Label_set.pp Entity.Label_set.equal

@@ -72,7 +72,7 @@ let pp fmt p =
 let to_string = Format.asprintf "%a" pp
 
 let to_entity (p : t) : Entity.t =
-  let uri = Uri.of_string (href p) in
+  let uri = Entity.Uri.of_string (href p) in
   let created_at = Entity.Time.of_string (time p) in
   let maybe_name = Option.map Entity.Name.of_string (description p) in
   let labels = Entity.Label_set.of_list (List.map Entity.Label.of_string (tag p)) in

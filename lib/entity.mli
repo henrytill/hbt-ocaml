@@ -1,3 +1,18 @@
+module Uri : sig
+  type t
+
+  val empty : t
+  val of_string : string -> t
+  val to_string : t -> string
+  val canonicalize : t -> t
+  val equal : t -> t -> bool
+  val compare : t -> t -> int
+  val pp : Format.formatter -> t -> unit
+  val hash : t -> int
+  val t_of_yaml : Yaml.value -> t
+  val yaml_of_t : t -> Yaml.value
+end
+
 module Name : sig
   type t
 
