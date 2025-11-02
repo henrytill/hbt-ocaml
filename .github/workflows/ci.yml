@@ -28,6 +28,10 @@ jobs:
         with:
           submodules: true
       - uses: cachix/install-nix-action@v31
+      - uses: cachix/cachix-action@v15
+        with:
+          name: henrytill
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
       - run: nix build -L --accept-flake-config .#hbt -o result-hbt-ocaml
       - run: nix build -L --accept-flake-config .#hbt-static -o result-hbt-ocaml-static
       - uses: actions/upload-artifact@v5
