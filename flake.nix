@@ -6,10 +6,6 @@
       url = "github:ocaml/opam-repository";
       flake = false;
     };
-    opam-repository-oxcaml = {
-      url = "github:oxcaml/opam-repository";
-      flake = false;
-    };
     opam-nix = {
       url = "github:tweag/opam-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -27,7 +23,6 @@
       opam-nix,
       nixpkgs,
       opam-repository,
-      opam-repository-oxcaml,
       ...
     }@inputs:
     flake-utils.lib.eachDefaultSystem (
