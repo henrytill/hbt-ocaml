@@ -73,7 +73,7 @@
               resolveArgs = {
                 with-test = true;
               };
-            } ./. query;
+            } self query;
             overlay = applyOverrides pkgs isStatic;
           in
           scope.overrideScope overlay;
