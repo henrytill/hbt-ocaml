@@ -127,6 +127,7 @@
             packages = devPackages ++ [
               ocp-browser-wrapped
               ocp-index-wrapped
+              pkgs.yaml-language-server
             ];
             shellHook = ''
               export OCAML_TOPLEVEL_PATH="${toplevelPath}"
