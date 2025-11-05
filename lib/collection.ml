@@ -22,7 +22,7 @@ module Id = struct
   let to_int = Fun.id
   let equal = Int.equal
   let compare = Int.compare
-  let pp = Format.pp_print_int
+  let pp = Fmt.int
   let t_of_yaml value = int_of_float (Yaml.Util.to_float_exn value)
   let yaml_of_t id = Yaml.Util.float (float_of_int id)
 end

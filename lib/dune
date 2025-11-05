@@ -27,7 +27,18 @@
 (library
  (name hbt)
  (public_name hbt-core)
- (libraries cmarkit ezjsonm markup mustache semver str unix uri xmlm yaml)
+ (libraries
+  cmarkit
+  ezjsonm
+  fmt
+  markup
+  mustache
+  semver
+  str
+  unix
+  uri
+  xmlm
+  yaml)
  (modules
   collection
   data

@@ -20,8 +20,7 @@ let to_string : type a. a t -> string = function
   | Html -> "html"
   | Yaml -> "yaml"
 
-let pp : type a. Format.formatter -> a t -> unit =
-  fun fmt format -> Format.pp_print_string fmt (to_string format)
+let pp : type a. a t Fmt.t = fun fmt format -> Fmt.string fmt (to_string format)
 
 let detect_input_format (filename : string) : input option =
   match Filename.extension filename with

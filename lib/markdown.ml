@@ -14,24 +14,16 @@ module Fold_state = struct
   let empty =
     { name = None; time = None; uri = None; labels = []; maybe_parent = None; parents = [] }
 
-  let[@warning "-32"] pp fmt st =
-    let open Format in
-    let none fmt () = fprintf fmt "None" in
-    let pp_sep fmt () = fprintf fmt ";@;<1 2>" in
-    let pp_print_name = pp_print_option ~none Entity.Name.pp in
-    let pp_print_time = pp_print_option ~none Entity.Time.pp in
-    let pp_print_uri = pp_print_option ~none Entity.Uri.pp in
-    let pp_print_labels = pp_print_list ~pp_sep Entity.Label.pp in
-    let pp_print_maybe_parent = pp_print_option ~none Collection.Id.pp in
-    let pp_print_parents = pp_print_list ~pp_sep Collection.Id.pp in
-    fprintf fmt "@[<hv>{";
-    fprintf fmt "@;<1 2>@[name =@ %a@];" pp_print_name st.name;
-    fprintf fmt "@;<1 2>@[time =@ %a@];" pp_print_time st.time;
-    fprintf fmt "@;<1 2>@[uri =@ %a@];" pp_print_uri st.uri;
-    fprintf fmt "@;<1 2>@[labels =@ @[<hv>[@;<0 2>%a@;<0 0>]@]@];" pp_print_labels st.labels;
-    fprintf fmt "@;<1 2>@[maybe_parent =@ %a@];" pp_print_maybe_parent st.maybe_parent;
-    fprintf fmt "@;<1 2>@[parents =@ @[<hv>[@;<0 2>%a@;<0 0>]@]@];" pp_print_parents st.parents;
-    fprintf fmt "@;<1 0>}@]"
+  let[@warning "-32"] pp =
+    Fmt.record
+      [
+        Fmt.(field "name" (fun st -> st.name) (option Entity.Name.pp));
+        Fmt.(field "time" (fun st -> st.time) (option Entity.Time.pp));
+        Fmt.(field "uri" (fun st -> st.uri) (option Entity.Uri.pp));
+        Fmt.(field "labels" (fun st -> st.labels) (list ~sep:semi Entity.Label.pp));
+        Fmt.(field "maybe_parent" (fun st -> st.maybe_parent) (option Collection.Id.pp));
+        Fmt.(field "parents" (fun st -> st.parents) (list ~sep:semi Collection.Id.pp));
+      ]
 
   let to_entity st =
     match (st.uri, st.time) with

@@ -1,9 +1,6 @@
 open Prelude
 
-let pp_print_set pp_item fmt items =
-  let open Format in
-  let pp_sep fmt () = fprintf fmt ";@ " in
-  fprintf fmt "@[<h>{%a}@]" (pp_print_list ~pp_sep pp_item) items
+let pp_print_set pp_item = Fmt.(braces (list ~sep:semi pp_item))
 
 module Uri = struct
   type t = Uri.t
@@ -31,7 +28,7 @@ module Name = struct
   let to_string = Fun.id
   let equal = String.equal
   let compare = String.compare
-  let pp fmt = Format.fprintf fmt "%S"
+  let pp = Fmt.(quote string)
   let t_of_yaml = Yaml.Util.to_string_exn
   let yaml_of_t = Yaml.Util.string
 end
@@ -51,7 +48,7 @@ module Label = struct
   let to_string = Fun.id
   let equal = String.equal
   let compare = String.compare
-  let pp fmt = Format.fprintf fmt "%S"
+  let pp = Fmt.(quote string)
   let t_of_yaml = Yaml.Util.to_string_exn
   let yaml_of_t = Yaml.Util.string
 end
@@ -141,7 +138,7 @@ module Time = struct
   let to_string t = fst t |> int_of_float |> string_of_int
   let equal x y = Float.equal (fst x) (fst y)
   let compare x y = Float.compare (fst x) (fst y)
-  let pp fmt t = Format.fprintf fmt "%S" (to_string t)
+  let pp = Fmt.(using to_string (quote string))
 
   let t_of_yaml value =
     let f = Yaml.Util.to_float_exn value in
@@ -157,7 +154,7 @@ module Extended = struct
   let to_string = Fun.id
   let equal = String.equal
   let compare = String.compare
-  let pp fmt = Format.fprintf fmt "%S"
+  let pp = Fmt.(quote string)
   let t_of_yaml = Yaml.Util.to_string_exn
   let yaml_of_t = Yaml.Util.string
 end
@@ -219,26 +216,20 @@ let equal x y =
   && Option.equal Time.equal x.last_visited_at y.last_visited_at
   && Bool.equal x.is_feed y.is_feed
 
-let pp fmt e =
-  let open Format in
-  let pp_sep fmt () = fprintf fmt ";@;<1 2>" in
-  let pp_updated_at = pp_print_list ~pp_sep Time.pp in
-  let none fmt () = fprintf fmt "None" in
-  let some fmt = fprintf fmt "Some %a" Extended.pp in
-  let pp_extended_opt = pp_print_option ~none some in
-  let pp_last_visit_opt = pp_print_option ~none Time.pp in
-  fprintf fmt "@[<hv>{";
-  fprintf fmt "@;<1 2>@[uri =@ %a@];" Uri.pp e.uri;
-  fprintf fmt "@;<1 2>@[created_at =@ %a@];" Time.pp e.created_at;
-  fprintf fmt "@;<1 2>@[updated_at =@ @[<hv>[@;<0 2>%a@;<0 0>]@]@];" pp_updated_at e.updated_at;
-  fprintf fmt "@;<1 2>@[names =@ %a@];" Name_set.pp e.names;
-  fprintf fmt "@;<1 2>@[labels =@ %a@];" Label_set.pp e.labels;
-  fprintf fmt "@;<1 2>@[extended =@ %a@];" pp_extended_opt e.extended;
-  fprintf fmt "@;<1 2>@[shared =@ %a@];" pp_print_bool e.shared;
-  fprintf fmt "@;<1 2>@[to_read =@ %a@];" pp_print_bool e.to_read;
-  fprintf fmt "@;<1 2>@[last_visited_at =@ %a@];" pp_last_visit_opt e.last_visited_at;
-  fprintf fmt "@;<1 2>@[is_feed =@ %a@];" pp_print_bool e.is_feed;
-  fprintf fmt "@;<1 0>}@]"
+let pp =
+  Fmt.record
+    [
+      Fmt.(field "uri" (fun e -> e.uri) Uri.pp);
+      Fmt.(field "created_at" (fun e -> e.created_at) Time.pp);
+      Fmt.(field "updated_at" (fun e -> e.updated_at) (list ~sep:semi Time.pp));
+      Fmt.(field "names" (fun e -> e.names) Name_set.pp);
+      Fmt.(field "labels" (fun e -> e.labels) Label_set.pp);
+      Fmt.(field "extended" (fun e -> e.extended) (option Extended.pp));
+      Fmt.(field "shared" (fun e -> e.shared) bool);
+      Fmt.(field "to_read" (fun e -> e.to_read) bool);
+      Fmt.(field "last_visited_at" (fun e -> e.last_visited_at) (option Time.pp));
+      Fmt.(field "is_feed" (fun e -> e.is_feed) bool);
+    ]
 
 let build entity (key, value) =
   match key with

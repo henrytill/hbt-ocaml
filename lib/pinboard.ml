@@ -49,27 +49,21 @@ let equal x y =
   && Bool.equal x.shared y.shared
   && Bool.equal x.toread y.toread
 
-let pp fmt p =
-  let open Format in
-  let none fmt () = fprintf fmt "None" in
-  let some fmt elem = fprintf fmt "%S" elem in
-  let pp_string_option = pp_print_option ~none some in
-  let pp_sep fmt () = fprintf fmt ";@;<1 2>" in
-  let pp_elem fmt elem = fprintf fmt "%S" elem in
-  let pp_tag = pp_print_list ~pp_sep pp_elem in
-  fprintf fmt "@[<hv>{";
-  fprintf fmt "@;<1 2>@[href =@ %S@];" p.href;
-  fprintf fmt "@;<1 2>@[time =@ %S@];" p.time;
-  fprintf fmt "@;<1 2>@[description =@ %a@];" pp_string_option p.description;
-  fprintf fmt "@;<1 2>@[extended =@ %a@];" pp_string_option p.extended;
-  fprintf fmt "@;<1 2>@[tag =@ @[<hv>[@;<0 2>%a@;<0 0>]@]@];" pp_tag p.tag;
-  fprintf fmt "@;<1 2>@[meta =@ %a@];" pp_string_option p.meta;
-  fprintf fmt "@;<1 2>@[hash =@ %a@];" pp_string_option p.hash;
-  fprintf fmt "@;<1 2>@[shared =@ %B@];" p.shared;
-  fprintf fmt "@;<1 2>@[toread =@ %B@];" p.toread;
-  fprintf fmt "@;<1 0>}@]"
+let pp =
+  Fmt.record
+    [
+      Fmt.(field "href" (fun p -> p.href) (quote string));
+      Fmt.(field "time" (fun p -> p.time) (quote string));
+      Fmt.(field "description" (fun p -> p.description) (option (quote string)));
+      Fmt.(field "extended" (fun p -> p.extended) (option (quote string)));
+      Fmt.(field "tag" (fun p -> p.tag) (list ~sep:semi (quote string)));
+      Fmt.(field "meta" (fun p -> p.meta) (option (quote string)));
+      Fmt.(field "hash" (fun p -> p.hash) (option (quote string)));
+      Fmt.(field "shared" (fun p -> p.shared) bool);
+      Fmt.(field "toread" (fun p -> p.toread) bool);
+    ]
 
-let to_string = Format.asprintf "%a" pp
+let to_string = Fmt.str "%a" pp
 
 let to_entity (p : t) : Entity.t =
   let uri = Entity.Uri.of_string (href p) in
