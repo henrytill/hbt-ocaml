@@ -204,6 +204,17 @@ let empty =
     is_feed = false;
   }
 
+let uri e = e.uri
+let created_at e = e.created_at
+let updated_at e = e.updated_at
+let names e = e.names
+let labels e = e.labels
+let extended e = e.extended
+let shared e = e.shared
+let to_read e = e.to_read
+let last_visited_at e = e.last_visited_at
+let is_feed e = e.is_feed
+
 let equal x y =
   Uri.equal x.uri y.uri
   && Time.equal x.created_at y.created_at
@@ -217,19 +228,20 @@ let equal x y =
   && Bool.equal x.is_feed y.is_feed
 
 let pp =
-  Fmt.record
-    [
-      Fmt.(field "uri" (fun e -> e.uri) Uri.pp);
-      Fmt.(field "created_at" (fun e -> e.created_at) Time.pp);
-      Fmt.(field "updated_at" (fun e -> e.updated_at) (list ~sep:semi Time.pp));
-      Fmt.(field "names" (fun e -> e.names) Name_set.pp);
-      Fmt.(field "labels" (fun e -> e.labels) Label_set.pp);
-      Fmt.(field "extended" (fun e -> e.extended) (option Extended.pp));
-      Fmt.(field "shared" (fun e -> e.shared) bool);
-      Fmt.(field "to_read" (fun e -> e.to_read) bool);
-      Fmt.(field "last_visited_at" (fun e -> e.last_visited_at) (option Time.pp));
-      Fmt.(field "is_feed" (fun e -> e.is_feed) bool);
-    ]
+  Fmt.(
+    record
+      [
+        field "uri" uri Uri.pp;
+        field "created_at" created_at Time.pp;
+        field "updated_at" updated_at (list ~sep:semi Time.pp);
+        field "names" names Name_set.pp;
+        field "labels" labels Label_set.pp;
+        field "extended" extended (option Extended.pp);
+        field "shared" shared bool;
+        field "to_read" to_read bool;
+        field "last_visited_at" last_visited_at (option Time.pp);
+        field "is_feed" is_feed bool;
+      ])
 
 let build entity (key, value) =
   match key with
@@ -295,16 +307,6 @@ let absorb other existing =
   else
     existing
 
-let uri e = e.uri
-let created_at e = e.created_at
-let updated_at e = e.updated_at
-let names e = e.names
-let labels e = e.labels
-let extended e = e.extended
-let shared e = e.shared
-let to_read e = e.to_read
-let last_visited_at e = e.last_visited_at
-let is_feed e = e.is_feed
 let map_labels f e = { e with labels = f e.labels }
 
 module Html = struct

@@ -50,18 +50,19 @@ let equal x y =
   && Bool.equal x.toread y.toread
 
 let pp =
-  Fmt.record
-    [
-      Fmt.(field "href" (fun p -> p.href) (quote string));
-      Fmt.(field "time" (fun p -> p.time) (quote string));
-      Fmt.(field "description" (fun p -> p.description) (option (quote string)));
-      Fmt.(field "extended" (fun p -> p.extended) (option (quote string)));
-      Fmt.(field "tag" (fun p -> p.tag) (list ~sep:semi (quote string)));
-      Fmt.(field "meta" (fun p -> p.meta) (option (quote string)));
-      Fmt.(field "hash" (fun p -> p.hash) (option (quote string)));
-      Fmt.(field "shared" (fun p -> p.shared) bool);
-      Fmt.(field "toread" (fun p -> p.toread) bool);
-    ]
+  Fmt.(
+    record
+      [
+        field "href" href (quote string);
+        field "time" time (quote string);
+        field "description" description (option (quote string));
+        field "extended" extended (option (quote string));
+        field "tag" tag (list ~sep:semi (quote string));
+        field "meta" meta (option (quote string));
+        field "hash" hash (option (quote string));
+        field "shared" shared bool;
+        field "toread" toread bool;
+      ])
 
 let to_string = Fmt.str "%a" pp
 
