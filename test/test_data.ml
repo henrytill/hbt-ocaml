@@ -84,8 +84,8 @@ let discover_input (format : Data.input) =
   in
   let* dir =
     match input_to_dir format with
-    | Some dir -> Ok dir
     | None -> Error (`Msg ("no inputs for " ^ Data.to_string format))
+    | Some dir -> Ok dir
   in
   let* all_files = Bos.OS.Dir.contents dir in
   try
@@ -121,8 +121,8 @@ let discover_output (format : Data.output) =
   in
   let* dir =
     match output_to_dir format with
-    | Some dir -> Ok dir
     | None -> Error (`Msg ("no inputs for " ^ Data.to_string format))
+    | Some dir -> Ok dir
   in
   let* all_files = Bos.OS.Dir.contents dir in
   try
