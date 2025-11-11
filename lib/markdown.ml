@@ -37,27 +37,30 @@ module Fold_state = struct
     | _ -> None
 end
 
-let kdefault () : 'a Folder.result = Folder.default
-
-let get_heading_text (h : Block.Heading.t) (kf : unit -> 'a Folder.result)
-    (ks : string -> 'a Folder.result) : 'a Folder.result =
+let get_heading_text (h : Block.Heading.t) : string option =
   match Block.Heading.inline h with
-  | Inline.Text (t, _) -> ks t
-  | _ -> kf ()
+  | Inline.Text (t, _) -> Some t
+  | _ -> None
 
 let block m ((c, st) : Collection.t * Fold_state.t) = function
-  | Block.Heading (heading, _) when Block.Heading.level heading = 1 ->
-      let@ heading_text = get_heading_text heading kdefault in
-      let time = Some (Entity.Time.of_string heading_text) in
-      let st = { st with time; maybe_parent = None; labels = [] } in
-      Folder.ret (c, st)
-  | Block.Heading (heading, _) ->
-      let heading_level = Block.Heading.level heading in
-      let labels = List_ext.take (heading_level - 2) st.labels in
-      let@ heading_text = get_heading_text heading kdefault in
-      let labels = Entity.Label.of_string heading_text :: labels in
-      let st = { st with labels } in
-      Folder.ret (c, st)
+  | Block.Heading (heading, _) when Block.Heading.level heading = 1 -> begin
+      match get_heading_text heading with
+      | None -> Folder.default
+      | Some heading_text ->
+          let time = Some (Entity.Time.of_string heading_text) in
+          let st = { st with time; maybe_parent = None; labels = [] } in
+          Folder.ret (c, st)
+    end
+  | Block.Heading (heading, _) -> begin
+      match get_heading_text heading with
+      | None -> Folder.default
+      | Some heading_text ->
+          let heading_level = Block.Heading.level heading in
+          let labels = List_ext.take (heading_level - 2) st.labels in
+          let labels = Entity.Label.of_string heading_text :: labels in
+          let st = { st with labels } in
+          Folder.ret (c, st)
+    end
   | Block.List (list, _) ->
       let st =
         match st.maybe_parent with
@@ -87,15 +90,15 @@ let handle_autolink (link : Inline.Autolink.t) ((c, st) : Collection.t * Fold_st
   let st = { st with uri } in
   save_entity c st
 
-let get_def (l : Inline.Link.t) (kf : unit -> 'a) (ks : Link_definition.t -> 'a) : 'a =
+let get_def (l : Inline.Link.t) : Link_definition.t option =
   match Inline.Link.reference l with
-  | `Inline (link_def, _) -> ks link_def
-  | _ -> kf ()
+  | `Inline (link_def, _) -> Some link_def
+  | _ -> None
 
-let get_dest (ld : Link_definition.t) (kf : unit -> 'a) (ks : string -> 'a) : 'a =
+let get_dest (ld : Link_definition.t) : string option =
   match Link_definition.dest ld with
-  | Some (link_dest, _) -> ks link_dest
-  | _ -> kf ()
+  | Some (link_dest, _) -> Some link_dest
+  | _ -> None
 
 let rec extract_string (inlines : Inline.t list) : string =
   let rec go acc = function
@@ -120,13 +123,14 @@ let get_text (link : Inline.Link.t) : string option =
   |> option_of_string
 
 let handle_link (link : Inline.Link.t) ((c, st) : Collection.t * Fold_state.t) =
-  let@ link_def = get_def link kdefault in
-  let@ link_dest = get_dest link_def kdefault in
-  let link_text = get_text link in
-  let uri = Some (Entity.Uri.of_string link_dest) in
-  let name = Option.map Entity.Name.of_string link_text in
-  let st = { st with uri; name } in
-  save_entity c st
+  match Option.bind (get_def link) get_dest with
+  | None -> Folder.default
+  | Some link_dest ->
+      let link_text = get_text link in
+      let uri = Some (Entity.Uri.of_string link_dest) in
+      let name = Option.map Entity.Name.of_string link_text in
+      let st = { st with uri; name } in
+      save_entity c st
 
 let inline _m (acc : Collection.t * Fold_state.t) = function
   | Inline.Autolink (a, _) -> handle_autolink a acc

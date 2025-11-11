@@ -58,8 +58,7 @@ let parse content =
         waiting_for := `Bookmark_description
     | Some (`Start_element ((_, name), _)) when elt_of_string name = `Dd ->
         Stack.push `Dd elt_stack;
-        let@ () = unless (Attrs.is_empty !attributes) in
-        waiting_for := `Extended_description
+        unless (Attrs.is_empty !attributes) (fun () -> waiting_for := `Extended_description)
     | Some (`Start_element ((_, name), _)) -> Stack.push (elt_of_string name) elt_stack
     | Some (`Text xs) -> begin
         match !waiting_for with

@@ -1,5 +1,3 @@
-let ( let@ ) = ( @@ )
-
 let option_of_string s =
   if String.length s = 0 then
     None
