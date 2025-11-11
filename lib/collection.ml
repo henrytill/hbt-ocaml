@@ -137,13 +137,12 @@ let map_labels (f : Entity.Label_set.t -> Entity.Label_set.t) (c : t) : t =
   { c with nodes }
 
 let yaml_to_map (yaml : Yaml.value) : Entity.Label.t Entity.Label_map.t =
-  let open Entity in
   let f acc (k, v) =
-    let k = Label.of_string k in
-    let v = Label.t_of_yaml v in
-    Label_map.add k v acc
+    let k = Entity.Label.of_string k in
+    let v = Entity.Label.t_of_yaml v in
+    Entity.Label_map.add k v acc
   in
-  Yaml_ext.fold_object_exn f Label_map.empty yaml
+  Yaml_ext.fold_object_exn f Entity.Label_map.empty yaml
 
 let update_labels (yaml : Yaml.value) : t -> t =
   let mapping = yaml_to_map yaml in

@@ -106,36 +106,35 @@ module Template_entity = struct
   }
 
   let of_entity (entity : Entity.t) : t =
-    let open Entity in
-    let uri = Uri.to_string (Entity.uri entity) in
+    let uri = Entity.Uri.to_string (Entity.uri entity) in
     let title =
-      match Name_set.elements (Entity.names entity) with
+      match Entity.Name_set.elements (Entity.names entity) with
       | [] -> uri
       | names ->
-          let name_strings = List.map Name.to_string names in
+          let name_strings = List.map Entity.Name.to_string names in
           List.hd (List.sort String.compare name_strings)
     in
     let last_modified =
       match Entity.updated_at entity with
       | [] -> None
       | times ->
-          let latest = List.hd (List.sort (fun a b -> Time.compare b a) times) in
-          Some (Time.to_string latest)
+          let latest = List.hd (List.sort (fun a b -> Entity.Time.compare b a) times) in
+          Some (Entity.Time.to_string latest)
     in
     let tags =
-      let labels = Label_set.elements (Entity.labels entity) in
+      let labels = Entity.Label_set.elements (Entity.labels entity) in
       match labels with
       | [] -> None
-      | _ -> Some (String.concat "," (List.map Label.to_string labels))
+      | _ -> Some (String.concat "," (List.map Entity.Label.to_string labels))
     in
     {
       uri;
       title;
-      created_at = Time.to_string (Entity.created_at entity);
+      created_at = Entity.Time.to_string (Entity.created_at entity);
       last_modified;
       tags;
-      description = Option.map Extended.to_string (Entity.extended entity);
-      last_visit = Option.map Time.to_string (Entity.last_visited_at entity);
+      description = Option.map Entity.Extended.to_string (Entity.extended entity);
+      last_visit = Option.map Entity.Time.to_string (Entity.last_visited_at entity);
       shared = Entity.shared entity;
       to_read = Entity.to_read entity;
       is_feed = Entity.is_feed entity;

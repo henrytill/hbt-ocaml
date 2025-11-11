@@ -1,5 +1,9 @@
 open Prelude
-open Cmarkit
+module Folder = Cmarkit.Folder
+module Block = Cmarkit.Block
+module Inline = Cmarkit.Inline
+module Link_definition = Cmarkit.Link_definition
+module Doc = Cmarkit.Doc
 
 module Fold_state = struct
   type t = {
