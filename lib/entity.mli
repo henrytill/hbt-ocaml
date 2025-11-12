@@ -111,6 +111,7 @@ val to_read : t -> bool
 val last_visited_at : t -> Time.t option
 val is_feed : t -> bool
 val map_labels : (Label_set.t -> Label_set.t) -> t -> t
+val of_pinboard : Pinboard.t -> t
 val t_of_yaml : Yaml.value -> t
 val yaml_of_t : t -> Yaml.value
 

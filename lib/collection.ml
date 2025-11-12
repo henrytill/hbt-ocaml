@@ -148,3 +148,9 @@ let update_labels (yaml : Yaml.value) : t -> t =
   let mapping = yaml_to_map yaml in
   let f label = Option.value ~default:label (Entity.Label_map.find_opt label mapping) in
   map_labels (Entity.Label_set.map f)
+
+let of_pinboards (ps : Pinboard.t list) : t =
+  let coll = create () in
+  let sorted = List.sort (fun a b -> String.compare (Pinboard.time a) (Pinboard.time b)) ps in
+  List.iter (fun post -> ignore (insert coll (Entity.of_pinboard post))) sorted;
+  coll

@@ -66,22 +66,6 @@ let pp =
 
 let to_string = Fmt.str "%a" pp
 
-let to_entity (p : t) : Entity.t =
-  let uri = Entity.Uri.of_string (href p) in
-  let created_at = Entity.Time.of_string (time p) in
-  let maybe_name = Option.map Entity.Name.of_string (description p) in
-  let labels = Entity.Label_set.of_list (List.map Entity.Label.of_string (tag p)) in
-  let extended = Option.map Entity.Extended.of_string (extended p) in
-  let shared = shared p in
-  let to_read = toread p in
-  Entity.make uri created_at ~maybe_name ~labels ~extended ~shared ~to_read ()
-
-let to_collection (ps : t list) : Collection.t =
-  let coll = Collection.create () in
-  let sorted = List.sort (fun a b -> String.compare a.time b.time) ps in
-  List.iter (fun post -> ignore (Collection.insert coll (to_entity post))) sorted;
-  coll
-
 module Json = struct
   let build p (k, v) =
     match k with
@@ -108,8 +92,9 @@ module Json = struct
     List.fold_left build empty assoc
 
   let from_json content = Yaml_ext.map_array_exn t_of_yaml (Ezjsonm.from_string content)
-  let parse content = to_collection (from_json content)
 end
+
+let from_json = Json.from_json
 
 module Xml = struct
   let build p ((_, k), v) =
@@ -149,6 +134,6 @@ module Xml = struct
           | `Dtd _ -> ()
       done;
       List.rev !acc
-
-  let parse content = to_collection (from_xml content)
 end
+
+let from_xml = Xml.from_xml

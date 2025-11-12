@@ -309,6 +309,16 @@ let absorb other existing =
 
 let map_labels f e = { e with labels = f e.labels }
 
+let of_pinboard (p : Pinboard.t) : t =
+  let uri = Uri.of_string (Pinboard.href p) in
+  let created_at = Time.of_string (Pinboard.time p) in
+  let maybe_name = Option.map Name.of_string (Pinboard.description p) in
+  let labels = Label_set.of_list (List.map Label.of_string (Pinboard.tag p)) in
+  let extended = Option.map Extended.of_string (Pinboard.extended p) in
+  let shared = Pinboard.shared p in
+  let to_read = Pinboard.toread p in
+  make uri created_at ~maybe_name ~labels ~extended ~shared ~to_read ()
+
 module Html = struct
   module Attrs = Prelude.Markup_ext.Attrs
 

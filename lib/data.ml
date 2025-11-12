@@ -45,6 +45,18 @@ module type FORMATTER = sig
   val format : Collection.t -> string
 end
 
+module Json_parser = struct
+  let parse input =
+    let ps = Pinboard.from_json input in
+    Collection.of_pinboards ps
+end
+
+module Xml_parser = struct
+  let parse input =
+    let ps = Pinboard.from_xml input in
+    Collection.of_pinboards ps
+end
+
 module Yaml_parser = struct
   let parse input =
     let yaml = Yaml.of_string_exn input in
@@ -54,8 +66,8 @@ end
 let parse (format : input) : string -> Collection.t =
   let (module Parser : PARSER) =
     match format with
-    | Json -> (module Pinboard.Json)
-    | Xml -> (module Pinboard.Xml)
+    | Json -> (module Json_parser)
+    | Xml -> (module Xml_parser)
     | Markdown -> (module Markdown)
     | Html -> (module Html)
     | Yaml -> (module Yaml_parser)
