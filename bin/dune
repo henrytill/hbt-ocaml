@@ -1,5 +1,5 @@
 (executable
  (name main)
  (public_name hbt)
- (package hbt)
+ (package hbt-cli)
  (libraries hbt-core cmdliner yaml))

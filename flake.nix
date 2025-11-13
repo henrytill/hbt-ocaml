@@ -37,12 +37,12 @@
             CPP_FLAGS = ''-DVERSION="${version}"'';
             nativeBuildInputs = as.nativeBuildInputs ++ [ pkgs.tzdata ];
           });
-          hbt = prev.hbt.overrideAttrs (
+          hbt-cli = prev.hbt-cli.overrideAttrs (
             as:
             pkgs.lib.optionalAttrs isStatic {
               buildPhase = ''
                 runHook preBuild
-                dune build -p hbt --profile static -j $NIX_BUILD_CORES
+                dune build -p hbt-cli --profile static -j $NIX_BUILD_CORES
                 runHook postBuild
               '';
             }
@@ -91,7 +91,7 @@
             pkgs = nixpkgs.legacyPackages.${system};
             ocpEnv = pkgs.buildEnv {
               name = "ocp-env";
-              paths = s.hbt.buildInputs ++ s.hbt.propagatedBuildInputs;
+              paths = s.hbt-cli.buildInputs ++ s.hbt-cli.propagatedBuildInputs;
             };
             ocp-browser-wrapped = pkgs.writeShellScriptBin "ocp-browser" ''
               exec ${s.ocp-browser}/bin/ocp-browser --no-opamlib -I "${ocpEnv}/lib/ocaml/${s.ocaml.version}/site-lib" "$@"
@@ -121,7 +121,7 @@
           in
           pkgs.mkShell {
             inputsFrom = [
-              s.hbt
+              s.hbt-cli
             ];
             packages = devPackages ++ [
               ocp-browser-wrapped
@@ -138,9 +138,9 @@
       in
       {
         packages = rec {
-          hbt = legacyPackages.hbt;
-          hbt-static = legacyPackagesStatic.hbt;
-          default = hbt;
+          hbt-cli = legacyPackages.hbt-cli;
+          hbt-cli-static = legacyPackagesStatic.hbt-cli;
+          default = hbt-cli;
         };
 
         devShells.default = mkShell legacyPackages;

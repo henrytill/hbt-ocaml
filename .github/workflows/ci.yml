@@ -32,8 +32,8 @@ jobs:
         with:
           name: henrytill
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-      - run: nix build -L .#hbt -o result-hbt-ocaml
-      - run: nix build -L .#hbt-static -o result-hbt-ocaml-static
+      - run: nix build -L .#hbt-cli -o result-hbt-ocaml
+      - run: nix build -L .#hbt-cli-static -o result-hbt-ocaml-static
       - uses: actions/upload-artifact@v5
         with:
           name: hbt-x86_64-unknown-linux-musl

@@ -2,7 +2,7 @@
 
 (cram
  (deps %{bin:hbt})
- (package hbt))
+ (package hbt-cli))
 
 (test
  (name test_collection)

@@ -81,7 +81,7 @@
    (>= 3.2.0))))
 
 (package
- (name hbt)
+ (name hbt-cli)
  (synopsis "Heterogeneous Bookmark Transformation (command-line interface)")
  (description
   "A tool for parsing and transforming bookmarks from various sources (command-line interface)")
