@@ -25,11 +25,24 @@
    %{target})))
 
 (library
+ (name prelude)
+ (public_name hbt-prelude)
+ (libraries yaml)
+ (modules prelude))
+
+(library
+ (name pinboard)
+ (public_name hbt-pinboard)
+ (libraries hbt-prelude ezjsonm fmt str xmlm yaml)
+ (modules pinboard))
+
+(library
  (name hbt)
  (public_name hbt-core)
  (libraries
+  hbt-prelude
+  hbt-pinboard
   cmarkit
-  ezjsonm
   fmt
   markup
   mustache
@@ -37,15 +50,5 @@
   str
   unix
   uri
-  xmlm
   yaml)
- (modules
-  collection
-  data
-  entity
-  html
-  markdown
-  pinboard
-  prelude
-  templates
-  version))
+ (modules collection data entity html markdown templates version))

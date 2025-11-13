@@ -16,6 +16,34 @@
 (implicit_transitive_deps false)
 
 (package
+ (name hbt-prelude)
+ (synopsis "Heterogeneous Bookmark Transformation (Library code)")
+ (description
+  "A tool for parsing and transforming bookmarks from various sources")
+ (depends
+  (ocaml
+   (>= 5.2.0))
+  dune
+  (yaml
+   (>= 3.2.0))))
+
+(package
+ (name hbt-pinboard)
+ (synopsis "Heterogeneous Bookmark Transformation (Pinboard support)")
+ (description
+  "A tool for parsing and transforming bookmarks from various sources")
+ (depends
+  (ocaml
+   (>= 5.2.0))
+  dune
+  (hbt-prelude
+   (= :version))
+  (ezjsonm
+   (>= 1.3.0))
+  (xmlm
+   (>= 1.4.0))))
+
+(package
  (name hbt-core)
  (synopsis "Heterogeneous Bookmark Transformation")
  (description
@@ -24,6 +52,10 @@
   (ocaml
    (>= 5.2.0))
   dune
+  (hbt-prelude
+   (= :version))
+  (hbt-pinboard
+   (= :version))
   (alcotest
    (and
     :with-test
@@ -38,8 +70,6 @@
     (>= 0.7.3)))
   (cmarkit
    (>= 0.3.0))
-  (ezjsonm
-   (>= 1.3.0))
   (fmt
    (>= 0.11.0))
   (mustache
@@ -50,8 +80,6 @@
    (>= 0.2.1))
   (uri
    (>= 4.4.0))
-  (xmlm
-   (>= 1.4.0))
   (yaml
    (>= 3.2.0))))
 
