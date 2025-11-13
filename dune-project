@@ -61,18 +61,18 @@
    (and
     :with-test
     (>= 0.2.1)))
-  (fpath
-   (and
-    :with-test
-    (>= 0.7.3)))
   (cmarkit
    (>= 0.3.0))
   (fmt
    (>= 0.11.0))
-  (mustache
-   (>= 3.3.0))
+  (fpath
+   (and
+    :with-test
+    (>= 0.7.3)))
   (markup
    (>= 1.0.3))
+  (mustache
+   (>= 3.3.0))
   (semver
    (>= 0.2.1))
   (uri

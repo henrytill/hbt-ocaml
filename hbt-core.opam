@@ -15,11 +15,11 @@ depends: [
   "hbt-pinboard" {= version}
   "alcotest" {with-test & >= "1.7.0"}
   "bos" {with-test & >= "0.2.1"}
-  "fpath" {with-test & >= "0.7.3"}
   "cmarkit" {>= "0.3.0"}
   "fmt" {>= "0.11.0"}
-  "mustache" {>= "3.3.0"}
+  "fpath" {with-test & >= "0.7.3"}
   "markup" {>= "1.0.3"}
+  "mustache" {>= "3.3.0"}
   "semver" {>= "0.2.1"}
   "uri" {>= "4.4.0"}
   "yaml" {>= "3.2.0"}
