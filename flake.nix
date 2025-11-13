@@ -122,6 +122,7 @@
           pkgs.mkShell {
             inputsFrom = [
               s.hbt-cli
+              s.hbt-web
             ];
             packages = devPackages ++ [
               ocp-browser-wrapped

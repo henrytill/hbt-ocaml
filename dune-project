@@ -81,6 +81,17 @@
    (>= 3.2.0))))
 
 (package
+ (name hbt-web)
+ (synopsis "Heterogeneous Bookmark Transformation (Wasm interface)")
+ (description
+  "A tool for parsing and transforming bookmarks from various sources (Wasm interface)")
+ (depends
+  (ocaml
+   (>= 5.2.0))
+  (wasm_of_ocaml-compiler
+   (>= 6.0.1))))
+
+(package
  (name hbt-cli)
  (synopsis "Heterogeneous Bookmark Transformation (command-line interface)")
  (description

@@ -1,0 +1,9 @@
+(executable
+ (name main)
+ (public_name hbt-web)
+ (package hbt-web)
+ (modes byte wasm))
+
+(alias
+ (name all)
+ (deps (glob_files *.html)))
