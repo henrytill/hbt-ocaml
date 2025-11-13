@@ -24,7 +24,7 @@ module Elt = struct
     | _, _ -> false
 end
 
-let mk_labels ls s = Entity.(Label_set.add (Label.of_string s) ls)
+let mk_labels acc s = Entity.(Label_set.add (Label.of_string s) acc)
 
 let parse content =
   let coll = Collection.create () in
