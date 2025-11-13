@@ -3,12 +3,11 @@
 (rule
  (target templates.ml)
  (deps
-  (:template templates/netscape_bookmarks.mustache)
-  (:script embed.ml))
+  (:template templates/netscape_bookmarks.mustache))
  (action
   (with-stdout-to
    %{target}
-   (run %{bin:ocaml} %{script} %{template}))))
+   (run %{bin:embed} %{template}))))
 
 (rule
  (target version.ml)

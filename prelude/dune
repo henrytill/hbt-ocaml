@@ -3,3 +3,9 @@
  (public_name hbt-prelude)
  (libraries yaml)
  (modules prelude))
+
+(executable
+ (name embed)
+ (public_name embed)
+ (package hbt-prelude)
+ (modules embed))
