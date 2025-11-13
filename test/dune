@@ -13,6 +13,7 @@
 (test
  (name test_data)
  (modules test_data)
+ (package hbt-core)
  (libraries alcotest bos fpath hbt-core yaml)
  (deps
   (glob_files data/html/*)
