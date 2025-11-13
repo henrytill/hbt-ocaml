@@ -228,20 +228,20 @@ let equal x y =
   && Bool.equal x.is_feed y.is_feed
 
 let pp =
-  Fmt.(
-    record
-      [
-        field "uri" uri Uri.pp;
-        field "created_at" created_at Time.pp;
-        field "updated_at" updated_at (list ~sep:semi Time.pp);
-        field "names" names Name_set.pp;
-        field "labels" labels Label_set.pp;
-        field "extended" extended (option Extended.pp);
-        field "shared" shared bool;
-        field "to_read" to_read bool;
-        field "last_visited_at" last_visited_at (option Time.pp);
-        field "is_feed" is_feed bool;
-      ])
+  let open Fmt in
+  record
+    [
+      field "uri" uri Uri.pp;
+      field "created_at" created_at Time.pp;
+      field "updated_at" updated_at (list ~sep:semi Time.pp);
+      field "names" names Name_set.pp;
+      field "labels" labels Label_set.pp;
+      field "extended" extended (option Extended.pp);
+      field "shared" shared bool;
+      field "to_read" to_read bool;
+      field "last_visited_at" last_visited_at (option Time.pp);
+      field "is_feed" is_feed bool;
+    ]
 
 let build entity (key, value) =
   match key with

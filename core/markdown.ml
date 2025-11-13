@@ -19,14 +19,15 @@ module Fold_state = struct
     { name = None; time = None; uri = None; labels = []; maybe_parent = None; parents = [] }
 
   let[@warning "-32"] pp =
-    Fmt.record
+    let open Fmt in
+    record
       [
-        Fmt.(field "name" (fun st -> st.name) (option Entity.Name.pp));
-        Fmt.(field "time" (fun st -> st.time) (option Entity.Time.pp));
-        Fmt.(field "uri" (fun st -> st.uri) (option Entity.Uri.pp));
-        Fmt.(field "labels" (fun st -> st.labels) (list ~sep:semi Entity.Label.pp));
-        Fmt.(field "maybe_parent" (fun st -> st.maybe_parent) (option Collection.Id.pp));
-        Fmt.(field "parents" (fun st -> st.parents) (list ~sep:semi Collection.Id.pp));
+        field "name" (fun st -> st.name) (option Entity.Name.pp);
+        field "time" (fun st -> st.time) (option Entity.Time.pp);
+        field "uri" (fun st -> st.uri) (option Entity.Uri.pp);
+        field "labels" (fun st -> st.labels) (list ~sep:semi Entity.Label.pp);
+        field "maybe_parent" (fun st -> st.maybe_parent) (option Collection.Id.pp);
+        field "parents" (fun st -> st.parents) (list ~sep:semi Collection.Id.pp);
       ]
 
   let to_entity st =
