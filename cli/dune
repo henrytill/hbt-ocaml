@@ -3,3 +3,7 @@
  (public_name hbt)
  (package hbt-cli)
  (libraries hbt-core cmdliner yaml))
+
+(cram
+ (deps %{bin:hbt})
+ (package hbt-cli))

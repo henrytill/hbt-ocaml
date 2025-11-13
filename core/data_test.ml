@@ -184,5 +184,5 @@ let () =
     html @ markdown @ pinboard
   in
   match all_tests with
-  | Ok tests -> Alcotest.run "Test_data" tests
+  | Ok tests -> Alcotest.run "Data" tests
   | Error (`Msg msg) -> failwith msg

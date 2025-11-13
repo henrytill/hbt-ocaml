@@ -28,4 +28,4 @@ val t_of_yaml : Yaml.value -> t
 val yaml_of_t : t -> Yaml.value
 val map_labels : (Entity.Label_set.t -> Entity.Label_set.t) -> t -> t
 val update_labels : Yaml.value -> t -> t
-val of_pinboards : Pinboard.t list -> t
+val of_posts : Pinboard.Post.t list -> t

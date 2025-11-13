@@ -149,8 +149,9 @@ let update_labels (yaml : Yaml.value) : t -> t =
   let f label = Option.value ~default:label (Entity.Label_map.find_opt label mapping) in
   map_labels (Entity.Label_set.map f)
 
-let of_pinboards (ps : Pinboard.t list) : t =
+let of_posts (ps : Pinboard.Post.t list) : t =
+  let module Post = Pinboard.Post in
   let coll = create () in
-  let sorted = List.sort (fun a b -> String.compare (Pinboard.time a) (Pinboard.time b)) ps in
-  List.iter (fun post -> ignore (insert coll (Entity.of_pinboard post))) sorted;
+  let sorted = List.sort (fun a b -> String.compare (Post.time a) (Post.time b)) ps in
+  List.iter (fun post -> ignore (insert coll (Entity.of_post post))) sorted;
   coll

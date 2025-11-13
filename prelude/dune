@@ -1,0 +1,5 @@
+(library
+ (name prelude)
+ (public_name hbt-prelude)
+ (libraries yaml)
+ (modules prelude))

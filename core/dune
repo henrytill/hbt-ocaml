@@ -1,3 +1,5 @@
+(data_only_dirs data templates)
+
 (rule
  (target templates.ml)
  (deps
@@ -12,7 +14,7 @@
  (target version.ml)
  (deps
   (:template version.ml.in)
-  (:header %{workspace_root}/project.h))
+  (:header project.h))
  (action
   (run
    %{bin:cpp}
@@ -23,18 +25,6 @@
    %{template}
    -o
    %{target})))
-
-(library
- (name prelude)
- (public_name hbt-prelude)
- (libraries yaml)
- (modules prelude))
-
-(library
- (name pinboard)
- (public_name hbt-pinboard)
- (libraries hbt-prelude ezjsonm fmt str xmlm yaml)
- (modules pinboard))
 
 (library
  (name hbt)
@@ -52,3 +42,25 @@
   uri
   yaml)
  (modules collection data entity html markdown templates version))
+
+(test
+ (name collection_test)
+ (modules collection_test)
+ (package hbt-core)
+ (libraries alcotest hbt-core uri))
+
+(test
+ (name data_test)
+ (modules data_test)
+ (package hbt-core)
+ (libraries alcotest bos fpath hbt-core yaml)
+ (deps
+  (glob_files data/html/*)
+  (glob_files data/markdown/*)
+  (glob_files data/pinboard/xml/*)
+  (glob_files data/pinboard/json/*))
+ (action
+  (setenv
+   TZ
+   UTC
+   (run %{test}))))

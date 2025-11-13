@@ -1,0 +1,5 @@
+(library
+ (name pinboard)
+ (public_name hbt-pinboard)
+ (libraries hbt-prelude ezjsonm fmt str xmlm yaml)
+ (modules post))

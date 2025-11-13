@@ -47,14 +47,14 @@ end
 
 module Json_parser = struct
   let parse input =
-    let ps = Pinboard.from_json input in
-    Collection.of_pinboards ps
+    let ps = Pinboard.Post.from_json input in
+    Collection.of_posts ps
 end
 
 module Xml_parser = struct
   let parse input =
-    let ps = Pinboard.from_xml input in
-    Collection.of_pinboards ps
+    let ps = Pinboard.Post.from_xml input in
+    Collection.of_posts ps
 end
 
 module Yaml_parser = struct
