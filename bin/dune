@@ -2,4 +2,4 @@
  (name main)
  (public_name hbt)
  (package hbt)
- (libraries hbt-core cmdliner))
+ (libraries hbt-core cmdliner yaml))

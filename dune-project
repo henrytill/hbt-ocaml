@@ -13,6 +13,8 @@
 
 (license ISC)
 
+(implicit_transitive_deps false)
+
 (package
  (name hbt-core)
  (synopsis "Heterogeneous Bookmark Transformation")
@@ -65,4 +67,6 @@
   (hbt-core
    (= :version))
   (cmdliner
-   (>= 1.3.0))))
+   (>= 1.3.0))
+  (yaml
+   (>= 3.2.0))))
