@@ -1,13 +1,28 @@
 open Prelude
 module Attrs = Markup_ext.Attrs
 
-let elt_of_string = function
-  | "h3" -> `H3
-  | "dt" -> `Dt
-  | "a" -> `A
-  | "dd" -> `Dd
-  | "dl" -> `Dl
-  | _ -> `Other
+module Elt = struct
+  type t =
+    | Dl
+    | Dt
+    | Dd
+    | H3
+    | A
+    | Other
+
+  let of_string = function
+    | "dl" -> Dl
+    | "dt" -> Dt
+    | "dd" -> Dd
+    | "h3" -> H3
+    | "a" -> A
+    | _ -> Other
+
+  let equals a b =
+    match (a, b) with
+    | Dl, Dl | Dt, Dt | Dd, Dd | H3, H3 | A, A | Other, Other -> true
+    | _, _ -> false
+end
 
 let mk_labels ls s = Entity.(Label_set.add (Label.of_string s) ls)
 
@@ -46,20 +61,20 @@ let parse content =
     | None ->
         assert (Attrs.is_empty !attributes);
         continue := false
-    | Some (`Start_element ((_, name), _)) when elt_of_string name = `H3 ->
-        Stack.push `H3 elt_stack;
+    | Some (`Start_element ((_, name), _)) when Elt.(equals (of_string name) H3) ->
+        Stack.push Elt.H3 elt_stack;
         waiting_for := `Folder_name
-    | Some (`Start_element ((_, name), _)) when elt_of_string name = `Dt ->
-        Stack.push `Dt elt_stack;
+    | Some (`Start_element ((_, name), _)) when Elt.(equals (of_string name) Dt) ->
+        Stack.push Elt.Dt elt_stack;
         unless (Attrs.is_empty !attributes) add_pending
-    | Some (`Start_element ((_, name), attrs)) when elt_of_string name = `A ->
-        Stack.push `A elt_stack;
+    | Some (`Start_element ((_, name), attrs)) when Elt.(equals (of_string name) A) ->
+        Stack.push Elt.A elt_stack;
         attributes := attrs;
         waiting_for := `Bookmark_description
-    | Some (`Start_element ((_, name), _)) when elt_of_string name = `Dd ->
-        Stack.push `Dd elt_stack;
+    | Some (`Start_element ((_, name), _)) when Elt.(equals (of_string name) Dd) ->
+        Stack.push Elt.Dd elt_stack;
         unless (Attrs.is_empty !attributes) (fun () -> waiting_for := `Extended_description)
-    | Some (`Start_element ((_, name), _)) -> Stack.push (elt_of_string name) elt_stack
+    | Some (`Start_element ((_, name), _)) -> Stack.push (Elt.of_string name) elt_stack
     | Some (`Text xs) -> begin
         match !waiting_for with
         | `Folder_name ->
@@ -79,7 +94,7 @@ let parse content =
       end
     | Some `End_element ->
         let maybe_head = Stack.pop_opt elt_stack in
-        if maybe_head = Some `Dl then begin
+        if maybe_head = Some Dl then begin
           unless (Attrs.is_empty !attributes) add_pending;
           ignore (Stack.pop_opt folder_stack)
         end
