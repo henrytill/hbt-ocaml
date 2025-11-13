@@ -9,8 +9,8 @@ license: "ISC"
 homepage: "https://github.com/henrytill/hbt-ocaml"
 bug-reports: "https://github.com/henrytill/hbt-ocaml/issues"
 depends: [
-  "ocaml" {>= "5.2.0"}
   "dune" {>= "3.17"}
+  "ocaml" {>= "5.2.0"}
   "yaml" {>= "3.2.0"}
   "odoc" {with-doc}
 ]

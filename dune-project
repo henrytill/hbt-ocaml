@@ -23,7 +23,6 @@
  (depends
   (ocaml
    (>= 5.2.0))
-  dune
   (yaml
    (>= 3.2.0))))
 
@@ -35,7 +34,6 @@
  (depends
   (ocaml
    (>= 5.2.0))
-  dune
   (hbt-prelude
    (= :version))
   (ezjsonm
@@ -51,7 +49,6 @@
  (depends
   (ocaml
    (>= 5.2.0))
-  dune
   (hbt-prelude
    (= :version))
   (hbt-pinboard
@@ -91,7 +88,6 @@
  (depends
   (ocaml
    (>= 5.2.0))
-  dune
   (hbt-core
    (= :version))
   (cmdliner
