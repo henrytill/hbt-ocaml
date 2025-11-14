@@ -128,6 +128,7 @@
               ocp-index-wrapped
               pkgs.yaml-language-server
             ];
+            EMACSLOADPATH = "${s.dune}/share/emacs/site-lisp:";
             OCAML_TOPLEVEL_PATH = "${toplevelPath}";
           };
 
