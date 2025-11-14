@@ -79,56 +79,64 @@
           scope.overrideScope overlay;
 
         mkDevPackages =
-          s:
+          scope:
           let
             lib = nixpkgs.legacyPackages.${system}.lib;
           in
-          builtins.attrValues (lib.getAttrs (builtins.attrNames devPackagesQuery) s);
+          builtins.attrValues (lib.getAttrs (builtins.attrNames devPackagesQuery) scope);
 
         mkShell =
-          s:
+          scope:
           let
             pkgs = nixpkgs.legacyPackages.${system};
+
             ocpEnv = pkgs.buildEnv {
               name = "ocp-env";
-              paths = s.hbt-cli.buildInputs ++ s.hbt-cli.propagatedBuildInputs;
+              paths = scope.hbt-cli.buildInputs ++ scope.hbt-cli.propagatedBuildInputs;
             };
+
             ocp-browser-wrapped = pkgs.writeShellScriptBin "ocp-browser" ''
-              exec ${s.ocp-browser}/bin/ocp-browser --no-opamlib -I "${ocpEnv}/lib/ocaml/${s.ocaml.version}/site-lib" "$@"
+              exec ${scope.ocp-browser}/bin/ocp-browser --no-opamlib -I "${ocpEnv}/lib/ocaml/${scope.ocaml.version}/site-lib" "$@"
             '';
+
             ocp-index-wrapped = pkgs.writeShellScriptBin "ocp-index" ''
               if [ $# -eq 0 ]; then
-                exec ${s.ocp-index}/bin/ocp-index
+                exec ${scope.ocp-index}/bin/ocp-index
               else
                 cmd="$1"
                 shift
-                exec ${s.ocp-index}/bin/ocp-index "$cmd" --no-opamlib -I "${ocpEnv}/lib/ocaml/${s.ocaml.version}/site-lib" "$@"
+                exec ${scope.ocp-index}/bin/ocp-index "$cmd" --no-opamlib -I "${ocpEnv}/lib/ocaml/${scope.ocaml.version}/site-lib" "$@"
               fi
             '';
-            devPackages = pkgs.lib.filter (p: p != s.ocp-browser && p != s.ocp-index) (mkDevPackages s);
+
+            devPackages = pkgs.lib.filter (p: p != scope.ocp-browser && p != scope.ocp-index) (
+              mkDevPackages scope
+            );
 
             mkToplevelPath =
               ps:
               let
-                toplevelDir = pkg: "${pkg}/lib/ocaml/${s.ocaml.version}/site-lib/toplevel";
+                toplevelDir = pkg: "${pkg}/lib/ocaml/${scope.ocaml.version}/site-lib/toplevel";
               in
               pkgs.lib.concatStringsSep ":" (map toplevelDir ps);
 
             toplevelPath = mkToplevelPath [
-              s.ocamlfind
-              s.down
+              scope.ocamlfind
+              scope.down
             ];
           in
           pkgs.mkShell {
             inputsFrom = [
-              s.hbt-cli
+              scope.hbt-cli
             ];
+
             packages = devPackages ++ [
               ocp-browser-wrapped
               ocp-index-wrapped
               pkgs.yaml-language-server
             ];
-            EMACSLOADPATH = "${s.dune}/share/emacs/site-lisp:";
+
+            EMACSLOADPATH = "${scope.dune}/share/emacs/site-lisp:";
             OCAML_TOPLEVEL_PATH = "${toplevelPath}";
           };
 
