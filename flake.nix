@@ -128,9 +128,7 @@
               ocp-index-wrapped
               pkgs.yaml-language-server
             ];
-            shellHook = ''
-              export OCAML_TOPLEVEL_PATH="${toplevelPath}"
-            '';
+            OCAML_TOPLEVEL_PATH = "${toplevelPath}";
           };
 
         legacyPackages = mkRegularScope false;
