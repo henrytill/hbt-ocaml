@@ -19,11 +19,11 @@
    %{bin:cpp}
    -include
    %{header}
-   %{env:CPP_FLAGS=-D__UNUSED__}
    -P
    %{template}
    -o
-   %{target})))
+   %{target}
+   %{env:CPP_FLAGS=-D__UNUSED__})))
 
 (library
  (name hbt)
