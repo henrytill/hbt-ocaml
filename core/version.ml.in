@@ -1,3 +1,5 @@
 (* -*- mode: prog; -*- *)
 
+#include "project.h"
+
 let version = VERSION

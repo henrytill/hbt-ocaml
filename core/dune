@@ -17,8 +17,6 @@
  (action
   (run
    %{bin:cpp}
-   -include
-   %{header}
    -P
    %{template}
    -o
