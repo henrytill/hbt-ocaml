@@ -15,13 +15,7 @@
   (:template version.ml.in)
   (:header project.h))
  (action
-  (run
-   %{bin:cpp}
-   -P
-   %{template}
-   -o
-   %{target}
-   %{env:CPP_FLAGS=-D__UNUSED__})))
+  (run %{bin:cpp} -P %{template} -o %{target} %{env:CPP_FLAGS=-D__UNUSED__})))
 
 (library
  (name hbt)
