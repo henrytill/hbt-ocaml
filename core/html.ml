@@ -125,14 +125,15 @@ module Template_entity = struct
       match Entity.Name_set.elements (Entity.names entity) with
       | [] -> uri
       | names ->
-          let name_strings = List.map Entity.Name.to_string names in
-          List.hd (List.sort String.compare name_strings)
+          let name = List.hd (List.sort Entity.Name.compare names) in
+          Entity.Name.to_string name
     in
     let last_modified =
       match Entity.updated_at entity with
       | [] -> None
       | times ->
-          let latest = List.hd (List.sort (fun a b -> Entity.Time.compare b a) times) in
+          let compare = Fun.flip Entity.Time.compare in
+          let latest = List.hd (List.sort compare times) in
           Some (Entity.Time.to_string latest)
     in
     let tags =
