@@ -1,5 +1,3 @@
-exception Unsupported_file_format of string
-
 type _ t =
   | Json : [ `Input ] t
   | Xml : [ `Input ] t

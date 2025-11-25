@@ -1,6 +1,7 @@
 open Cmdliner
 open Hbt
 
+exception Unsupported_file_format of string
 exception Missing_output_specification
 
 let version = Version.version
@@ -21,7 +22,7 @@ end
 
 let detect_input_format file =
   match Data.detect_input_format file with
-  | None -> raise (Data.Unsupported_file_format (Filename.extension file))
+  | None -> raise (Unsupported_file_format (Filename.extension file))
   | Some format -> format
 
 let read_file file =
@@ -56,8 +57,8 @@ let print (file : string) (args : Args.t) (coll : Collection.t) : unit =
     else
       let output_format =
         match args.output_format with
-        | Some format -> Some format
         | None -> Option.bind args.output Data.detect_output_format
+        | Some _ as format -> format
       in
       match output_format with
       | None -> raise Missing_output_specification
