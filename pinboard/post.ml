@@ -104,7 +104,7 @@ module Xml = struct
     | "description" when v <> String.empty -> { p with description = Some v }
     | "extended" when v <> String.empty -> { p with extended = Some v }
     | "tag" when v <> String.empty ->
-        let tag = Str.split (Str.regexp "[ \t]+") v in
+        let tag = Str.(split (regexp "[ \t]+") v) in
         { p with tag }
     | "meta" when v <> String.empty -> { p with meta = Some v }
     | "hash" when v <> String.empty -> { p with hash = Some v }

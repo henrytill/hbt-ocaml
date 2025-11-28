@@ -78,15 +78,15 @@ let parse content =
     | Some (`Text xs) -> begin
         match !waiting_for with
         | `Folder_name ->
-            let folder_name = String.trim (String.concat String.empty xs) in
+            let folder_name = String.(trim (concat empty xs)) in
             Stack.push folder_name folder_stack;
             waiting_for := `Nothing
         | `Bookmark_description ->
-            let description = String.trim (String.concat String.empty xs) in
+            let description = String.(trim (concat empty xs)) in
             maybe_description := Some description;
             waiting_for := `Nothing
         | `Extended_description ->
-            let extended = String.trim (String.concat String.empty xs) in
+            let extended = String.(trim (concat empty xs)) in
             maybe_extended := Some extended;
             unless (Attrs.is_empty !attributes) add_pending;
             waiting_for := `Nothing
@@ -137,10 +137,9 @@ module Template_entity = struct
           Some (Entity.Time.to_string latest)
     in
     let tags =
-      let labels = Entity.Label_set.elements (Entity.labels entity) in
-      match labels with
+      match Entity.Label_set.elements (Entity.labels entity) with
       | [] -> None
-      | _ -> Some (String.concat "," (List.map Entity.Label.to_string labels))
+      | labels -> Some (String.concat "," (List.map Entity.Label.to_string labels))
     in
     {
       uri;
