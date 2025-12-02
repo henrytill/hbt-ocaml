@@ -114,7 +114,7 @@ module Template_entity = struct
     tags : string option;
     description : string option;
     last_visit : string option;
-    shared : bool;
+    is_private : bool;
     to_read : bool;
     is_feed : bool;
   }
@@ -149,7 +149,7 @@ module Template_entity = struct
       tags;
       description = Option.map Entity.Extended.to_string (Entity.extended entity);
       last_visit = Option.map Entity.Time.to_string (Entity.last_visited_at entity);
-      shared = Entity.shared entity;
+      is_private = not (Entity.shared entity);
       to_read = Entity.to_read entity;
       is_feed = Entity.is_feed entity;
     }
@@ -159,7 +159,7 @@ module Template_entity = struct
       [
         ("uri", `String template_entity.uri);
         ("createdAt", `String template_entity.created_at);
-        ("shared", `Bool template_entity.shared);
+        ("isPrivate", `Bool template_entity.is_private);
         ("toRead", `Bool template_entity.to_read);
         ("isFeed", `Bool template_entity.is_feed);
         ("title", `String template_entity.title);
