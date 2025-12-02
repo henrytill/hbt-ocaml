@@ -25,13 +25,14 @@ module Elt = struct
 end
 
 let mk_labels acc s = Entity.(Label_set.add (Label.of_string s) acc)
+let mk_extended acc s = Entity.Extended.of_string s :: acc
 
 let parse content =
   let coll = Collection.create () in
   let maybe_description = ref None in
-  let maybe_extended = ref None in
   let attributes = ref Attrs.empty in
   let folder_stack = Stack.create () in
+  let extended_stack = Stack.create () in
   let waiting_for = ref `Nothing in
 
   let add_pending () =
@@ -40,13 +41,13 @@ let parse content =
       let some s = Name_set.singleton (Name.of_string s) in
       let names = Option.fold ~none:Name_set.empty ~some !maybe_description in
       let folder_labels = Stack.fold mk_labels Entity.Label_set.empty folder_stack in
-      let extended = Option.map Extended.of_string !maybe_extended in
+      let extended = Stack.fold mk_extended [] extended_stack in
       Html.entity_of_attrs !attributes names folder_labels extended
     in
     ignore (Collection.upsert coll entity);
     attributes := Attrs.empty;
     maybe_description := None;
-    maybe_extended := None
+    Stack.clear extended_stack
   in
 
   let stream = Markup.string content in
@@ -87,17 +88,19 @@ let parse content =
             waiting_for := `Nothing
         | `Extended_description ->
             let extended = String.(trim (concat empty xs)) in
-            maybe_extended := Some extended;
-            unless (Attrs.is_empty !attributes) add_pending;
-            waiting_for := `Nothing
+            Stack.push extended extended_stack
         | `Nothing -> ()
       end
-    | Some `End_element ->
-        let maybe_head = Stack.pop_opt elt_stack in
-        if maybe_head = Some Dl then begin
-          unless (Attrs.is_empty !attributes) add_pending;
-          ignore (Stack.pop_opt folder_stack)
-        end
+    | Some `End_element -> begin
+        match Stack.pop_opt elt_stack with
+        | Some Dd ->
+            unless (Attrs.is_empty !attributes) add_pending;
+            waiting_for := `Nothing
+        | Some Dl ->
+            unless (Attrs.is_empty !attributes) add_pending;
+            ignore (Stack.pop_opt folder_stack)
+        | _ -> ()
+      end
     | Some _ -> ()
   done;
 
@@ -141,13 +144,18 @@ module Template_entity = struct
       | [] -> None
       | labels -> Some (String.concat "," (List.map Entity.Label.to_string labels))
     in
+    let description =
+      match Entity.extended entity with
+      | [] -> None
+      | exts -> Some (String.concat "<br>" (List.map Entity.Extended.to_string exts))
+    in
     {
       uri;
       title;
       created_at = Entity.Time.to_string (Entity.created_at entity);
       last_modified;
       tags;
-      description = Option.map Entity.Extended.to_string (Entity.extended entity);
+      description;
       last_visit = Option.map Entity.Time.to_string (Entity.last_visited_at entity);
       is_private = not (Entity.shared entity);
       to_read = Entity.to_read entity;

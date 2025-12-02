@@ -87,7 +87,7 @@ val make :
   ?updated_at:Time.t list ->
   ?maybe_name:Name.t option ->
   ?labels:Label_set.t ->
-  ?extended:Extended.t option ->
+  ?extended:Extended.t list ->
   ?shared:bool ->
   ?to_read:bool ->
   ?last_visited_at:Time.t option ->
@@ -98,14 +98,14 @@ val make :
 val empty : t
 val equal : t -> t -> bool
 val pp : Format.formatter -> t -> unit
-val update : Time.t -> Name_set.t -> Label_set.t -> t -> t
+val update : Time.t -> Name_set.t -> Label_set.t -> Extended.t list -> t -> t
 val absorb : t -> t -> t
 val uri : t -> Uri.t
 val created_at : t -> Time.t
 val updated_at : t -> Time.t list
 val names : t -> Name_set.t
 val labels : t -> Label_set.t
-val extended : t -> Extended.t option
+val extended : t -> Extended.t list
 val shared : t -> bool
 val to_read : t -> bool
 val last_visited_at : t -> Time.t option
@@ -118,5 +118,5 @@ val yaml_of_t : t -> Yaml.value
 module Html : sig
   module Attrs = Prelude.Markup_ext.Attrs
 
-  val entity_of_attrs : Attrs.t -> Name_set.t -> Label_set.t -> Extended.t option -> t
+  val entity_of_attrs : Attrs.t -> Name_set.t -> Label_set.t -> Extended.t list -> t
 end
