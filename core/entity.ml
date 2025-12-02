@@ -165,7 +165,7 @@ type t = {
   updated_at : Time.t list;
   names : Name_set.t;
   labels : Label_set.t;
-  extended : Extended.t option;
+  extended : Extended.t list;
   shared : bool;
   to_read : bool;
   last_visited_at : Time.t option;
@@ -173,7 +173,7 @@ type t = {
 }
 
 let make uri created_at ?(updated_at = []) ?(maybe_name = None) ?(labels = Label_set.empty)
-    ?(extended = None) ?(shared = false) ?(to_read = false) ?(last_visited_at = None)
+    ?(extended = []) ?(shared = false) ?(to_read = false) ?(last_visited_at = None)
     ?(is_feed = false) () =
   let uri = Uri.canonicalize uri in
   let names = Option.fold ~none:Name_set.empty ~some:Name_set.singleton maybe_name in
@@ -197,7 +197,7 @@ let empty =
     updated_at = [];
     names = Name_set.empty;
     labels = Label_set.empty;
-    extended = None;
+    extended = [];
     shared = false;
     to_read = false;
     last_visited_at = None;
@@ -221,7 +221,7 @@ let equal x y =
   && List.equal Time.equal x.updated_at y.updated_at
   && Name_set.equal x.names y.names
   && Label_set.equal x.labels y.labels
-  && Option.equal Extended.equal x.extended y.extended
+  && List.equal Extended.equal x.extended y.extended
   && Bool.equal x.shared y.shared
   && Bool.equal x.to_read y.to_read
   && Option.equal Time.equal x.last_visited_at y.last_visited_at
@@ -236,7 +236,7 @@ let pp =
       field "updated_at" updated_at (list ~sep:semi Time.pp);
       field "names" names Name_set.pp;
       field "labels" labels Label_set.pp;
-      field "extended" extended (option Extended.pp);
+      field "extended" extended (list ~sep:semi Extended.pp);
       field "shared" shared bool;
       field "to_read" to_read bool;
       field "last_visited_at" last_visited_at (option Time.pp);
@@ -250,7 +250,7 @@ let build entity (key, value) =
   | "updatedAt" -> { entity with updated_at = Yaml_ext.map_array_exn Time.t_of_yaml value }
   | "names" -> { entity with names = Name_set.t_of_yaml value }
   | "labels" -> { entity with labels = Label_set.t_of_yaml value }
-  | "extended" -> { entity with extended = option_of_string (Extended.t_of_yaml value) }
+  | "extended" -> { entity with extended = Yaml_ext.map_array_exn Extended.t_of_yaml value }
   | "shared" -> { entity with shared = Yaml.Util.to_bool_exn value }
   | "toRead" -> { entity with to_read = Yaml.Util.to_bool_exn value }
   | "lastVisitedAt" -> { entity with last_visited_at = Some (Time.t_of_yaml value) }
@@ -278,18 +278,22 @@ let yaml_of_t entity =
       ("isFeed", `Bool entity.is_feed);
     ]
   in
-  let optional_fields =
-    List_ext.filter_some
-      [
-        Option.map (fun e -> ("extended", Extended.yaml_of_t e)) entity.extended;
-        Option.map (fun t -> ("lastVisitedAt", Time.yaml_of_t t)) entity.last_visited_at;
-      ]
+  let extended =
+    match entity.extended with
+    | [] -> []
+    | exts -> [ ("extended", `A (List.map Extended.yaml_of_t exts)) ]
   in
-  `O (base_fields @ optional_fields)
+  let last_visited =
+    match entity.last_visited_at with
+    | None -> []
+    | Some t -> [ ("lastVisitedAt", Time.yaml_of_t t) ]
+  in
+  `O (base_fields @ extended @ last_visited)
 
-let update updated_at names labels e =
+let update updated_at names labels extended e =
   let names = Name_set.union e.names names in
   let labels = Label_set.union e.labels labels in
+  let extended = e.extended @ extended in
   if Time.compare updated_at e.created_at < 0 then
     {
       e with
@@ -297,13 +301,20 @@ let update updated_at names labels e =
       created_at = updated_at;
       names;
       labels;
+      extended;
     }
   else
-    { e with updated_at = List.sort Time.compare (updated_at :: e.updated_at); names; labels }
+    {
+      e with
+      updated_at = List.sort Time.compare (updated_at :: e.updated_at);
+      names;
+      labels;
+      extended;
+    }
 
 let absorb other existing =
   if not (equal other existing) then
-    update other.created_at other.names other.labels existing
+    update other.created_at other.names other.labels other.extended existing
   else
     existing
 
@@ -315,7 +326,7 @@ let of_post (p : Pinboard.Post.t) : t =
   let created_at = Time.of_string (Post.time p) in
   let maybe_name = Option.map Name.of_string (Post.description p) in
   let labels = Label_set.of_list (List.map Label.of_string (Post.tag p)) in
-  let extended = Option.map Extended.of_string (Post.extended p) in
+  let extended = Option.fold ~none:[] ~some:(fun s -> [ Extended.of_string s ]) (Post.extended p) in
   let shared = Post.shared p in
   let to_read = Post.toread p in
   make uri created_at ~maybe_name ~labels ~extended ~shared ~to_read ()

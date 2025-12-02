@@ -40,7 +40,7 @@ let parse content =
       let some s = Name_set.singleton (Name.of_string s) in
       let names = Option.fold ~none:Name_set.empty ~some !maybe_description in
       let folder_labels = Stack.fold mk_labels Entity.Label_set.empty folder_stack in
-      let extended = Option.map Extended.of_string !maybe_extended in
+      let extended = Option.to_list (Option.map Extended.of_string !maybe_extended) in
       Html.entity_of_attrs !attributes names folder_labels extended
     in
     ignore (Collection.upsert coll entity);
@@ -141,13 +141,18 @@ module Template_entity = struct
       | [] -> None
       | labels -> Some (String.concat "," (List.map Entity.Label.to_string labels))
     in
+    let description =
+      match Entity.extended entity with
+      | [] -> None
+      | hd :: _ -> Some (Entity.Extended.to_string hd)
+    in
     {
       uri;
       title;
       created_at = Entity.Time.to_string (Entity.created_at entity);
       last_modified;
       tags;
-      description = Option.map Entity.Extended.to_string (Entity.extended entity);
+      description;
       last_visit = Option.map Entity.Time.to_string (Entity.last_visited_at entity);
       is_private = not (Entity.shared entity);
       to_read = Entity.to_read entity;

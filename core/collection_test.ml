@@ -29,7 +29,8 @@ let test_entity_update () =
   let updated = Time.of_string "September 4, 2024" in
   let names_update = Name_set.of_list [ Name.of_string "Foo.org"; Name.of_string "F00" ] in
   let labels_update = Label_set.of_list [ Label.of_string "foozer"; Label.of_string "bar" ] in
-  let a = Entity.update updated names_update labels_update a in
+  let extended_update = [] in
+  let a = Entity.update updated names_update labels_update extended_update a in
   Alcotest.(check (module Uri)) same_uri (Uri.canonicalize uri) (Entity.uri a);
   Alcotest.(check (module Time)) same_created_at created (Entity.created_at a);
   Alcotest.(check (list (module Time))) same_updated_at [ updated ] (Entity.updated_at a);
@@ -63,6 +64,22 @@ let test_entity_absorb () =
     same_labels
     (Label_set.union labels_foo labels_bar)
     (Entity.labels a)
+
+let test_entity_absorb_extended () =
+  let open Entity in
+  let uri = Uri.of_string "https://foo.org" in
+  let created_a = Time.of_string "September 4, 2024" in
+  let created_b = Time.of_string "September 2, 2024" in
+  let extended_a = [ Extended.of_string "description from source A" ] in
+  let extended_b = [ Extended.of_string "description from source B" ] in
+  let a = Entity.make uri created_a ~extended:extended_a () in
+  let b = Entity.make uri created_b ~extended:extended_b () in
+  let merged = Entity.absorb b a in
+  let expected_extended = extended_a @ extended_b in
+  Alcotest.(check (list (module Extended)))
+    "extended lists concatenated"
+    expected_extended
+    (Entity.extended merged)
 
 let test_collection_upsert () =
   let open Entity in
@@ -124,6 +141,7 @@ let tests =
         test_case "equal" `Quick test_entity_equal;
         test_case "update" `Quick test_entity_update;
         test_case "absorb" `Quick test_entity_absorb;
+        test_case "absorb extended" `Quick test_entity_absorb_extended;
       ] );
     ( "Collection",
       [
