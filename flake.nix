@@ -51,6 +51,7 @@
 
         devPackagesQuery = {
           ocaml-lsp-server = "*";
+          ocaml-manual = "*";
           ocamlformat = "*";
           ocp-browser = "*";
           ocp-index = "*";
@@ -90,6 +91,10 @@
           let
             pkgs = nixpkgs.legacyPackages.${system};
 
+            ocaml-manual-wrapped = pkgs.writeShellScriptBin "ocaml-manual" ''
+              exec ${pkgs.xdg-utils}/bin/xdg-open "${scope.ocaml-manual}/share/doc/index.html"
+            '';
+
             ocpEnv = pkgs.buildEnv {
               name = "ocp-env";
               paths = scope.hbt-cli.buildInputs ++ scope.hbt-cli.propagatedBuildInputs;
@@ -109,9 +114,9 @@
               fi
             '';
 
-            devPackages = pkgs.lib.filter (p: p != scope.ocp-browser && p != scope.ocp-index) (
-              mkDevPackages scope
-            );
+            devPackages = pkgs.lib.filter (
+              p: p != scope.ocaml-manual && p != scope.ocp-browser && p != scope.ocp-index
+            ) (mkDevPackages scope);
 
             mkToplevelPath =
               ps:
@@ -131,6 +136,7 @@
             ];
 
             packages = devPackages ++ [
+              ocaml-manual-wrapped
               ocp-browser-wrapped
               ocp-index-wrapped
               pkgs.yaml-language-server
