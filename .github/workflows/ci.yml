@@ -21,6 +21,7 @@ jobs:
       - run: opam install . --deps-only --with-test
       - run: opam exec -- dune build
       - run: opam exec -- dune runtest
+
   linux-flake:
     runs-on: ubuntu-latest
     steps:
@@ -33,6 +34,19 @@ jobs:
           name: henrytill
           authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
       - run: nix build -L .#hbt-cli -o result-hbt-ocaml
+
+  linux-flake-static:
+    needs: linux-flake
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: true
+      - uses: cachix/install-nix-action@v31
+      - uses: cachix/cachix-action@v16
+        with:
+          name: henrytill
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
       - run: nix build -L .#hbt-cli-static -o result-hbt-ocaml-static
       - uses: actions/upload-artifact@v5
         with:
