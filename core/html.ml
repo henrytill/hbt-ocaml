@@ -107,23 +107,23 @@ module Template_entity = struct
   open Prelude
 
   type t = {
-    uri : string;
-    title : string;
-    created_at : string;
+    href : string;
+    text : string;
+    add_date : string;
     last_modified : string option;
     tags : string option;
     description : string option;
     last_visit : string option;
-    is_private : bool;
+    private_ : bool;
     to_read : bool;
-    is_feed : bool;
+    feed : bool;
   }
 
   let of_entity (entity : Entity.t) : t =
-    let uri = Entity.Uri.to_string (Entity.uri entity) in
-    let title =
+    let href = Entity.Uri.to_string (Entity.uri entity) in
+    let text =
       match Entity.Name_set.elements (Entity.names entity) with
-      | [] -> uri
+      | [] -> href
       | names ->
           let name = List.hd (List.sort Entity.Name.compare names) in
           Entity.Name.to_string name
@@ -147,27 +147,27 @@ module Template_entity = struct
       | hd :: _ -> Some (Entity.Extended.to_string hd)
     in
     {
-      uri;
-      title;
-      created_at = Entity.Time.to_string (Entity.created_at entity);
+      href;
+      text;
+      add_date = Entity.Time.to_string (Entity.created_at entity);
       last_modified;
       tags;
       description;
       last_visit = Option.map Entity.Time.to_string (Entity.last_visited_at entity);
-      is_private = not (Entity.shared entity);
+      private_ = not (Entity.shared entity);
       to_read = Entity.to_read entity;
-      is_feed = Entity.is_feed entity;
+      feed = Entity.is_feed entity;
     }
 
   let yaml_of_t (template_entity : t) : Yaml.value =
     let base_fields =
       [
-        ("uri", `String template_entity.uri);
-        ("createdAt", `String template_entity.created_at);
-        ("isPrivate", `Bool template_entity.is_private);
+        ("uri", `String template_entity.href);
+        ("addDate", `String template_entity.add_date);
+        ("private", `Bool template_entity.private_);
         ("toRead", `Bool template_entity.to_read);
-        ("isFeed", `Bool template_entity.is_feed);
-        ("title", `String template_entity.title);
+        ("feed", `Bool template_entity.feed);
+        ("text", `String template_entity.text);
       ]
     in
     let optional_fields =
