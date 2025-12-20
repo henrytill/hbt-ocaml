@@ -32,7 +32,15 @@ let parse content =
   let maybe_extended = ref None in
   let attributes = ref Attrs.empty in
   let folder_stack = Stack.create () in
-  let waiting_for = ref `Nothing in
+
+  let module Text = struct
+    type t =
+      | Folder_name
+      | Bookmark_description
+      | Extended_description
+      | Nothing
+  end in
+  let waiting_for = ref Text.Nothing in
 
   let add_pending () =
     let entity =
@@ -63,34 +71,34 @@ let parse content =
         continue := false
     | Some (`Start_element ((_, name), _)) when Elt.(equals (of_string name) H3) ->
         Stack.push Elt.H3 elt_stack;
-        waiting_for := `Folder_name
+        waiting_for := Folder_name
     | Some (`Start_element ((_, name), _)) when Elt.(equals (of_string name) Dt) ->
         Stack.push Elt.Dt elt_stack;
         unless (Attrs.is_empty !attributes) add_pending
     | Some (`Start_element ((_, name), attrs)) when Elt.(equals (of_string name) A) ->
         Stack.push Elt.A elt_stack;
         attributes := attrs;
-        waiting_for := `Bookmark_description
+        waiting_for := Bookmark_description
     | Some (`Start_element ((_, name), _)) when Elt.(equals (of_string name) Dd) ->
         Stack.push Elt.Dd elt_stack;
-        unless (Attrs.is_empty !attributes) (fun () -> waiting_for := `Extended_description)
+        unless (Attrs.is_empty !attributes) (fun () -> waiting_for := Extended_description)
     | Some (`Start_element ((_, name), _)) -> Stack.push (Elt.of_string name) elt_stack
     | Some (`Text xs) -> begin
         match !waiting_for with
-        | `Folder_name ->
+        | Folder_name ->
             let folder_name = String.(trim (concat empty xs)) in
             Stack.push folder_name folder_stack;
-            waiting_for := `Nothing
-        | `Bookmark_description ->
+            waiting_for := Nothing
+        | Bookmark_description ->
             let description = String.(trim (concat empty xs)) in
             maybe_description := Some description;
-            waiting_for := `Nothing
-        | `Extended_description ->
+            waiting_for := Nothing
+        | Extended_description ->
             let extended = String.(trim (concat empty xs)) in
             maybe_extended := Some extended;
             unless (Attrs.is_empty !attributes) add_pending;
-            waiting_for := `Nothing
-        | `Nothing -> ()
+            waiting_for := Nothing
+        | Nothing -> ()
       end
     | Some `End_element ->
         let maybe_head = Stack.pop_opt elt_stack in
