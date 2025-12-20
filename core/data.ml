@@ -1,3 +1,8 @@
+type flow =
+  [ `Input
+  | `Output
+  ]
+
 type _ t =
   | Json : [ `Input ] t
   | Xml : [ `Input ] t
