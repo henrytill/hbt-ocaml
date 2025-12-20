@@ -8,20 +8,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  linux:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          submodules: true
-      - uses: ocaml/setup-ocaml@v3
-        with:
-          ocaml-compiler: 5.3.0
-          dune-cache: true
-      - run: opam install . --deps-only --with-test
-      - run: opam exec -- dune build
-      - run: opam exec -- dune runtest
-
   linux-flake:
     runs-on: ubuntu-latest
     steps:
