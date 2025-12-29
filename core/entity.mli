@@ -88,10 +88,10 @@ val make :
   ?maybe_name:Name.t option ->
   ?labels:Label_set.t ->
   ?extended:Extended.t list ->
-  ?shared:bool ->
-  ?to_read:bool ->
+  ?shared:bool option ->
+  ?to_read:bool option ->
   ?last_visited_at:Time.t option ->
-  ?is_feed:bool ->
+  ?is_feed:bool option ->
   unit ->
   t
 
@@ -106,10 +106,10 @@ val updated_at : t -> Time.t list
 val names : t -> Name_set.t
 val labels : t -> Label_set.t
 val extended : t -> Extended.t list
-val shared : t -> bool
-val to_read : t -> bool
+val shared : t -> bool option
+val to_read : t -> bool option
 val last_visited_at : t -> Time.t option
-val is_feed : t -> bool
+val is_feed : t -> bool option
 val map_labels : (Label_set.t -> Label_set.t) -> t -> t
 val of_post : Pinboard.Post.t -> t
 val t_of_yaml : Yaml.value -> t

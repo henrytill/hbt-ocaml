@@ -42,9 +42,6 @@ Test dumping entities:
       labels:
       - ocaml
       - programming
-      shared: false
-      toRead: false
-      isFeed: false
     edges: []
   - id: 1
     entity:
@@ -55,9 +52,6 @@ Test dumping entities:
       labels:
       - ocaml
       - programming
-      shared: false
-      toRead: false
-      isFeed: false
     edges: []
   - id: 2
     entity:
@@ -70,9 +64,6 @@ Test dumping entities:
       - editor
       - ocaml
       - tools
-      shared: false
-      toRead: false
-      isFeed: false
     edges: []
 
 Test dumping tags:
@@ -115,9 +106,6 @@ Verify that entities are preserved while tags are transformed:
       labels:
       - dev
       - languages
-      shared: false
-      toRead: false
-      isFeed: false
     edges: []
   - id: 1
     entity:
@@ -128,9 +116,6 @@ Verify that entities are preserved while tags are transformed:
       labels:
       - dev
       - languages
-      shared: false
-      toRead: false
-      isFeed: false
     edges: []
   - id: 2
     entity:
@@ -143,9 +128,6 @@ Verify that entities are preserved while tags are transformed:
       - editors
       - languages
       - tools
-      shared: false
-      toRead: false
-      isFeed: false
     edges: []
 
 Test with an empty mappings file:

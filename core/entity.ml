@@ -166,15 +166,15 @@ type t = {
   names : Name_set.t;
   labels : Label_set.t;
   extended : Extended.t list;
-  shared : bool;
-  to_read : bool;
+  shared : bool option;
+  to_read : bool option;
   last_visited_at : Time.t option;
-  is_feed : bool;
+  is_feed : bool option;
 }
 
 let make uri created_at ?(updated_at = []) ?(maybe_name = None) ?(labels = Label_set.empty)
-    ?(extended = []) ?(shared = false) ?(to_read = false) ?(last_visited_at = None)
-    ?(is_feed = false) () =
+    ?(extended = []) ?(shared = None) ?(to_read = None) ?(last_visited_at = None)
+    ?(is_feed = None) () =
   let uri = Uri.canonicalize uri in
   let names = Option.fold ~none:Name_set.empty ~some:Name_set.singleton maybe_name in
   {
@@ -198,10 +198,10 @@ let empty =
     names = Name_set.empty;
     labels = Label_set.empty;
     extended = [];
-    shared = false;
-    to_read = false;
+    shared = None;
+    to_read = None;
     last_visited_at = None;
-    is_feed = false;
+    is_feed = None;
   }
 
 let uri e = e.uri
@@ -222,10 +222,10 @@ let equal x y =
   && Name_set.equal x.names y.names
   && Label_set.equal x.labels y.labels
   && List.equal Extended.equal x.extended y.extended
-  && Bool.equal x.shared y.shared
-  && Bool.equal x.to_read y.to_read
+  && Option.equal Bool.equal x.shared y.shared
+  && Option.equal Bool.equal x.to_read y.to_read
   && Option.equal Time.equal x.last_visited_at y.last_visited_at
-  && Bool.equal x.is_feed y.is_feed
+  && Option.equal Bool.equal x.is_feed y.is_feed
 
 let pp =
   let open Fmt in
@@ -237,10 +237,10 @@ let pp =
       field "names" names Name_set.pp;
       field "labels" labels Label_set.pp;
       field "extended" extended (list ~sep:semi Extended.pp);
-      field "shared" shared bool;
-      field "to_read" to_read bool;
+      field "shared" shared (option bool);
+      field "to_read" to_read (option bool);
       field "last_visited_at" last_visited_at (option Time.pp);
-      field "is_feed" is_feed bool;
+      field "is_feed" is_feed (option bool);
     ]
 
 let build entity (key, value) =
@@ -251,10 +251,10 @@ let build entity (key, value) =
   | "names" -> { entity with names = Name_set.t_of_yaml value }
   | "labels" -> { entity with labels = Label_set.t_of_yaml value }
   | "extended" -> { entity with extended = Yaml_ext.map_array_exn Extended.t_of_yaml value }
-  | "shared" -> { entity with shared = Yaml.Util.to_bool_exn value }
-  | "toRead" -> { entity with to_read = Yaml.Util.to_bool_exn value }
+  | "shared" -> { entity with shared = Some (Yaml.Util.to_bool_exn value) }
+  | "toRead" -> { entity with to_read = Some (Yaml.Util.to_bool_exn value) }
   | "lastVisitedAt" -> { entity with last_visited_at = Some (Time.t_of_yaml value) }
-  | "isFeed" -> { entity with is_feed = Yaml.Util.to_bool_exn value }
+  | "isFeed" -> { entity with is_feed = Some (Yaml.Util.to_bool_exn value) }
   | _ -> entity
 
 let t_of_yaml value =
@@ -273,10 +273,22 @@ let yaml_of_t entity =
       ("updatedAt", `A (List.map Time.yaml_of_t entity.updated_at));
       ("names", Name_set.yaml_of_t entity.names);
       ("labels", Label_set.yaml_of_t entity.labels);
-      ("shared", `Bool entity.shared);
-      ("toRead", `Bool entity.to_read);
-      ("isFeed", `Bool entity.is_feed);
     ]
+  in
+  let shared =
+    match entity.shared with
+    | None -> []
+    | Some b -> [ ("shared", `Bool b) ]
+  in
+  let to_read =
+    match entity.to_read with
+    | None -> []
+    | Some b -> [ ("toRead", `Bool b) ]
+  in
+  let is_feed =
+    match entity.is_feed with
+    | None -> []
+    | Some b -> [ ("isFeed", `Bool b) ]
   in
   let extended =
     match entity.extended with
@@ -288,7 +300,7 @@ let yaml_of_t entity =
     | None -> []
     | Some t -> [ ("lastVisitedAt", Time.yaml_of_t t) ]
   in
-  `O (base_fields @ extended @ last_visited)
+  `O (base_fields @ shared @ to_read @ is_feed @ extended @ last_visited)
 
 let update updated_at names labels extended e =
   let names = Name_set.union e.names names in
@@ -327,9 +339,10 @@ let of_post (p : Pinboard.Post.t) : t =
   let maybe_name = Option.map Name.of_string (Post.description p) in
   let labels = Label_set.of_list (List.map Label.of_string (Post.tag p)) in
   let extended = Option.fold ~none:[] ~some:(fun s -> [ Extended.of_string s ]) (Post.extended p) in
-  let shared = Post.shared p in
-  let to_read = Post.toread p in
-  make uri created_at ~maybe_name ~labels ~extended ~shared ~to_read ()
+  let shared = Some (Post.shared p) in
+  let to_read = Some (Post.toread p) in
+  let is_feed = Some false in
+  make uri created_at ~maybe_name ~labels ~extended ~shared ~to_read ~is_feed ()
 
 module Html = struct
   module Attrs = Prelude.Markup_ext.Attrs
@@ -357,15 +370,17 @@ module Html = struct
                (fun tag -> if tag <> "toread" then Some (Label.of_string tag) else None)
                tag_list)
         in
-        let to_read = entity.to_read || List.mem "toread" tag_list in
+        let to_read =
+          if List.mem "toread" tag_list then Some true else entity.to_read
+        in
         { entity with labels; to_read }
-    | "private" -> { entity with shared = value <> "1" }
-    | "toread" -> { entity with to_read = value = "1" }
-    | "feed" -> { entity with is_feed = value = "true" }
+    | "private" -> { entity with shared = Some (value <> "1") }
+    | "toread" -> { entity with to_read = Some (value = "1") }
+    | "feed" -> { entity with is_feed = Some (value = "true") }
     | _ -> entity
 
   let entity_of_attrs attributes names folder_labels extended : t =
-    let entity = List.fold_left build { empty with shared = true; names; extended } attributes in
+    let entity = List.fold_left build { empty with names; extended } attributes in
     let labels = Label_set.union entity.labels folder_labels in
     { entity with labels }
 end

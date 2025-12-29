@@ -122,9 +122,9 @@ module Template_entity = struct
     tags : string option;
     description : string option;
     last_visit : string option;
-    private_ : bool;
-    to_read : bool;
-    feed : bool;
+    private_ : bool option;
+    to_read : bool option;
+    feed : bool option;
   }
 
   let of_entity (entity : Entity.t) : t =
@@ -162,25 +162,29 @@ module Template_entity = struct
       tags;
       description;
       last_visit = Option.map Entity.Time.to_string (Entity.last_visited_at entity);
-      private_ = not (Entity.shared entity);
+      private_ = Option.map not (Entity.shared entity);
       to_read = Entity.to_read entity;
       feed = Entity.is_feed entity;
     }
+
+  let string_of_bool = function
+    | false -> "0"
+    | true -> "1"
 
   let yaml_of_t (template_entity : t) : Yaml.value =
     let base_fields =
       [
         ("uri", `String template_entity.href);
         ("addDate", `String template_entity.add_date);
-        ("private", `Bool template_entity.private_);
-        ("toRead", `Bool template_entity.to_read);
-        ("feed", `Bool template_entity.feed);
         ("text", `String template_entity.text);
       ]
     in
     let optional_fields =
       List_ext.filter_some
         [
+          Option.map (fun v -> ("private", `String (string_of_bool v))) template_entity.private_;
+          Option.map (fun v -> ("toRead", `String (string_of_bool v))) template_entity.to_read;
+          Option.map (fun v -> ("feed", `String (Bool.to_string v))) template_entity.feed;
           Option.map (fun v -> ("lastModified", `String v)) template_entity.last_modified;
           Option.map (fun v -> ("tags", `String v)) template_entity.tags;
           Option.map (fun v -> ("description", `String v)) template_entity.description;
