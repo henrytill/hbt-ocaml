@@ -161,10 +161,13 @@ module Template_entity = struct
       last_modified;
       tags;
       description;
-      last_visit = Option.map Entity.Time.to_string (Entity.last_visited_at entity);
-      private_ = Option.map not (Entity.shared entity);
-      to_read = Entity.to_read entity;
-      feed = Entity.is_feed entity;
+      last_visit =
+        Option.map
+          Entity.Time.to_string
+          (Entity.Last_visited_at.get (Entity.last_visited_at entity));
+      private_ = Option.map not (Entity.Shared.get (Entity.shared entity));
+      to_read = Entity.To_read.get (Entity.to_read entity);
+      feed = Entity.Is_feed.get (Entity.is_feed entity);
     }
 
   let string_of_bool = function

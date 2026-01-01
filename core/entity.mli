@@ -79,6 +79,50 @@ module Extended : sig
   val yaml_of_t : t -> Yaml.value
 end
 
+module Shared : sig
+  type t
+
+  val of_bool : bool -> t
+  val empty : t
+  val get : t -> bool option
+  val equal : t -> t -> bool
+  val pp : Format.formatter -> t -> unit
+  val concat : t -> t -> t
+end
+
+module To_read : sig
+  type t
+
+  val of_bool : bool -> t
+  val empty : t
+  val get : t -> bool option
+  val equal : t -> t -> bool
+  val pp : Format.formatter -> t -> unit
+  val concat : t -> t -> t
+end
+
+module Is_feed : sig
+  type t
+
+  val of_bool : bool -> t
+  val empty : t
+  val get : t -> bool option
+  val equal : t -> t -> bool
+  val pp : Format.formatter -> t -> unit
+  val concat : t -> t -> t
+end
+
+module Last_visited_at : sig
+  type t
+
+  val of_time : Time.t -> t
+  val empty : t
+  val get : t -> Time.t option
+  val equal : t -> t -> bool
+  val pp : Format.formatter -> t -> unit
+  val concat : t -> t -> t
+end
+
 type t
 
 val make :
@@ -88,10 +132,10 @@ val make :
   ?maybe_name:Name.t option ->
   ?labels:Label_set.t ->
   ?extended:Extended.t list ->
-  ?shared:bool option ->
-  ?to_read:bool option ->
-  ?last_visited_at:Time.t option ->
-  ?is_feed:bool option ->
+  ?shared:Shared.t ->
+  ?to_read:To_read.t ->
+  ?last_visited_at:Last_visited_at.t ->
+  ?is_feed:Is_feed.t ->
   unit ->
   t
 
@@ -106,10 +150,10 @@ val updated_at : t -> Time.t list
 val names : t -> Name_set.t
 val labels : t -> Label_set.t
 val extended : t -> Extended.t list
-val shared : t -> bool option
-val to_read : t -> bool option
-val last_visited_at : t -> Time.t option
-val is_feed : t -> bool option
+val shared : t -> Shared.t
+val to_read : t -> To_read.t
+val last_visited_at : t -> Last_visited_at.t
+val is_feed : t -> Is_feed.t
 val map_labels : (Label_set.t -> Label_set.t) -> t -> t
 val of_post : Pinboard.Post.t -> t
 val t_of_yaml : Yaml.value -> t
