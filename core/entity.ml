@@ -169,7 +169,7 @@ module Flag = struct
   let pp = Fmt.(option bool)
 
   let concat a b =
-    match a, b with
+    match (a, b) with
     | None, None -> None
     | Some x, None | None, Some x -> Some x
     | Some x, Some y -> Some (x || y)
@@ -189,7 +189,7 @@ module Last_visited_at = struct
   let pp = Fmt.(option Time.pp)
 
   let concat a b =
-    match a, b with
+    match (a, b) with
     | None, None -> None
     | Some t, None | None, Some t -> Some t
     | Some t1, Some t2 -> Some (if Time.compare t1 t2 < 0 then t2 else t1)
@@ -289,7 +289,8 @@ let build entity (key, value) =
   | "extended" -> { entity with extended = Yaml_ext.map_array_exn Extended.t_of_yaml value }
   | "shared" -> { entity with shared = Shared.of_bool (Yaml.Util.to_bool_exn value) }
   | "toRead" -> { entity with to_read = To_read.of_bool (Yaml.Util.to_bool_exn value) }
-  | "lastVisitedAt" -> { entity with last_visited_at = Last_visited_at.of_time (Time.t_of_yaml value) }
+  | "lastVisitedAt" ->
+      { entity with last_visited_at = Last_visited_at.of_time (Time.t_of_yaml value) }
   | "isFeed" -> { entity with is_feed = Is_feed.of_bool (Yaml.Util.to_bool_exn value) }
   | _ -> entity
 
@@ -413,9 +414,7 @@ module Html = struct
                (fun tag -> if tag <> "toread" then Some (Label.of_string tag) else None)
                tag_list)
         in
-        let to_read =
-          if List.mem "toread" tag_list then To_read.of_bool true else entity.to_read
-        in
+        let to_read = if List.mem "toread" tag_list then To_read.of_bool true else entity.to_read in
         { entity with labels; to_read }
     | "private" -> { entity with shared = Shared.of_bool (value <> "1") }
     | "toread" -> { entity with to_read = To_read.of_bool (value = "1") }
