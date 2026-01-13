@@ -396,30 +396,30 @@ module Html = struct
     | None -> Time.empty
     | Some timestamp -> (timestamp, Unix.gmtime timestamp)
 
-  let build r entity ((_, key), value) =
-    match String.lowercase_ascii key with
-    | "href" -> { entity with uri = Uri.canonicalize (Uri.of_string value) }
-    | "add_date" -> { entity with created_at = parse_timestamp value }
-    | "last_modified" when value <> String.empty ->
-        let time = parse_timestamp value in
-        { entity with updated_at = [ time ] }
-    | "last_visit" when value <> String.empty ->
-        let time = parse_timestamp value in
-        { entity with last_visited_at = Last_visited_at.of_time time }
-    | "tags" when value <> String.empty ->
-        let tag_list = Str.split r value in
+  let build r e ((_, k), v) =
+    match String.lowercase_ascii k with
+    | "href" -> { e with uri = Uri.canonicalize (Uri.of_string v) }
+    | "add_date" -> { e with created_at = parse_timestamp v }
+    | "last_modified" when v <> String.empty ->
+        let time = parse_timestamp v in
+        { e with updated_at = [ time ] }
+    | "last_visit" when v <> String.empty ->
+        let time = parse_timestamp v in
+        { e with last_visited_at = Last_visited_at.of_time time }
+    | "tags" when v <> String.empty ->
+        let tag_list = Str.split r v in
         let labels =
           Label_set.of_list
             (List.filter_map
                (fun tag -> if tag <> "toread" then Some (Label.of_string tag) else None)
                tag_list)
         in
-        let to_read = if List.mem "toread" tag_list then To_read.of_bool true else entity.to_read in
-        { entity with labels; to_read }
-    | "private" -> { entity with shared = Shared.of_bool (value <> "1") }
-    | "toread" -> { entity with to_read = To_read.of_bool (value = "1") }
-    | "feed" -> { entity with is_feed = Is_feed.of_bool (value = "true") }
-    | _ -> entity
+        let to_read = if List.mem "toread" tag_list then To_read.of_bool true else e.to_read in
+        { e with labels; to_read }
+    | "private" -> { e with shared = Shared.of_bool (v <> "1") }
+    | "toread" -> { e with to_read = To_read.of_bool (v = "1") }
+    | "feed" -> { e with is_feed = Is_feed.of_bool (v = "true") }
+    | _ -> e
 
   let tag_splitter = lazy (Str.regexp "[,]+")
 
