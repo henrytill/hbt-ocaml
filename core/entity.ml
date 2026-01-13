@@ -279,20 +279,19 @@ let pp =
       field "is_feed" is_feed Is_feed.pp;
     ]
 
-let build entity (key, value) =
-  match key with
-  | "uri" -> { entity with uri = Uri.t_of_yaml value }
-  | "createdAt" -> { entity with created_at = Time.t_of_yaml value }
-  | "updatedAt" -> { entity with updated_at = Yaml_ext.map_array_exn Time.t_of_yaml value }
-  | "names" -> { entity with names = Name_set.t_of_yaml value }
-  | "labels" -> { entity with labels = Label_set.t_of_yaml value }
-  | "extended" -> { entity with extended = Yaml_ext.map_array_exn Extended.t_of_yaml value }
-  | "shared" -> { entity with shared = Shared.of_bool (Yaml.Util.to_bool_exn value) }
-  | "toRead" -> { entity with to_read = To_read.of_bool (Yaml.Util.to_bool_exn value) }
-  | "lastVisitedAt" ->
-      { entity with last_visited_at = Last_visited_at.of_time (Time.t_of_yaml value) }
-  | "isFeed" -> { entity with is_feed = Is_feed.of_bool (Yaml.Util.to_bool_exn value) }
-  | _ -> entity
+let build e (k, v) =
+  match k with
+  | "uri" -> { e with uri = Uri.t_of_yaml v }
+  | "createdAt" -> { e with created_at = Time.t_of_yaml v }
+  | "updatedAt" -> { e with updated_at = Yaml_ext.map_array_exn Time.t_of_yaml v }
+  | "names" -> { e with names = Name_set.t_of_yaml v }
+  | "labels" -> { e with labels = Label_set.t_of_yaml v }
+  | "extended" -> { e with extended = Yaml_ext.map_array_exn Extended.t_of_yaml v }
+  | "shared" -> { e with shared = Shared.of_bool (Yaml.Util.to_bool_exn v) }
+  | "toRead" -> { e with to_read = To_read.of_bool (Yaml.Util.to_bool_exn v) }
+  | "lastVisitedAt" -> { e with last_visited_at = Last_visited_at.of_time (Time.t_of_yaml v) }
+  | "isFeed" -> { e with is_feed = Is_feed.of_bool (Yaml.Util.to_bool_exn v) }
+  | _ -> e
 
 let t_of_yaml value =
   let assoc =
