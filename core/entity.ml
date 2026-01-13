@@ -396,7 +396,7 @@ module Html = struct
     | None -> Time.empty
     | Some timestamp -> (timestamp, Unix.gmtime timestamp)
 
-  let build entity ((_, key), value) =
+  let build r entity ((_, key), value) =
     match String.lowercase_ascii key with
     | "href" -> { entity with uri = Uri.canonicalize (Uri.of_string value) }
     | "add_date" -> { entity with created_at = parse_timestamp value }
@@ -407,7 +407,7 @@ module Html = struct
         let time = parse_timestamp value in
         { entity with last_visited_at = Last_visited_at.of_time time }
     | "tags" when value <> String.empty ->
-        let tag_list = Str.split (Str.regexp "[,]+") value in
+        let tag_list = Str.split r value in
         let labels =
           Label_set.of_list
             (List.filter_map
@@ -421,8 +421,11 @@ module Html = struct
     | "feed" -> { entity with is_feed = Is_feed.of_bool (value = "true") }
     | _ -> entity
 
+  let tag_splitter = lazy (Str.regexp "[,]+")
+
   let entity_of_attrs attributes names folder_labels extended : t =
-    let entity = List.fold_left build { empty with names; extended } attributes in
+    let f = build (Lazy.force tag_splitter) in
+    let entity = List.fold_left f { empty with names; extended } attributes in
     let labels = Label_set.union entity.labels folder_labels in
     { entity with labels }
 end

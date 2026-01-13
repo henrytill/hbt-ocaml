@@ -65,9 +65,10 @@ let pp =
     ]
 
 let to_string = Fmt.str "%a" pp
+let tag_splitter = lazy (Str.regexp "[ \t]+")
 
 module Json = struct
-  let build p (k, v) =
+  let build r p (k, v) =
     match k with
     | "href" -> { p with href = Yaml.Util.to_string_exn v }
     | "time" -> { p with time = Yaml.Util.to_string_exn v }
@@ -75,7 +76,7 @@ module Json = struct
     | "extended" -> { p with extended = option_of_string (Yaml.Util.to_string_exn v) }
     | "tags" ->
         let tags = Yaml.Util.to_string_exn v in
-        let tag = Str.split (Str.regexp "[ \t]+") tags in
+        let tag = Str.split r tags in
         { p with tag }
     | "meta" -> { p with meta = option_of_string (Yaml.Util.to_string_exn v) }
     | "hash" -> { p with hash = option_of_string (Yaml.Util.to_string_exn v) }
@@ -84,12 +85,13 @@ module Json = struct
     | _ -> p
 
   let t_of_yaml (value : Yaml.value) : t =
+    let f = build (Lazy.force tag_splitter) in
     let assoc =
       match value with
       | `O assoc -> assoc
       | _ -> raise (Yaml.Util.Value_error "Expected an object")
     in
-    List.fold_left build empty assoc
+    List.fold_left f empty assoc
 
   let from_json content = Yaml_ext.map_array_exn t_of_yaml (Ezjsonm.from_string content)
 end
@@ -97,14 +99,14 @@ end
 let from_json = Json.from_json
 
 module Xml = struct
-  let build p ((_, k), v) =
+  let build r p ((_, k), v) =
     match String.lowercase_ascii k with
     | "href" -> { p with href = v }
     | "time" -> { p with time = v }
     | "description" when v <> String.empty -> { p with description = Some v }
     | "extended" when v <> String.empty -> { p with extended = Some v }
     | "tag" when v <> String.empty ->
-        let tag = Str.(split (regexp "[ \t]+") v) in
+        let tag = Str.split r v in
         { p with tag }
     | "meta" when v <> String.empty -> { p with meta = Some v }
     | "hash" when v <> String.empty -> { p with hash = Some v }
@@ -112,7 +114,9 @@ module Xml = struct
     | "toread" -> { p with toread = v = "yes" }
     | _ -> p
 
-  let t_of_attrs (attrs : Attrs.t) : t = List.fold_left build empty attrs
+  let t_of_attrs (attrs : Attrs.t) : t =
+    let f = build (Lazy.force tag_splitter) in
+    List.fold_left f empty attrs
 
   let from_xml content =
     if String.length content = 0 then
