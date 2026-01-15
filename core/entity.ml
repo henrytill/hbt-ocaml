@@ -408,10 +408,10 @@ module Html = struct
     | "tags" when v <> String.empty ->
         let tag_list = Str.split r v in
         let labels =
-          Label_set.of_list
-            (List.filter_map
+          Label_set.of_seq
+            (Seq.filter_map
                (fun tag -> if tag <> "toread" then Some (Label.of_string tag) else None)
-               tag_list)
+               (List.to_seq tag_list))
         in
         let to_read = if List.mem "toread" tag_list then To_read.of_bool true else e.to_read in
         { e with labels; to_read }
