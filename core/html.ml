@@ -102,7 +102,7 @@ let parse content =
       end
     | Some `End_element ->
         let maybe_head = Stack.pop_opt elt_stack in
-        if maybe_head = Some Dl then begin
+        if maybe_head = Some Elt.Dl then begin
           unless (Attrs.is_empty !attributes) add_pending;
           ignore (Stack.pop_opt folder_stack)
         end
