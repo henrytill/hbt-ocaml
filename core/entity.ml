@@ -162,7 +162,7 @@ end
 module Flag = struct
   type t = bool option
 
-  let of_bool b = Some b
+  let of_bool (b : bool) = Some b
   let empty = None
   let get = Fun.id
   let equal = Option.equal Bool.equal
@@ -182,7 +182,7 @@ module Is_feed = Flag
 module Last_visited_at = struct
   type t = Time.t option
 
-  let of_time t = Some t
+  let of_time (t : Time.t) = Some t
   let empty = None
   let get = Fun.id
   let equal = Option.equal Time.equal
