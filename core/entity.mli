@@ -79,38 +79,9 @@ module Extended : sig
   val yaml_of_t : t -> Yaml.value
 end
 
-module Shared : sig
-  type t
-
-  val of_bool : bool -> t
-  val empty : t
-  val get : t -> bool option
-  val equal : t -> t -> bool
-  val pp : Format.formatter -> t -> unit
-  val concat : t -> t -> t
-end
-
-module To_read : sig
-  type t
-
-  val of_bool : bool -> t
-  val empty : t
-  val get : t -> bool option
-  val equal : t -> t -> bool
-  val pp : Format.formatter -> t -> unit
-  val concat : t -> t -> t
-end
-
-module Is_feed : sig
-  type t
-
-  val of_bool : bool -> t
-  val empty : t
-  val get : t -> bool option
-  val equal : t -> t -> bool
-  val pp : Format.formatter -> t -> unit
-  val concat : t -> t -> t
-end
+module Shared : Flag_intf.S
+module To_read : Flag_intf.S
+module Is_feed : Flag_intf.S
 
 module Last_visited_at : sig
   type t

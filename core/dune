@@ -32,7 +32,7 @@
   unix
   uri
   yaml)
- (modules collection data entity html markdown templates version))
+ (modules collection data entity flag_intf html markdown templates version))
 
 (test
  (name collection_test)
