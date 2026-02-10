@@ -59,11 +59,12 @@ let accum _k v acc = v :: acc
 let discover_input (format : Data.input) =
   let f acc file =
     let stem, ext = Fpath.split_ext ~multi:true file in
+    let file_thunk = lazy (read_exn file) in
     let name_thunk = lazy (Fpath.to_string stem) in
     let updater =
       match split ext with
       | [ "expected"; "yaml" ] -> begin
-          let expected = read_exn file in
+          let expected = Lazy.force file_thunk in
           function
           | None ->
               let name = Lazy.force name_thunk in
@@ -71,7 +72,7 @@ let discover_input (format : Data.input) =
           | Some entry -> Some { entry with expected }
         end
       | [ "input"; ext ] when ext = format_to_ext format -> begin
-          let input = read_exn file in
+          let input = Lazy.force file_thunk in
           function
           | None ->
               let name = Lazy.force name_thunk in
@@ -96,11 +97,12 @@ let discover_input (format : Data.input) =
 let discover_output (format : Data.output) =
   let f acc file =
     let stem, ext = Fpath.split_ext ~multi:true file in
+    let file_thunk = lazy (read_exn file) in
     let name_thunk = lazy (Fpath.to_string stem) in
     let updater =
       match split ext with
       | [ "expected"; ext ] when ext = format_to_ext format -> begin
-          let expected = read_exn file in
+          let expected = Lazy.force file_thunk in
           function
           | None ->
               let name = Lazy.force name_thunk in
@@ -108,7 +110,7 @@ let discover_output (format : Data.output) =
           | Some entry -> Some { entry with expected }
         end
       | [ "input"; _ ] -> begin
-          let input = read_exn file in
+          let input = Lazy.force file_thunk in
           function
           | None ->
               let name = Lazy.force name_thunk in
