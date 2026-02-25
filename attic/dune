@@ -1,8 +1,14 @@
 (library
  (name attic)
  (public_name hbt-attic)
- (modules belnap belnap_vec)
+ (modules bits belnap belnap_vec)
  (libraries fmt))
+
+(test
+ (name bits_test)
+ (modules bits_test)
+ (package hbt-attic)
+ (libraries alcotest hbt-attic))
 
 (test
  (name belnap_test)

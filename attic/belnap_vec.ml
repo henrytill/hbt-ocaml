@@ -193,14 +193,7 @@ let is_all_false =
     (fun ok m pos neg -> if pos land m <> 0 then false else if neg land m <> m then false else ok)
     true
 
-let popcount x =
-  let x = x land 0xFFFFFFFF in
-  let x = x - ((x lsr 1) land 0x55555555) in
-  let x = (x land 0x33333333) + ((x lsr 2) land 0x33333333) in
-  let x = (x + (x lsr 4)) land 0x0f0f0f0f in
-  ((x * 0x01010101) lsr 24) land 0xFF
-
-let count_true vec = fold_pairs (fun n _m pos neg -> n + popcount (pos land lnot neg)) 0 vec
-let count_false vec = fold_pairs (fun n _m pos neg -> n + popcount (lnot pos land neg)) 0 vec
-let count_both vec = fold_pairs (fun n _m pos neg -> n + popcount (pos land neg)) 0 vec
+let count_true vec = fold_pairs (fun n _m pos neg -> n + Bits.popcount (pos land lnot neg)) 0 vec
+let count_false vec = fold_pairs (fun n _m pos neg -> n + Bits.popcount (lnot pos land neg)) 0 vec
+let count_both vec = fold_pairs (fun n _m pos neg -> n + Bits.popcount (pos land neg)) 0 vec
 let count_unknown vec = vec.width - count_true vec - count_false vec - count_both vec
