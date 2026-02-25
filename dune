@@ -1,7 +1,7 @@
 (env
  (static
   (link_flags
-   (-ccopt -static)))
+   (:standard -ccopt -static)))
  (ubsan
   (c_flags
    (:standard -fsanitize=undefined -fno-sanitize-recover=all))
