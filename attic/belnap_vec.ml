@@ -120,127 +120,78 @@ let resize vec new_width fill =
     if is_known then mask_tail vec
   end
 
-(* Returns 0 for out-of-bounds word indices (treats missing words as Unknown). *)
-let get_word vec idx = if idx < Dynarray.length vec.words then Dynarray.get vec.words idx else 0
+(* Fold over word pairs of [vec], calling [f acc m pos neg] for each pair.
+   [m] is a bitmask of the live bits in the pair — bits corresponding to actual
+   elements. It is [-1] (all bits live) for full words, and [tail_mask vec.width]
+   (only the low bits live) for the final partial word. Callers that do not need
+   to distinguish the tail may ignore [m]. *)
+let fold_pairs f init vec =
+  let nw = words_needed vec.width in
+  let acc = ref init in
+  for i = 0 to nw - 1 do
+    let pos_idx = i * 2 in
+    let m = if i = nw - 1 then tail_mask vec.width else -1 in
+    acc := f !acc m (Dynarray.get vec.words pos_idx) (Dynarray.get vec.words (pos_idx + 1))
+  done;
+  !acc
 
-let not vec =
+(* Map over word pairs of [vec], calling [f pos neg] for each pair and
+   collecting the results into a new vec of the same width. *)
+let map_pairs f vec =
   let nw = words_needed vec.width in
   let words = Dynarray.create () in
   for i = 0 to nw - 1 do
     let pos_idx = i * 2 in
-    let pos = Dynarray.get vec.words pos_idx in
-    let neg = Dynarray.get vec.words (pos_idx + 1) in
-    Dynarray.add_last words neg;
-    Dynarray.add_last words pos
+    let pos, neg = f (Dynarray.get vec.words pos_idx) (Dynarray.get vec.words (pos_idx + 1)) in
+    Dynarray.add_last words pos;
+    Dynarray.add_last words neg
   done;
   let result = { width = vec.width; words } in
   mask_tail result;
   result
 
-let ( && ) a b =
+(* Map over word pairs of [a] and [b] in lockstep, calling [f ap an bp bn] for
+   each pair and collecting the results into a new vec. The result width is the
+   maximum of the two input widths; pairs beyond the shorter vec are padded with
+   zero (representing all-[Unknown] elements). *)
+let map_pairs2 f a b =
   let width = max a.width b.width in
   let nw = words_needed width in
   let words = Dynarray.create () in
+  let get vec idx = if idx < Dynarray.length vec.words then Dynarray.get vec.words idx else 0 in
   for i = 0 to nw - 1 do
     let pos_idx = i * 2 in
     let neg_idx = pos_idx + 1 in
-    let pos_a = get_word a pos_idx in
-    let neg_a = get_word a neg_idx in
-    let pos_b = get_word b pos_idx in
-    let neg_b = get_word b neg_idx in
-    Dynarray.add_last words (pos_a land pos_b);
-    Dynarray.add_last words (neg_a lor neg_b)
+    let pos, neg = f (get a pos_idx) (get a neg_idx) (get b pos_idx) (get b neg_idx) in
+    Dynarray.add_last words pos;
+    Dynarray.add_last words neg
   done;
   let result = { width; words } in
   mask_tail result;
   result
 
-let ( || ) a b =
-  let width = max a.width b.width in
-  let nw = words_needed width in
-  let words = Dynarray.create () in
-  for i = 0 to nw - 1 do
-    let pos_idx = i * 2 in
-    let neg_idx = pos_idx + 1 in
-    let pos_a = get_word a pos_idx in
-    let neg_a = get_word a neg_idx in
-    let pos_b = get_word b pos_idx in
-    let neg_b = get_word b neg_idx in
-    Dynarray.add_last words (pos_a lor pos_b);
-    Dynarray.add_last words (neg_a land neg_b)
-  done;
-  let result = { width; words } in
-  mask_tail result;
-  result
-
-let merge a b =
-  let width = max a.width b.width in
-  let nw = words_needed width in
-  let words = Dynarray.create () in
-  for i = 0 to nw - 1 do
-    let pos_idx = i * 2 in
-    let neg_idx = pos_idx + 1 in
-    let pos_a = get_word a pos_idx in
-    let neg_a = get_word a neg_idx in
-    let pos_b = get_word b pos_idx in
-    let neg_b = get_word b neg_idx in
-    Dynarray.add_last words (pos_a lor pos_b);
-    Dynarray.add_last words (neg_a lor neg_b)
-  done;
-  let result = { width; words } in
-  mask_tail result;
-  result
-
+let not = map_pairs (fun pos neg -> (neg, pos))
+let ( && ) = map_pairs2 (fun ap an bp bn -> (ap land bp, an lor bn))
+let ( || ) = map_pairs2 (fun ap an bp bn -> (ap lor bp, an land bn))
+let merge = map_pairs2 (fun ap an bp bn -> (ap lor bp, an lor bn))
 let implies a b = (not a) || b
 
-let is_consistent vec =
-  let nw = words_needed vec.width in
-  let result = ref true in
-  for i = 0 to nw - 1 do
-    let pos_idx = i * 2 in
-    let pos = Dynarray.get vec.words pos_idx in
-    let neg = Dynarray.get vec.words (pos_idx + 1) in
-    if pos land neg <> 0 then result := false
-  done;
-  !result
+(* Queries *)
 
-let is_all_determined vec =
-  let nw = words_needed vec.width in
-  let result = ref true in
-  for i = 0 to nw - 1 do
-    let pos_idx = i * 2 in
-    let m = if i = nw - 1 then tail_mask vec.width else -1 in
-    let pos = Dynarray.get vec.words pos_idx in
-    let neg = Dynarray.get vec.words (pos_idx + 1) in
-    if pos lxor neg land m <> m then result := false
-  done;
-  !result
+let is_consistent = fold_pairs (fun ok _m pos neg -> if pos land neg <> 0 then false else ok) true
 
-let is_all_true vec =
-  let nw = words_needed vec.width in
-  let result = ref true in
-  for i = 0 to nw - 1 do
-    let pos_idx = i * 2 in
-    let m = if i = nw - 1 then tail_mask vec.width else -1 in
-    let pos = Dynarray.get vec.words pos_idx in
-    let neg = Dynarray.get vec.words (pos_idx + 1) in
-    if pos land m <> m then result := false;
-    if neg land m <> 0 then result := false
-  done;
-  !result
+let is_all_determined =
+  fold_pairs (fun ok m pos neg -> if pos lxor neg land m <> m then false else ok) true
 
-let is_all_false vec =
-  let nw = words_needed vec.width in
-  let result = ref true in
-  for i = 0 to nw - 1 do
-    let pos_idx = i * 2 in
-    let m = if i = nw - 1 then tail_mask vec.width else -1 in
-    let pos = Dynarray.get vec.words pos_idx in
-    let neg = Dynarray.get vec.words (pos_idx + 1) in
-    if pos land m <> 0 then result := false;
-    if neg land m <> m then result := false
-  done;
-  !result
+let is_all_true =
+  fold_pairs
+    (fun ok m pos neg -> if pos land m <> m then false else if neg land m <> 0 then false else ok)
+    true
+
+let is_all_false =
+  fold_pairs
+    (fun ok m pos neg -> if pos land m <> 0 then false else if neg land m <> m then false else ok)
+    true
 
 let popcount x =
   let x = x land 0xFFFFFFFF in
@@ -249,37 +200,7 @@ let popcount x =
   let x = (x + (x lsr 4)) land 0x0f0f0f0f in
   ((x * 0x01010101) lsr 24) land 0xFF
 
-let count_true vec =
-  let nw = words_needed vec.width in
-  let sum = ref 0 in
-  for i = 0 to nw - 1 do
-    let pos_idx = i * 2 in
-    let pos = Dynarray.get vec.words pos_idx in
-    let neg = Dynarray.get vec.words (pos_idx + 1) in
-    sum := !sum + popcount (pos land lnot neg)
-  done;
-  !sum
-
-let count_false vec =
-  let nw = words_needed vec.width in
-  let sum = ref 0 in
-  for i = 0 to nw - 1 do
-    let pos_idx = i * 2 in
-    let pos = Dynarray.get vec.words pos_idx in
-    let neg = Dynarray.get vec.words (pos_idx + 1) in
-    sum := !sum + popcount (lnot pos land neg)
-  done;
-  !sum
-
-let count_both vec =
-  let nw = words_needed vec.width in
-  let sum = ref 0 in
-  for i = 0 to nw - 1 do
-    let pos_idx = i * 2 in
-    let pos = Dynarray.get vec.words pos_idx in
-    let neg = Dynarray.get vec.words (pos_idx + 1) in
-    sum := !sum + popcount (pos land neg)
-  done;
-  !sum
-
+let count_true vec = fold_pairs (fun n _m pos neg -> n + popcount (pos land lnot neg)) 0 vec
+let count_false vec = fold_pairs (fun n _m pos neg -> n + popcount (lnot pos land neg)) 0 vec
+let count_both vec = fold_pairs (fun n _m pos neg -> n + popcount (pos land neg)) 0 vec
 let count_unknown vec = vec.width - count_true vec - count_false vec - count_both vec
