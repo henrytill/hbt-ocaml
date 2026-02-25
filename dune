@@ -1,4 +1,12 @@
 (env
  (static
   (link_flags
-   (-ccopt -static))))
+   (-ccopt -static)))
+ (ubsan
+  (c_flags
+   (:standard -fsanitize=undefined -fno-sanitize-recover=all))
+  (link_flags
+   (:standard -cclib -fsanitize=undefined))
+  (env-vars
+   (ALCOTEST_VERBOSE true)
+   (UBSAN_OPTIONS print_stacktrace=1))))
