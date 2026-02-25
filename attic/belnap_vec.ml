@@ -3,14 +3,16 @@ type t = {
   words : int Dynarray.t;
 }
 
-let bits_log2 = 5
+let bits_log2 = 5 (* log2 of the number of bits per word, i.e. words are 32 bits *)
 let bits_mask = (1 lsl bits_log2) - 1
+let all_ones = lnot 0
+let planes = 2 (* pos and neg bitplanes *)
 let words_needed n = (n + bits_mask) lsr bits_log2
 
 let tail_mask n =
   let r = n land bits_mask in
   if r = 0 then
-    -1
+    all_ones
   else
     (1 lsl r) - 1
 
@@ -18,18 +20,18 @@ let mask_tail vec =
   let nw = words_needed vec.width in
   if nw > 0 then begin
     let m = tail_mask vec.width in
-    let pos_idx = (nw - 1) * 2 in
+    let pos_idx = (nw - 1) * planes in
     let neg_idx = pos_idx + 1 in
     Dynarray.set vec.words pos_idx (Dynarray.get vec.words pos_idx land m);
     Dynarray.set vec.words neg_idx (Dynarray.get vec.words neg_idx land m)
   end
 
 let create () = { width = 0; words = Dynarray.create () }
-let make width = { width; words = Dynarray.make (2 * words_needed width) 0b00 }
+let make width = { width; words = Dynarray.make (planes * words_needed width) 0b00 }
 
 let filled width fill =
-  let pos_word = if fill land 1 = 1 then -1 else 0 in
-  let neg_word = if fill lsr 1 = 1 then -1 else 0 in
+  let pos_word = if fill land 1 = 1 then all_ones else 0 in
+  let neg_word = if fill lsr 1 = 1 then all_ones else 0 in
   let nw = words_needed width in
   let words = Dynarray.create () in
   for _ = 0 to nw - 1 do
@@ -47,7 +49,7 @@ let width vec = vec.width
 let get_unchecked vec i =
   let w = i lsr bits_log2 in
   let b = i land bits_mask in
-  let pos_idx = w * 2 in
+  let pos_idx = w * planes in
   let pos_bit = (Dynarray.get vec.words pos_idx lsr b) land 1 in
   let neg_bit = (Dynarray.get vec.words (pos_idx + 1) lsr b) land 1 in
   Belnap.of_view
@@ -68,7 +70,7 @@ let get vec i =
 let set_unchecked vec i (v : Belnap.t) =
   let w = i lsr bits_log2 in
   let b = i land bits_mask in
-  let pos_idx = w * 2 in
+  let pos_idx = w * planes in
   let neg_idx = pos_idx + 1 in
   let mask = 1 lsl b in
   let raw = Belnap.to_bits v in
@@ -81,7 +83,7 @@ let set vec i v =
   if i >= vec.width then begin
     let new_width = i + 1 in
     let new_nw = words_needed new_width in
-    for _ = Dynarray.length vec.words to (2 * new_nw) - 1 do
+    for _ = Dynarray.length vec.words to (planes * new_nw) - 1 do
       Dynarray.add_last vec.words 0b00
     done;
     vec.width <- new_width
@@ -91,7 +93,7 @@ let set vec i v =
 let truncate vec new_width =
   if new_width < vec.width then begin
     vec.width <- new_width;
-    Dynarray.truncate vec.words (2 * words_needed new_width);
+    Dynarray.truncate vec.words (planes * words_needed new_width);
     mask_tail vec
   end
 
@@ -100,14 +102,14 @@ let resize vec new_width fill =
     truncate vec new_width
   else begin
     let raw = Belnap.to_bits fill in
-    let pos_word = if raw land 1 = 1 then -1 else 0 in
-    let neg_word = if raw lsr 1 = 1 then -1 else 0 in
+    let pos_word = if raw land 1 = 1 then all_ones else 0 in
+    let neg_word = if raw lsr 1 = 1 then all_ones else 0 in
     let is_known = raw <> 0b00 in
     let old_nw = words_needed vec.width in
     let new_nw = words_needed new_width in
     if is_known && old_nw > 0 && vec.width land bits_mask <> 0 then begin
       let fill_mask = lnot (tail_mask vec.width) in
-      let pos_idx = (old_nw - 1) * 2 in
+      let pos_idx = (old_nw - 1) * planes in
       let neg_idx = pos_idx + 1 in
       Dynarray.set vec.words pos_idx (Dynarray.get vec.words pos_idx lor (pos_word land fill_mask));
       Dynarray.set vec.words neg_idx (Dynarray.get vec.words neg_idx lor (neg_word land fill_mask))
@@ -122,16 +124,17 @@ let resize vec new_width fill =
 
 (* Fold over word pairs of [vec], calling [f acc m pos neg] for each pair.
    [m] is a bitmask of the live bits in the pair — bits corresponding to actual
-   elements. It is [-1] (all bits live) for full words, and [tail_mask vec.width]
+   elements. It is [all_ones] for full words and [tail_mask vec.width]
    (only the low bits live) for the final partial word. Callers that do not need
    to distinguish the tail may ignore [m]. *)
 let fold_pairs f init vec =
   let nw = words_needed vec.width in
   let acc = ref init in
   for i = 0 to nw - 1 do
-    let pos_idx = i * 2 in
-    let m = if i = nw - 1 then tail_mask vec.width else -1 in
-    acc := f !acc m (Dynarray.get vec.words pos_idx) (Dynarray.get vec.words (pos_idx + 1))
+    let pos_idx = i * planes in
+    let neg_idx = pos_idx + 1 in
+    let m = if i = nw - 1 then tail_mask vec.width else all_ones in
+    acc := f !acc m (Dynarray.get vec.words pos_idx) (Dynarray.get vec.words neg_idx)
   done;
   !acc
 
@@ -139,9 +142,9 @@ let fold_pairs f init vec =
    collecting the results into a new vec of the same width. *)
 let map_pairs f vec =
   let nw = words_needed vec.width in
-  let words = Dynarray.make (2 * nw) 0b00 in
+  let words = Dynarray.make (planes * nw) 0b00 in
   for i = 0 to nw - 1 do
-    let pos_idx = i * 2 in
+    let pos_idx = i * planes in
     let neg_idx = pos_idx + 1 in
     let pos, neg = f (Dynarray.get vec.words pos_idx) (Dynarray.get vec.words neg_idx) in
     Dynarray.set words pos_idx pos;
@@ -158,10 +161,10 @@ let map_pairs f vec =
 let map_pairs2 f a b =
   let width = max a.width b.width in
   let nw = words_needed width in
-  let words = Dynarray.make (2 * nw) 0b00 in
+  let words = Dynarray.make (planes * nw) 0b00 in
   let get vec idx = if idx < Dynarray.length vec.words then Dynarray.get vec.words idx else 0b00 in
   for i = 0 to nw - 1 do
-    let pos_idx = i * 2 in
+    let pos_idx = i * planes in
     let neg_idx = pos_idx + 1 in
     let pos, neg = f (get a pos_idx) (get a neg_idx) (get b pos_idx) (get b neg_idx) in
     Dynarray.set words pos_idx pos;
