@@ -132,6 +132,7 @@
           in
           pkgs.mkShell {
             inputsFrom = [
+              scope.hbt-attic
               scope.hbt-cli
             ];
 
@@ -150,7 +151,13 @@
         legacyPackagesStatic = mkRegularScope true;
       in
       {
+        checks = {
+          hbt-attic = legacyPackages.hbt-attic;
+          hbt-cli = legacyPackages.hbt-cli;
+        };
+
         packages = rec {
+          hbt-attic = legacyPackages.hbt-attic;
           hbt-cli = legacyPackages.hbt-cli;
           hbt-cli-static = legacyPackagesStatic.hbt-cli;
           default = hbt-cli;

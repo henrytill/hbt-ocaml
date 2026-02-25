@@ -27,6 +27,21 @@
    (>= 3.2.0))))
 
 (package
+ (name hbt-attic)
+ (synopsis "Heterogenous Bookmark Transformation (Experiments)")
+ (description
+  "A tool for parsing and transforming bookmarks from various sources")
+ (depends
+  (ocaml
+   (>= 5.2.0))
+  (fmt
+   (>= 0.11.0))
+  (alcotest
+   (and
+    :with-test
+    (>= 1.7.0)))))
+
+(package
  (name hbt-pinboard)
  (synopsis "Heterogeneous Bookmark Transformation (Pinboard support)")
  (description
