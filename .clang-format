@@ -1,0 +1,10 @@
+AlignAfterOpenBracket: Align
+AlignConsecutiveMacros: true
+AlignTrailingComments: true
+BasedOnStyle: WebKit
+BreakBeforeBraces: Allman
+ColumnLimit: 0
+DerivePointerAlignment: false
+IndentPPDirectives: AfterHash
+PointerAlignment: Right
+QualifierAlignment: Right

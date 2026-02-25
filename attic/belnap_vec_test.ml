@@ -119,6 +119,18 @@ let test_different_widths () =
     check (Printf.sprintf "pos %d is False" i) f (Belnap_vec.get r i)
   done
 
+let test_word_boundaries () =
+  (* Element 63: bit 63 (sign bit) of word-pair 0 *)
+  let v = Belnap_vec.make 65 in
+  Belnap_vec.set v 63 b;
+  check "get 63 is Both" b (Belnap_vec.get v 63);
+  check "get 62 is Unknown" u (Belnap_vec.get v 62);
+  check "get 64 is Unknown" u (Belnap_vec.get v 64);
+  (* Element 64: bit 0 of word-pair 1 *)
+  Belnap_vec.set v 64 t;
+  check "get 64 is True" t (Belnap_vec.get v 64);
+  check "get 63 still Both" b (Belnap_vec.get v 63)
+
 let tests =
   let open Alcotest in
   [
@@ -134,6 +146,7 @@ let tests =
         test_case "is_all_determined" `Quick test_is_all_determined;
         test_case "counts" `Quick test_counts;
         test_case "different_widths" `Quick test_different_widths;
+        test_case "word_boundaries" `Quick test_word_boundaries;
       ] );
   ]
 
