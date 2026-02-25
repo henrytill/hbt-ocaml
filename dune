@@ -4,7 +4,7 @@
    (:standard -ccopt -static)))
  (ubsan
   (c_flags
-   (:standard -fsanitize=undefined -fno-sanitize-recover=all))
+   (:standard -O0 -fno-wrapv -fsanitize=undefined -fno-sanitize-recover=all))
   (link_flags
    (:standard -cclib -fsanitize=undefined))
   (env-vars

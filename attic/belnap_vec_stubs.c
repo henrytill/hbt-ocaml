@@ -46,7 +46,7 @@ CAMLprim value caml_bv_set(value words, value vi, value vraw)
 
     int const word = i >> BITS_LOG2;
     int const bit = i & BITS_MASK;
-    int64_t const mask = INT64_C(1) << bit;
+    int64_t const mask = UINT64_C(1) << bit;
     int64_t const pos = (uint64_t)((raw) & 1) << bit;
     int64_t const neg = (uint64_t)((raw >> 1) & 1) << bit;
     w[word * 2] = (w[word * 2] & ~mask) | pos;
@@ -64,7 +64,7 @@ CAMLprim value caml_bv_mask_tail(value words, value vnw, value vwidth)
     int const r = width & BITS_MASK;
     if (nw > 0 && r != 0)
     {
-        int64_t const mask = (INT64_C(1) << r) - 1;
+        int64_t const mask = (UINT64_C(1) << r) - 1;
         int const base = (nw - 1) * 2;
         w[base] &= mask;
         w[base + 1] &= mask;
@@ -112,7 +112,7 @@ CAMLprim value caml_bv_fill_gap(value vwords, value vold_width, value vnew_width
         int const r = old_width & BITS_MASK;
         if (r != 0)
         {
-            int64_t const fill_mask = ~((INT64_C(1) << r) - 1);
+            int64_t const fill_mask = ~((UINT64_C(1) << r) - 1);
             int const base = (old_nw - 1) * 2;
             if (raw & 1)
                 w[base] |= fill_mask;
@@ -139,7 +139,7 @@ CAMLprim value caml_bv_fill_gap(value vwords, value vold_width, value vnew_width
         int const r = new_width & BITS_MASK;
         if (r != 0)
         {
-            int64_t const mask = (INT64_C(1) << r) - 1;
+            int64_t const mask = (UINT64_C(1) << r) - 1;
             int const base = (new_nw - 1) * 2;
             w[base] &= mask;
             w[base + 1] &= mask;
@@ -241,7 +241,7 @@ CAMLprim value caml_bv_merge(value va, value vb, value dst, value vnwa, value vn
 static inline int64_t tail_mask(int const width)
 {
     int const r = width & BITS_MASK;
-    return r == 0 ? ALL_ONES : (INT64_C(1) << r) - 1;
+    return r == 0 ? ALL_ONES : (UINT64_C(1) << r) - 1;
 }
 
 /* bv_is_consistent(words, nw, width) — true if no pos & neg set simultaneously */
