@@ -25,7 +25,7 @@ let mask_tail vec =
   end
 
 let create () = { width = 0; words = Dynarray.create () }
-let make width = { width; words = Dynarray.make (2 * words_needed width) 0 }
+let make width = { width; words = Dynarray.make (2 * words_needed width) 0b00 }
 
 let filled width fill =
   let pos_word = if fill land 1 = 1 then -1 else 0 in
@@ -82,7 +82,7 @@ let set vec i v =
     let new_width = i + 1 in
     let new_nw = words_needed new_width in
     for _ = Dynarray.length vec.words to (2 * new_nw) - 1 do
-      Dynarray.add_last vec.words 0
+      Dynarray.add_last vec.words 0b00
     done;
     vec.width <- new_width
   end;
@@ -102,7 +102,7 @@ let resize vec new_width fill =
     let raw = Belnap.to_bits fill in
     let pos_word = if raw land 1 = 1 then -1 else 0 in
     let neg_word = if raw lsr 1 = 1 then -1 else 0 in
-    let is_known = raw <> 0 in
+    let is_known = raw <> 0b00 in
     let old_nw = words_needed vec.width in
     let new_nw = words_needed new_width in
     if is_known && old_nw > 0 && vec.width land bits_mask <> 0 then begin
@@ -139,12 +139,13 @@ let fold_pairs f init vec =
    collecting the results into a new vec of the same width. *)
 let map_pairs f vec =
   let nw = words_needed vec.width in
-  let words = Dynarray.create () in
+  let words = Dynarray.make (2 * nw) 0b00 in
   for i = 0 to nw - 1 do
     let pos_idx = i * 2 in
-    let pos, neg = f (Dynarray.get vec.words pos_idx) (Dynarray.get vec.words (pos_idx + 1)) in
-    Dynarray.add_last words pos;
-    Dynarray.add_last words neg
+    let neg_idx = pos_idx + 1 in
+    let pos, neg = f (Dynarray.get vec.words pos_idx) (Dynarray.get vec.words neg_idx) in
+    Dynarray.set words pos_idx pos;
+    Dynarray.set words neg_idx neg
   done;
   let result = { width = vec.width; words } in
   mask_tail result;
@@ -157,14 +158,14 @@ let map_pairs f vec =
 let map_pairs2 f a b =
   let width = max a.width b.width in
   let nw = words_needed width in
-  let words = Dynarray.create () in
-  let get vec idx = if idx < Dynarray.length vec.words then Dynarray.get vec.words idx else 0 in
+  let words = Dynarray.make (2 * nw) 0b00 in
+  let get vec idx = if idx < Dynarray.length vec.words then Dynarray.get vec.words idx else 0b00 in
   for i = 0 to nw - 1 do
     let pos_idx = i * 2 in
     let neg_idx = pos_idx + 1 in
     let pos, neg = f (get a pos_idx) (get a neg_idx) (get b pos_idx) (get b neg_idx) in
-    Dynarray.add_last words pos;
-    Dynarray.add_last words neg
+    Dynarray.set words pos_idx pos;
+    Dynarray.set words neg_idx neg
   done;
   let result = { width; words } in
   mask_tail result;
