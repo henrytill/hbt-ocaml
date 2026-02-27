@@ -140,6 +140,8 @@
               ocaml-manual-wrapped
               ocp-browser-wrapped
               ocp-index-wrapped
+              pkgs.bear
+              pkgs.clang-tools
               pkgs.yaml-language-server
             ];
 
