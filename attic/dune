@@ -3,7 +3,7 @@
  (public_name hbt-attic)
  (modules bits belnap belnap_vec)
  (foreign_stubs (language c) (names belnap_vec_stubs))
- (libraries fmt bigarray))
+ (libraries fmt))
 
 (test
  (name bits_test)

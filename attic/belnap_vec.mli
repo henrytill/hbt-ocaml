@@ -8,7 +8,7 @@ val width : t -> int
 val get : t -> int -> Belnap.t
 val set : t -> int -> Belnap.t -> unit
 val truncate : t -> int -> unit
-val resize : t -> int -> Belnap.t -> unit
+val resize : t -> int -> unit
 val not : t -> t
 val ( && ) : t -> t -> t
 val ( || ) : t -> t -> t

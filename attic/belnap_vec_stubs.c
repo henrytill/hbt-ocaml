@@ -1,6 +1,9 @@
 #include <stdint.h>
+#include <string.h>
 
-#include <caml/bigarray.h>
+#include <caml/alloc.h>
+#include <caml/custom.h>
+#include <caml/memory.h>
 #include <caml/mlvalues.h>
 
 #if !defined(__has_builtin) || !__has_builtin(__builtin_popcountll)
@@ -14,57 +17,112 @@ enum
     BITS_MASK = (1 << BITS_LOG2) - 1
 };
 
-static int64_t const ALL_ONES = INT64_C(-1);
+static uint64_t const ALL_ONES = ~UINT64_C(0);
 
 /* Layout: words[2*i] = pos plane, words[2*i+1] = neg plane for word-pair i.
-   All functions are [@@noalloc] — they never allocate OCaml values. */
+   nwords is the per-plane word count = ceil(width/64).
+   The flat array has 2*nwords uint64_t elements total. */
 
-static inline int popcount64(int64_t x)
+struct belnap_vec
+{
+    int nwords;       /* per-plane word count = ceil(width/64) */
+    uint64_t words[]; /* flexible array member; 2*nwords elements */
+};
+
+static struct custom_operations bv_ops = {
+    "hbt-attic.belnap_vec",
+    custom_finalize_default,
+    custom_compare_default,
+    custom_hash_default,
+    custom_serialize_default,
+    custom_deserialize_default,
+    custom_compare_ext_default,
+    custom_fixed_length_default,
+};
+
+#define Bv_val(v)          ((struct belnap_vec *)Data_custom_val(v))
+#define BV_WORDS_BYTES(nw) (2 * (size_t)(nw) * sizeof(uint64_t))
+
+static inline int popcount64(uint64_t x)
 {
     return __builtin_popcountll(x);
 }
 
-/* bv_get(words, i) -> Val_int(2-bit Belnap encoding) */
-CAMLprim value caml_bv_get(value words, value vi)
+/* caml_bv_alloc(vnw) — allocate a zeroed custom block for nw per-plane words */
+CAMLprim value caml_bv_alloc(value vnw)
 {
-    int64_t const *const w = Caml_ba_data_val(words);
+    int const nwords = Int_val(vnw);
+    mlsize_t const bsz = sizeof(struct belnap_vec) + BV_WORDS_BYTES(nwords);
+    value v = caml_alloc_custom(&bv_ops, bsz, 0, 1);
+    Bv_val(v)->nwords = nwords;
+    memset(Bv_val(v)->words, 0, BV_WORDS_BYTES(nwords));
+    return v;
+}
+
+/* caml_bv_blit_grow(vsrc, vnew_nw) — allocate larger block, copy old words, zero rest */
+CAMLprim value caml_bv_blit_grow(value vsrc, value vnew_nw)
+{
+    CAMLparam1(vsrc);
+    int const new_nwords = Int_val(vnew_nw);
+    mlsize_t const bsz = sizeof(struct belnap_vec) + BV_WORDS_BYTES(new_nwords);
+    CAMLlocal1(vdst);
+    vdst = caml_alloc_custom(&bv_ops, bsz, 0, 1);
+    struct belnap_vec *dst = Bv_val(vdst);
+    struct belnap_vec const *src = Bv_val(vsrc);
+    int const old_nwords = src->nwords;
+    dst->nwords = new_nwords;
+    memcpy(dst->words, src->words, BV_WORDS_BYTES(old_nwords));
+    memset(dst->words + (2 * old_nwords), 0, BV_WORDS_BYTES(new_nwords - old_nwords));
+    CAMLreturn(vdst);
+}
+
+/* caml_bv_nwords(vbv) — returns per-plane nwords stored in block [@@noalloc] */
+CAMLprim value caml_bv_nwords(value vbv)
+{
+    return Val_int(Bv_val(vbv)->nwords);
+}
+
+/* bv_get(vbv, vi) -> Val_int(2-bit Belnap encoding) */
+CAMLprim value caml_bv_get(value vbv, value vi)
+{
+    uint64_t const *const w = Bv_val(vbv)->words;
     int const i = Int_val(vi);
 
     int const word = i >> BITS_LOG2;
     int const bit = i & BITS_MASK;
-    int const pos_bit = (int)(((uint64_t)w[word * 2] >> bit) & 1);
-    int const neg_bit = (int)(((uint64_t)w[word * 2 + 1] >> bit) & 1);
+    int const pos_bit = (int)((w[word * 2] >> bit) & 1);
+    int const neg_bit = (int)((w[word * 2 + 1] >> bit) & 1);
     return Val_int((neg_bit << 1) | pos_bit);
 }
 
-/* bv_set(words, i, raw) — raw is Val_int(Belnap.to_bits v) */
-CAMLprim value caml_bv_set(value words, value vi, value vraw)
+/* bv_set(vbv, vi, vraw) — raw is Val_int(Belnap.to_bits v) */
+CAMLprim value caml_bv_set(value vbv, value vi, value vraw)
 {
-    int64_t *const w = Caml_ba_data_val(words);
+    uint64_t *const w = Bv_val(vbv)->words;
     int const i = Int_val(vi);
     int const raw = Int_val(vraw);
 
     int const word = i >> BITS_LOG2;
     int const bit = i & BITS_MASK;
-    int64_t const mask = UINT64_C(1) << bit;
-    int64_t const pos = (uint64_t)((raw) & 1) << bit;
-    int64_t const neg = (uint64_t)((raw >> 1) & 1) << bit;
+    uint64_t const mask = UINT64_C(1) << bit;
+    uint64_t const pos = (uint64_t)(raw & 1) << bit;
+    uint64_t const neg = (uint64_t)((raw >> 1) & 1) << bit;
     w[word * 2] = (w[word * 2] & ~mask) | pos;
     w[word * 2 + 1] = (w[word * 2 + 1] & ~mask) | neg;
     return Val_unit;
 }
 
-/* bv_mask_tail(words, nw, width) — clears bits >= (width & 63) in last pair */
-CAMLprim value caml_bv_mask_tail(value words, value vnw, value vwidth)
+/* bv_mask_tail(vbv, vwidth) — clears bits >= (width & 63) in last word-pair */
+CAMLprim value caml_bv_mask_tail(value vbv, value vwidth)
 {
-    int64_t *const w = Caml_ba_data_val(words);
-    int const nw = Int_val(vnw);
+    uint64_t *const w = Bv_val(vbv)->words;
+    int const nw = Bv_val(vbv)->nwords;
     int const width = Int_val(vwidth);
 
     int const r = width & BITS_MASK;
     if (nw > 0 && r != 0)
     {
-        int64_t const mask = (UINT64_C(1) << r) - 1;
+        uint64_t const mask = (UINT64_C(1) << r) - 1;
         int const base = (nw - 1) * 2;
         w[base] &= mask;
         w[base + 1] &= mask;
@@ -72,16 +130,16 @@ CAMLprim value caml_bv_mask_tail(value words, value vnw, value vwidth)
     return Val_unit;
 }
 
-/* bv_fill(words, from_pair, to_pair, raw_fill) — fills word-pairs [from, to) */
-CAMLprim value caml_bv_fill(value words, value vfrom, value vto, value vraw)
+/* bv_fill(vbv, vfrom, vto, vraw) — fills word-pairs [from, to) */
+CAMLprim value caml_bv_fill(value vbv, value vfrom, value vto, value vraw)
 {
-    int64_t *const w = Caml_ba_data_val(words);
+    uint64_t *const w = Bv_val(vbv)->words;
     int const from = Int_val(vfrom);
     int const to_ = Int_val(vto);
     int const raw = Int_val(vraw);
 
-    int64_t const pos = (raw & 1) ? ALL_ONES : INT64_C(0);
-    int64_t const neg = (raw >> 1) & 1 ? ALL_ONES : INT64_C(0);
+    uint64_t const pos = (raw & 1) ? ALL_ONES : UINT64_C(0);
+    uint64_t const neg = (raw >> 1) & 1 ? ALL_ONES : UINT64_C(0);
 
     for (int i = from; i < to_; i++)
     {
@@ -92,69 +150,12 @@ CAMLprim value caml_bv_fill(value words, value vfrom, value vto, value vraw)
     return Val_unit;
 }
 
-/* bv_fill_gap(words, old_width, new_width, raw)
-   Fills elements [old_width, new_width) with the given Belnap encoding and
-   masks the tail beyond new_width. Assumes word-pairs [old_nw, new_nw) are
-   already zero-initialized. */
-CAMLprim value caml_bv_fill_gap(value vwords, value vold_width, value vnew_width, value vraw)
+/* bv_not(src, dst) */
+CAMLprim value caml_bv_not(value src, value dst)
 {
-    int64_t *const w = Caml_ba_data_val(vwords);
-    int const old_width = Int_val(vold_width);
-    int const new_width = Int_val(vnew_width);
-    int const raw = Int_val(vraw);
-
-    int const old_nw = (old_width + BITS_MASK) >> BITS_LOG2;
-    int const new_nw = (new_width + BITS_MASK) >> BITS_LOG2;
-
-    /* Patch the partial tail of the last old word-pair, if any. */
-    if (raw != 0 && old_nw > 0)
-    {
-        int const r = old_width & BITS_MASK;
-        if (r != 0)
-        {
-            int64_t const fill_mask = ~((UINT64_C(1) << r) - 1);
-            int const base = (old_nw - 1) * 2;
-            if (raw & 1)
-                w[base] |= fill_mask;
-            if ((raw >> 1) & 1)
-                w[base + 1] |= fill_mask;
-        }
-    }
-
-    /* Fill whole new word-pairs [old_nw, new_nw). */
-    if (new_nw > old_nw)
-    {
-        int64_t const pos = (raw & 1) ? ALL_ONES : INT64_C(0);
-        int64_t const neg = (raw >> 1) & 1 ? ALL_ONES : INT64_C(0);
-        for (int i = old_nw; i < new_nw; i++)
-        {
-            w[i * 2] = pos;
-            w[i * 2 + 1] = neg;
-        }
-    }
-
-    /* Mask the tail of the last new word-pair. */
-    if (raw != 0 && new_nw > 0)
-    {
-        int const r = new_width & BITS_MASK;
-        if (r != 0)
-        {
-            int64_t const mask = (UINT64_C(1) << r) - 1;
-            int const base = (new_nw - 1) * 2;
-            w[base] &= mask;
-            w[base + 1] &= mask;
-        }
-    }
-
-    return Val_unit;
-}
-
-/* bv_not(src, dst, nw) */
-CAMLprim value caml_bv_not(value src, value dst, value vnw)
-{
-    int64_t const *const s = Caml_ba_data_val(src);
-    int64_t *const d = Caml_ba_data_val(dst);
-    int const nw = Int_val(vnw);
+    uint64_t const *const s = Bv_val(src)->words;
+    uint64_t *const d = Bv_val(dst)->words;
+    int const nw = Bv_val(src)->nwords;
 
     for (int i = 0; i < nw; i++)
     {
@@ -165,23 +166,23 @@ CAMLprim value caml_bv_not(value src, value dst, value vnw)
     return Val_unit;
 }
 
-/* bv_and(a, b, dst, nwa, nwb) — a/b may be shorter; dst is zero-initialized */
-CAMLprim value caml_bv_and(value va, value vb, value dst, value vnwa, value vnwb)
+/* bv_and(va, vb, dst) — a/b may have different nwords; dst is zero-initialized */
+CAMLprim value caml_bv_and(value va, value vb, value dst)
 {
-    int64_t const *const a = Caml_ba_data_val(va);
-    int64_t const *const b = Caml_ba_data_val(vb);
-    int64_t *const d = Caml_ba_data_val(dst);
-    int const nwa = Int_val(vnwa);
-    int const nwb = Int_val(vnwb);
+    uint64_t const *const a = Bv_val(va)->words;
+    uint64_t const *const b = Bv_val(vb)->words;
+    uint64_t *const d = Bv_val(dst)->words;
+    int const nwa = Bv_val(va)->nwords;
+    int const nwb = Bv_val(vb)->nwords;
 
     int const nw = nwa > nwb ? nwa : nwb;
 
     for (int i = 0; i < nw; i++)
     {
-        int64_t const ap = i < nwa ? a[i * 2] : 0;
-        int64_t const an = i < nwa ? a[i * 2 + 1] : 0;
-        int64_t const bp = i < nwb ? b[i * 2] : 0;
-        int64_t const bn = i < nwb ? b[i * 2 + 1] : 0;
+        uint64_t const ap = i < nwa ? a[i * 2] : 0;
+        uint64_t const an = i < nwa ? a[i * 2 + 1] : 0;
+        uint64_t const bp = i < nwb ? b[i * 2] : 0;
+        uint64_t const bn = i < nwb ? b[i * 2 + 1] : 0;
         d[i * 2] = ap & bp;
         d[i * 2 + 1] = an | bn;
     }
@@ -189,23 +190,23 @@ CAMLprim value caml_bv_and(value va, value vb, value dst, value vnwa, value vnwb
     return Val_unit;
 }
 
-/* bv_or(a, b, dst, nwa, nwb) */
-CAMLprim value caml_bv_or(value va, value vb, value dst, value vnwa, value vnwb)
+/* bv_or(va, vb, dst) */
+CAMLprim value caml_bv_or(value va, value vb, value dst)
 {
-    int64_t const *const a = Caml_ba_data_val(va);
-    int64_t const *const b = Caml_ba_data_val(vb);
-    int64_t *const d = Caml_ba_data_val(dst);
-    int const nwa = Int_val(vnwa);
-    int const nwb = Int_val(vnwb);
+    uint64_t const *const a = Bv_val(va)->words;
+    uint64_t const *const b = Bv_val(vb)->words;
+    uint64_t *const d = Bv_val(dst)->words;
+    int const nwa = Bv_val(va)->nwords;
+    int const nwb = Bv_val(vb)->nwords;
 
     int const nw = nwa > nwb ? nwa : nwb;
 
     for (int i = 0; i < nw; i++)
     {
-        int64_t const ap = i < nwa ? a[i * 2] : 0;
-        int64_t const an = i < nwa ? a[i * 2 + 1] : 0;
-        int64_t const bp = i < nwb ? b[i * 2] : 0;
-        int64_t const bn = i < nwb ? b[i * 2 + 1] : 0;
+        uint64_t const ap = i < nwa ? a[i * 2] : 0;
+        uint64_t const an = i < nwa ? a[i * 2 + 1] : 0;
+        uint64_t const bp = i < nwb ? b[i * 2] : 0;
+        uint64_t const bn = i < nwb ? b[i * 2 + 1] : 0;
         d[i * 2] = ap | bp;
         d[i * 2 + 1] = an & bn;
     }
@@ -213,23 +214,23 @@ CAMLprim value caml_bv_or(value va, value vb, value dst, value vnwa, value vnwb)
     return Val_unit;
 }
 
-/* bv_merge(a, b, dst, nwa, nwb) */
-CAMLprim value caml_bv_merge(value va, value vb, value dst, value vnwa, value vnwb)
+/* bv_merge(va, vb, dst) */
+CAMLprim value caml_bv_merge(value va, value vb, value dst)
 {
-    int64_t const *const a = Caml_ba_data_val(va);
-    int64_t const *const b = Caml_ba_data_val(vb);
-    int64_t *const d = Caml_ba_data_val(dst);
-    int const nwa = Int_val(vnwa);
-    int const nwb = Int_val(vnwb);
+    uint64_t const *const a = Bv_val(va)->words;
+    uint64_t const *const b = Bv_val(vb)->words;
+    uint64_t *const d = Bv_val(dst)->words;
+    int const nwa = Bv_val(va)->nwords;
+    int const nwb = Bv_val(vb)->nwords;
 
     int const nw = nwa > nwb ? nwa : nwb;
 
     for (int i = 0; i < nw; i++)
     {
-        int64_t const ap = i < nwa ? a[i * 2] : 0;
-        int64_t const an = i < nwa ? a[i * 2 + 1] : 0;
-        int64_t const bp = i < nwb ? b[i * 2] : 0;
-        int64_t const bn = i < nwb ? b[i * 2 + 1] : 0;
+        uint64_t const ap = i < nwa ? a[i * 2] : 0;
+        uint64_t const an = i < nwa ? a[i * 2 + 1] : 0;
+        uint64_t const bp = i < nwb ? b[i * 2] : 0;
+        uint64_t const bn = i < nwb ? b[i * 2 + 1] : 0;
         d[i * 2] = ap | bp;
         d[i * 2 + 1] = an | bn;
     }
@@ -238,22 +239,22 @@ CAMLprim value caml_bv_merge(value va, value vb, value dst, value vnwa, value vn
 }
 
 /* Query helpers: build a tail mask for the last word-pair */
-static inline int64_t tail_mask(int const width)
+static inline uint64_t tail_mask(int const width)
 {
     int const r = width & BITS_MASK;
     return r == 0 ? ALL_ONES : (UINT64_C(1) << r) - 1;
 }
 
-/* bv_is_consistent(words, nw, width) — true if no pos & neg set simultaneously */
-CAMLprim value caml_bv_is_consistent(value words, value vnw, value vwidth)
+/* bv_is_consistent(vbv, vwidth) — true if no pos & neg set simultaneously */
+CAMLprim value caml_bv_is_consistent(value vbv, value vwidth)
 {
-    int64_t const *const w = Caml_ba_data_val(words);
-    int const nw = Int_val(vnw);
+    uint64_t const *const w = Bv_val(vbv)->words;
+    int const nw = Bv_val(vbv)->nwords;
     int const width = Int_val(vwidth);
 
     for (int i = 0; i < nw; i++)
     {
-        int64_t const m = (i == nw - 1) ? tail_mask(width) : ALL_ONES;
+        uint64_t const m = (i == nw - 1) ? tail_mask(width) : ALL_ONES;
         if ((w[i * 2] & w[i * 2 + 1] & m) != 0)
             return Val_int(0);
     }
@@ -261,34 +262,34 @@ CAMLprim value caml_bv_is_consistent(value words, value vnw, value vwidth)
     return Val_int(1);
 }
 
-/* bv_is_all_determined(words, nw, width) — true if every live bit has pos XOR neg */
-CAMLprim value caml_bv_is_all_determined(value words, value vnw, value vwidth)
+/* bv_is_all_determined(vbv, vwidth) — true if every live bit has pos XOR neg */
+CAMLprim value caml_bv_is_all_determined(value vbv, value vwidth)
 {
-    int64_t const *const w = Caml_ba_data_val(words);
-    int const nw = Int_val(vnw);
+    uint64_t const *const w = Bv_val(vbv)->words;
+    int const nw = Bv_val(vbv)->nwords;
     int const width = Int_val(vwidth);
 
     for (int i = 0; i < nw; i++)
     {
-        int64_t const m = (i == nw - 1) ? tail_mask(width) : ALL_ONES;
-        int64_t const xor = w[i * 2] ^ w[i * 2 + 1];
-        if ((xor&m) != m)
+        uint64_t const m = (i == nw - 1) ? tail_mask(width) : ALL_ONES;
+        uint64_t const xorv = w[i * 2] ^ w[i * 2 + 1];
+        if ((xorv & m) != m)
             return Val_int(0);
     }
 
     return Val_int(1);
 }
 
-/* bv_is_all_true(words, nw, width) */
-CAMLprim value caml_bv_is_all_true(value words, value vnw, value vwidth)
+/* bv_is_all_true(vbv, vwidth) */
+CAMLprim value caml_bv_is_all_true(value vbv, value vwidth)
 {
-    int64_t const *const w = Caml_ba_data_val(words);
-    int const nw = Int_val(vnw);
+    uint64_t const *const w = Bv_val(vbv)->words;
+    int const nw = Bv_val(vbv)->nwords;
     int const width = Int_val(vwidth);
 
     for (int i = 0; i < nw; i++)
     {
-        int64_t const m = (i == nw - 1) ? tail_mask(width) : ALL_ONES;
+        uint64_t const m = (i == nw - 1) ? tail_mask(width) : ALL_ONES;
         if ((w[i * 2] & m) != m)
             return Val_int(0); /* not all pos set */
         if ((w[i * 2 + 1] & m) != 0)
@@ -298,16 +299,16 @@ CAMLprim value caml_bv_is_all_true(value words, value vnw, value vwidth)
     return Val_int(1);
 }
 
-/* bv_is_all_false(words, nw, width) */
-CAMLprim value caml_bv_is_all_false(value words, value vnw, value vwidth)
+/* bv_is_all_false(vbv, vwidth) */
+CAMLprim value caml_bv_is_all_false(value vbv, value vwidth)
 {
-    int64_t const *const w = Caml_ba_data_val(words);
-    int const nw = Int_val(vnw);
+    uint64_t const *const w = Bv_val(vbv)->words;
+    int const nw = Bv_val(vbv)->nwords;
     int const width = Int_val(vwidth);
 
     for (int i = 0; i < nw; i++)
     {
-        int64_t const m = (i == nw - 1) ? tail_mask(width) : ALL_ONES;
+        uint64_t const m = (i == nw - 1) ? tail_mask(width) : ALL_ONES;
         if ((w[i * 2] & m) != 0)
             return Val_int(0); /* some pos set */
         if ((w[i * 2 + 1] & m) != m)
@@ -317,11 +318,11 @@ CAMLprim value caml_bv_is_all_false(value words, value vnw, value vwidth)
     return Val_int(1);
 }
 
-/* bv_count_true(words, nw) — popcount(pos & ~neg) over all word-pairs */
-CAMLprim value caml_bv_count_true(value words, value vnw)
+/* bv_count_true(vbv) — popcount(pos & ~neg) over all word-pairs */
+CAMLprim value caml_bv_count_true(value vbv)
 {
-    int64_t const *const w = Caml_ba_data_val(words);
-    int const nw = Int_val(vnw);
+    uint64_t const *const w = Bv_val(vbv)->words;
+    int const nw = Bv_val(vbv)->nwords;
 
     int n = 0;
     for (int i = 0; i < nw; i++)
@@ -329,11 +330,11 @@ CAMLprim value caml_bv_count_true(value words, value vnw)
     return Val_int(n);
 }
 
-/* bv_count_false(words, nw) — popcount(~pos & neg) */
-CAMLprim value caml_bv_count_false(value words, value vnw)
+/* bv_count_false(vbv) — popcount(~pos & neg) */
+CAMLprim value caml_bv_count_false(value vbv)
 {
-    int64_t const *const w = Caml_ba_data_val(words);
-    int const nw = Int_val(vnw);
+    uint64_t const *const w = Bv_val(vbv)->words;
+    int const nw = Bv_val(vbv)->nwords;
 
     int n = 0;
     for (int i = 0; i < nw; i++)
@@ -341,11 +342,11 @@ CAMLprim value caml_bv_count_false(value words, value vnw)
     return Val_int(n);
 }
 
-/* bv_count_both(words, nw) — popcount(pos & neg) */
-CAMLprim value caml_bv_count_both(value words, value vnw)
+/* bv_count_both(vbv) — popcount(pos & neg) */
+CAMLprim value caml_bv_count_both(value vbv)
 {
-    int64_t const *const w = Caml_ba_data_val(words);
-    int const nw = Int_val(vnw);
+    uint64_t const *const w = Bv_val(vbv)->words;
+    int const nw = Bv_val(vbv)->nwords;
 
     int n = 0;
     for (int i = 0; i < nw; i++)

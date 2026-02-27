@@ -142,11 +142,11 @@ let test_width_63 () =
   let w = Belnap_vec.all_false 63 in
   let r = Belnap_vec.merge v w in
   Alcotest.(check int) "count_both after merge" 63 (Belnap_vec.count_both r);
-  (* resize from width=63 exercises old_width%64=63 in bv_fill_gap *)
+  (* resize from width=63 exercises the word-boundary case in bv_blit_grow *)
   let v2 = Belnap_vec.all_true 63 in
-  Belnap_vec.resize v2 127 f;
+  Belnap_vec.resize v2 127;
   check "get 62 still True after resize to 127" t (Belnap_vec.get v2 62);
-  check "get 63 is False after resize to 127" f (Belnap_vec.get v2 63)
+  check "get 63 is Unknown after resize to 127" u (Belnap_vec.get v2 63)
 
 let tests =
   let open Alcotest in
