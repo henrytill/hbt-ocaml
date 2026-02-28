@@ -4,6 +4,7 @@ val create : unit -> t
 val make : int -> t
 val all_true : int -> t
 val all_false : int -> t
+val of_list : Belnap.t list -> t
 val width : t -> int
 val get : t -> int -> Belnap.t
 val set : t -> int -> Belnap.t -> unit

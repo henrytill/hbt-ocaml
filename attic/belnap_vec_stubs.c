@@ -363,3 +363,31 @@ CAMLprim value caml_bv_equal(value va, value vb)
         return Val_int(0);
     return Val_int(memcmp(a->words, b->words, BV_WORDS_BYTES(a->nwords)) == 0);
 }
+
+/* bv_init_from_list(vbv, vlist) — fill bv from an OCaml list of Belnap.to_bits ints.
+   Assumes bv is already zero-initialised (from bv_alloc). */
+CAMLprim value caml_bv_init_from_list(value vbv, value vlist)
+{
+    CAMLparam2(vbv, vlist);
+    struct belnap_vec *bv = Bv_val(vbv);
+    int i = 0;
+    uint64_t pos = 0, neg = 0;
+    while (vlist != Val_emptylist)
+    {
+        int const raw = Int_val(Field(vlist, 0));
+        int const bit = i & BITS_MASK;
+        pos |= (uint64_t)(raw & 1) << bit;
+        neg |= (uint64_t)((raw >> 1) & 1) << bit;
+        vlist = Field(vlist, 1);
+        if (bit == BITS_MASK || vlist == Val_emptylist)
+        {
+            int const word = i >> BITS_LOG2;
+            bv->words[word * 2] = pos;
+            bv->words[word * 2 + 1] = neg;
+            pos = 0;
+            neg = 0;
+        }
+        i++;
+    }
+    CAMLreturn(Val_unit);
+}

@@ -12,6 +12,7 @@ let words_needed n = (n + bits_mask) lsr bits_log2
 (* Allocating stubs *)
 external bv_alloc : int -> bv = "caml_bv_alloc"
 external bv_blit_grow : bv -> int -> bv = "caml_bv_blit_grow"
+external bv_init_from_list : bv -> Belnap.t list -> unit = "caml_bv_init_from_list"
 
 (* C stubs — all [@@noalloc] *)
 external bv_get : bv -> int -> int = "caml_bv_get" [@@noalloc]
@@ -48,6 +49,14 @@ let filled width fill =
 
 let all_true width = filled width (Belnap.of_view Belnap.True)
 let all_false width = filled width (Belnap.of_view Belnap.False)
+
+let of_list vals =
+  let width = List.length vals in
+  let nw = words_needed width in
+  let data = bv_alloc nw in
+  bv_init_from_list data vals;
+  { width; data }
+
 let width vec = vec.width
 
 let get vec i =

@@ -178,13 +178,9 @@ let gen_belnap : Belnap.t QCheck2.Gen.t =
       QCheck2.Gen.return (Belnap.of_view Belnap.Both);
     ]
 
-let list_to_vec vals =
-  let width = List.length vals in
-  let vec = Belnap_vec.make width in
-  List.iteri (fun i v -> Belnap_vec.set vec i v) vals;
-  vec
+let gen_belnap_vec_of_width n =
+  QCheck2.Gen.(map Belnap_vec.of_list (list_size (return n) gen_belnap))
 
-let gen_belnap_vec_of_width n = QCheck2.Gen.(map list_to_vec (list_size (return n) gen_belnap))
 let gen_single = QCheck2.Gen.(bind (int_range 0 200) gen_belnap_vec_of_width)
 
 let gen_pair =
