@@ -68,9 +68,9 @@ CAMLprim value caml_bv_alloc(value vnw)
 CAMLprim value caml_bv_blit_grow(value vsrc, value vnew_nw)
 {
     CAMLparam1(vsrc);
+    CAMLlocal1(vdst);
     int const new_nwords = Int_val(vnew_nw);
     mlsize_t const bsz = sizeof(struct belnap_vec) + bv_words_bytes(new_nwords);
-    CAMLlocal1(vdst);
     vdst = caml_alloc_custom(&bv_ops, bsz, 0, 1);
     struct belnap_vec *dst = Bv_val(vdst);
     struct belnap_vec const *src = Bv_val(vsrc);
@@ -79,12 +79,6 @@ CAMLprim value caml_bv_blit_grow(value vsrc, value vnew_nw)
     memcpy(dst->words, src->words, bv_words_bytes(old_nwords));
     memset(dst->words + (2 * old_nwords), 0, bv_words_bytes(new_nwords - old_nwords));
     CAMLreturn(vdst);
-}
-
-/* caml_bv_nwords(vbv) — returns per-plane nwords stored in block [@@noalloc] */
-CAMLprim value caml_bv_nwords(value vbv)
-{
-    return Val_int(Bv_val(vbv)->nwords);
 }
 
 /* bv_get(vbv, vi) -> Val_int(2-bit Belnap encoding) */
@@ -432,7 +426,7 @@ CAMLprim value caml_bv_init_from_array(value vbv, value varr)
    valid across the caml_alloc call. */
 CAMLprim value caml_bv_to_array(value vbv, value vwidth)
 {
-    CAMLparam2(vbv, vwidth);
+    CAMLparam1(vbv);
     CAMLlocal1(arr);
     struct belnap_vec const *const bv = Bv_val(vbv);
     int const width = Int_val(vwidth);
@@ -478,7 +472,7 @@ CAMLprim value caml_bv_find_first(value vbv, value vwidth, value vraw)
         uint64_t const neg_match = want_neg ? neg_word : ~neg_word;
         uint64_t const candidates = pos_match & neg_match & m;
         if (candidates != 0)
-            return Val_int(i * 64 + __builtin_ctzll(candidates));
+            return Val_int((i << BITS_LOG2) + __builtin_ctzll(candidates));
     }
     return Val_int(-1);
 }
