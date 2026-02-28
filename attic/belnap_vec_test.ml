@@ -13,9 +13,11 @@ let array_equal eq a b =
   let rec go i = i >= n || (eq a.(i) b.(i) && go (i + 1)) in
   go 0
 
-let check =
-  let belnap = Alcotest.testable Belnap.pp Belnap.equal in
-  Alcotest.(check belnap)
+let belnap_t = Alcotest.testable Belnap.pp Belnap.equal
+let belnap_vec_t = Alcotest.testable Belnap_vec.pp Belnap_vec.equal
+let belnap_list = Alcotest.(list belnap_t)
+let belnap_array = Alcotest.(array belnap_t)
+let check = Alcotest.(check belnap_t)
 
 let test_get_set () =
   let v = Belnap_vec.make 4 in
@@ -43,26 +45,27 @@ let test_bulk_and () =
   let a = Belnap_vec.all_true 64 in
   let b = Belnap_vec.all_false 64 in
   let r = Belnap_vec.( && ) a b in
-  Alcotest.(check bool) "is_all_false" true (Belnap_vec.is_all_false r)
+  Alcotest.(check belnap_vec_t) "all_true && all_false = all_false" (Belnap_vec.all_false 64) r
 
 let test_bulk_or () =
   let a = Belnap_vec.all_false 64 in
   let b = Belnap_vec.all_true 64 in
   let r = Belnap_vec.( || ) a b in
-  Alcotest.(check bool) "is_all_true" true (Belnap_vec.is_all_true r)
+  Alcotest.(check belnap_vec_t) "all_false || all_true = all_true" (Belnap_vec.all_true 64) r
 
 let test_bulk_not () =
   let a = Belnap_vec.all_true 100 in
   let r = Belnap_vec.not a in
-  Alcotest.(check bool) "not all_true is_all_false" true (Belnap_vec.is_all_false r);
+  Alcotest.(check belnap_vec_t) "not all_true = all_false" (Belnap_vec.all_false 100) r;
   let rr = Belnap_vec.not r in
-  Alcotest.(check bool) "double-not round-trips is_all_true" true (Belnap_vec.is_all_true rr)
+  Alcotest.(check belnap_vec_t) "not not all_true = all_true" (Belnap_vec.all_true 100) rr
 
 let test_bulk_merge () =
   let a = Belnap_vec.all_true 64 in
   let b = Belnap_vec.all_false 64 in
   let r = Belnap_vec.merge a b in
-  Alcotest.(check int) "count_both" 64 (Belnap_vec.count_both r)
+  let all_both = Belnap_vec.of_list (List.init 64 (fun _ -> Belnap.(of_view Both))) in
+  Alcotest.(check belnap_vec_t) "merge all_true all_false = all_both" all_both r
 
 let test_is_consistent () =
   let v = Belnap_vec.make 4 in
@@ -118,14 +121,7 @@ let test_different_widths () =
   let b = Belnap_vec.all_false 64 in
   let r = Belnap_vec.( && ) a b in
   Alcotest.(check int) "width is max" 64 (Belnap_vec.width r);
-  (* first 32 entries: True && False = False *)
-  for i = 0 to 31 do
-    check (Printf.sprintf "pos %d is False" i) f (Belnap_vec.get r i)
-  done;
-  (* next 32 entries: Unknown && False = False *)
-  for i = 32 to 63 do
-    check (Printf.sprintf "pos %d is False" i) f (Belnap_vec.get r i)
-  done
+  Alcotest.(check belnap_vec_t) "result is all_false 64" (Belnap_vec.all_false 64) r
 
 let test_word_boundaries () =
   (* Element 63: bit 63 (sign bit) of word-pair 0 *)
@@ -155,10 +151,6 @@ let test_width_63 () =
   Belnap_vec.resize v2 127;
   check "get 62 still True after resize to 127" t (Belnap_vec.get v2 62);
   check "get 63 is Unknown after resize to 127" u (Belnap_vec.get v2 63)
-
-let belnap_t = Alcotest.testable Belnap.pp Belnap.equal
-let belnap_list = Alcotest.(list belnap_t)
-let belnap_array = Alcotest.(array belnap_t)
 
 let test_to_list_roundtrip () =
   Alcotest.(check belnap_list) "empty" [] (Belnap_vec.to_list (Belnap_vec.of_list []));
@@ -262,7 +254,6 @@ let gen_get_set =
 
 (* --- Print helpers --- *)
 let print_belnap_vec v = Format.asprintf "%a" Belnap_vec.pp v
-
 let print_pair (a, b) = Printf.sprintf "(w=%d, w=%d)" (Belnap_vec.width a) (Belnap_vec.width b)
 
 let print_triple (a, b, c) =
