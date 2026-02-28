@@ -1,17 +1,11 @@
 (library
  (name attic)
  (public_name hbt-attic)
- (modules bits belnap belnap_vec belnap_vec_intf)
+ (modules belnap belnap_vec belnap_vec_intf)
  (foreign_stubs
   (language c)
   (names belnap_vec_stubs))
  (libraries fmt))
-
-(test
- (name bits_test)
- (modules bits_test)
- (package hbt-attic)
- (libraries alcotest hbt-attic))
 
 (test
  (name belnap_test)
