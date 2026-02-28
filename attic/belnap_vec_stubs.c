@@ -14,6 +14,10 @@
 #    error "__builtin_ctzll is required"
 #endif
 
+struct belnap_vec;
+
+#define Bv_val(v) ((struct belnap_vec *)Data_custom_val(v))
+
 /* Must match bits_log2 / BITS_MASK in belnap_vec.ml. */
 enum
 {
@@ -44,16 +48,9 @@ static struct custom_operations bv_ops = {
     custom_fixed_length_default,
 };
 
-#define Bv_val(v) ((struct belnap_vec *)Data_custom_val(v))
-
 static inline size_t bv_words_bytes(int nw)
 {
     return 2 * (size_t)(nw) * sizeof(uint64_t);
-}
-
-static inline int popcount64(uint64_t x)
-{
-    return __builtin_popcountll(x);
 }
 
 /* caml_bv_alloc(vnw) — allocate a zeroed custom block for nw per-plane words */
@@ -324,6 +321,11 @@ CAMLprim value caml_bv_is_all_false(value vbv, value vwidth)
     }
 
     return Val_int(1);
+}
+
+static inline int popcount64(uint64_t x)
+{
+    return __builtin_popcountll(x);
 }
 
 /* bv_count_true(vbv) — popcount(pos & ~neg) over all word-pairs */
