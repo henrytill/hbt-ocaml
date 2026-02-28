@@ -287,249 +287,292 @@ let print_s3 ((module S : Belnap_vec.SIZE), xs, ys, zs) =
   Printf.sprintf "n=%d xs=%s ys=%s zs=%s" S.n (pp_blist xs) (pp_blist ys) (pp_blist zs)
 
 (* --- QCheck2 property tests --- *)
+
+(* Truth-order lattice laws (|| and &&) *)
+
+let or_commutativity =
+  let body ((module S : Belnap_vec.SIZE), xs, ys) =
+    let module M = Belnap_vec.Make (S) in
+    let a = M.of_list xs and b = M.of_list ys in
+    M.equal (M.( || ) a b) (M.( || ) b a)
+  in
+  QCheck2.Test.make ~name:"or_commutativity" ~print:print_s2 gen_s2 body
+
+let or_associativity =
+  let body ((module S : Belnap_vec.SIZE), xs, ys, zs) =
+    let module M = Belnap_vec.Make (S) in
+    let a = M.of_list xs and b = M.of_list ys and c = M.of_list zs in
+    M.equal (M.( || ) (M.( || ) a b) c) (M.( || ) a (M.( || ) b c))
+  in
+  QCheck2.Test.make ~name:"or_associativity" ~print:print_s3 gen_s3 body
+
+let or_idempotency =
+  let body ((module S : Belnap_vec.SIZE), xs) =
+    let module M = Belnap_vec.Make (S) in
+    let a = M.of_list xs in
+    M.equal (M.( || ) a a) a
+  in
+  QCheck2.Test.make ~name:"or_idempotency" ~print:print_s1 gen_s1 body
+
+let and_commutativity =
+  let body ((module S : Belnap_vec.SIZE), xs, ys) =
+    let module M = Belnap_vec.Make (S) in
+    let a = M.of_list xs and b = M.of_list ys in
+    M.equal (M.( && ) a b) (M.( && ) b a)
+  in
+  QCheck2.Test.make ~name:"and_commutativity" ~print:print_s2 gen_s2 body
+
+let and_associativity =
+  let body ((module S : Belnap_vec.SIZE), xs, ys, zs) =
+    let module M = Belnap_vec.Make (S) in
+    let a = M.of_list xs and b = M.of_list ys and c = M.of_list zs in
+    M.equal (M.( && ) (M.( && ) a b) c) (M.( && ) a (M.( && ) b c))
+  in
+  QCheck2.Test.make ~name:"and_associativity" ~print:print_s3 gen_s3 body
+
+let and_idempotency =
+  let body ((module S : Belnap_vec.SIZE), xs) =
+    let module M = Belnap_vec.Make (S) in
+    let a = M.of_list xs in
+    M.equal (M.( && ) a a) a
+  in
+  QCheck2.Test.make ~name:"and_idempotency" ~print:print_s1 gen_s1 body
+
+let absorption_or_and =
+  let body ((module S : Belnap_vec.SIZE), xs, ys) =
+    let module M = Belnap_vec.Make (S) in
+    let a = M.of_list xs and b = M.of_list ys in
+    M.equal (M.( || ) a (M.( && ) a b)) a
+  in
+  QCheck2.Test.make ~name:"absorption_or_and" ~print:print_s2 gen_s2 body
+
+let absorption_and_or =
+  let body ((module S : Belnap_vec.SIZE), xs, ys) =
+    let module M = Belnap_vec.Make (S) in
+    let a = M.of_list xs and b = M.of_list ys in
+    M.equal (M.( && ) a (M.( || ) a b)) a
+  in
+  QCheck2.Test.make ~name:"absorption_and_or" ~print:print_s2 gen_s2 body
+
+let or_bottom_identity =
+  let body ((module S : Belnap_vec.SIZE), xs) =
+    let module M = Belnap_vec.Make (S) in
+    let a = M.of_list xs in
+    M.equal (M.( || ) a (M.all_false ())) a
+  in
+  QCheck2.Test.make ~name:"or_bottom_identity" ~print:print_s1 gen_s1 body
+
+let and_top_identity =
+  let body ((module S : Belnap_vec.SIZE), xs) =
+    let module M = Belnap_vec.Make (S) in
+    let a = M.of_list xs in
+    M.equal (M.( && ) a (M.all_true ())) a
+  in
+  QCheck2.Test.make ~name:"and_top_identity" ~print:print_s1 gen_s1 body
+
+(* Knowledge-order join semilattice laws (merge) *)
+
+let merge_commutativity =
+  let body ((module S : Belnap_vec.SIZE), xs, ys) =
+    let module M = Belnap_vec.Make (S) in
+    let a = M.of_list xs and b = M.of_list ys in
+    M.equal (M.merge a b) (M.merge b a)
+  in
+  QCheck2.Test.make ~name:"merge_commutativity" ~print:print_s2 gen_s2 body
+
+let merge_associativity =
+  let body ((module S : Belnap_vec.SIZE), xs, ys, zs) =
+    let module M = Belnap_vec.Make (S) in
+    let a = M.of_list xs and b = M.of_list ys and c = M.of_list zs in
+    M.equal (M.merge (M.merge a b) c) (M.merge a (M.merge b c))
+  in
+  QCheck2.Test.make ~name:"merge_associativity" ~print:print_s3 gen_s3 body
+
+let merge_idempotency =
+  let body ((module S : Belnap_vec.SIZE), xs) =
+    let module M = Belnap_vec.Make (S) in
+    let a = M.of_list xs in
+    M.equal (M.merge a a) a
+  in
+  QCheck2.Test.make ~name:"merge_idempotency" ~print:print_s1 gen_s1 body
+
+let merge_bottom_identity =
+  let body ((module S : Belnap_vec.SIZE), xs) =
+    let module M = Belnap_vec.Make (S) in
+    let a = M.of_list xs in
+    M.equal (M.merge (M.make ()) a) a
+  in
+  QCheck2.Test.make ~name:"merge_bottom_identity" ~print:print_s1 gen_s1 body
+
+(* Auxiliary consistency properties *)
+
+let count_nonneg =
+  let body ((module S : Belnap_vec.SIZE), xs) =
+    let module M = Belnap_vec.Make (S) in
+    let v = M.of_list xs in
+    M.count_true v >= 0 && M.count_false v >= 0 && M.count_both v >= 0 && M.count_unknown v >= 0
+  in
+  QCheck2.Test.make ~name:"count_nonneg" ~print:print_s1 gen_s1 body
+
+let not_involutive =
+  let body ((module S : Belnap_vec.SIZE), xs) =
+    let module M = Belnap_vec.Make (S) in
+    let v = M.of_list xs in
+    M.equal (M.not (M.not v)) v
+  in
+  QCheck2.Test.make ~name:"not_involutive" ~print:print_s1 gen_s1 body
+
+let is_consistent_iff_no_both =
+  let body ((module S : Belnap_vec.SIZE), xs) =
+    let module M = Belnap_vec.Make (S) in
+    let v = M.of_list xs in
+    M.is_consistent v = (M.count_both v = 0)
+  in
+  QCheck2.Test.make ~name:"is_consistent_iff_no_both" ~print:print_s1 gen_s1 body
+
+let is_all_determined_iff =
+  let body ((module S : Belnap_vec.SIZE), xs) =
+    let module M = Belnap_vec.Make (S) in
+    let v = M.of_list xs in
+    M.is_all_determined v = (M.count_unknown v = 0 && M.count_both v = 0)
+  in
+  QCheck2.Test.make ~name:"is_all_determined_iff" ~print:print_s1 gen_s1 body
+
+let is_all_true_iff =
+  let body ((module S : Belnap_vec.SIZE), xs) =
+    let module M = Belnap_vec.Make (S) in
+    let v = M.of_list xs in
+    M.is_all_true v = (M.count_true v = S.n)
+  in
+  QCheck2.Test.make ~name:"is_all_true_iff" ~print:print_s1 gen_s1 body
+
+let is_all_false_iff =
+  let body ((module S : Belnap_vec.SIZE), xs) =
+    let module M = Belnap_vec.Make (S) in
+    let v = M.of_list xs in
+    M.is_all_false v = (M.count_false v = S.n)
+  in
+  QCheck2.Test.make ~name:"is_all_false_iff" ~print:print_s1 gen_s1 body
+
+(* to_list / to_array *)
+
+let of_list_to_list_roundtrip =
+  let body ((module S : Belnap_vec.SIZE), xs) =
+    let module M = Belnap_vec.Make (S) in
+    List.equal Belnap.equal (M.to_list (M.of_list xs)) xs
+  in
+  QCheck2.Test.make ~name:"of_list_to_list_roundtrip" ~print:print_s1 gen_s1 body
+
+let of_array_to_array_roundtrip =
+  let body ((module S : Belnap_vec.SIZE), xs) =
+    let module M = Belnap_vec.Make (S) in
+    let arr = Array.of_list xs in
+    array_equal Belnap.equal (M.to_array (M.of_array arr)) arr
+  in
+  QCheck2.Test.make ~name:"of_array_to_array_roundtrip" ~print:print_s1 gen_s1 body
+
+let of_array_of_list_consistent =
+  let body ((module S : Belnap_vec.SIZE), xs) =
+    let module M = Belnap_vec.Make (S) in
+    M.equal (M.of_list xs) (M.of_array (Array.of_list xs))
+  in
+  QCheck2.Test.make ~name:"of_array_of_list_consistent" ~print:print_s1 gen_s1 body
+
+let to_list_matches_get =
+  let body ((module S : Belnap_vec.SIZE), xs) =
+    let module M = Belnap_vec.Make (S) in
+    let v = M.of_list xs in
+    List.equal Belnap.equal (M.to_list v) (List.init S.n (fun i -> M.get v (M.index_exn i)))
+  in
+  QCheck2.Test.make ~name:"to_list_matches_get" ~print:print_s1 gen_s1 body
+
+(* find_first correctness *)
+
+let find_first_returns_correct_value =
+  let print (needle, s1) = Format.asprintf "needle=%a %s" Belnap.pp needle (print_s1 s1) in
+  let body (needle, ((module S : Belnap_vec.SIZE), xs)) =
+    let module M = Belnap_vec.Make (S) in
+    let v = M.of_list xs in
+    match M.find_first needle v with
+    | None -> true
+    | Some i -> Belnap.equal (M.get v (M.index_exn i)) needle
+  in
+  QCheck2.Test.make
+    ~name:"find_first_returns_correct_value"
+    ~print
+    QCheck2.Gen.(pair gen_belnap gen_s1)
+    body
+
+let find_first_is_minimum =
+  let print (needle, s1) = Format.asprintf "needle=%a %s" Belnap.pp needle (print_s1 s1) in
+  let body (needle, ((module S : Belnap_vec.SIZE), xs)) =
+    let module M = Belnap_vec.Make (S) in
+    let v = M.of_list xs in
+    match M.find_first needle v with
+    | None -> true
+    | Some i ->
+        let rec all_before j =
+          j >= i || ((not (Belnap.equal (M.get v (M.index_exn j)) needle)) && all_before (j + 1))
+        in
+        all_before 0
+  in
+  QCheck2.Test.make ~name:"find_first_is_minimum" ~print QCheck2.Gen.(pair gen_belnap gen_s1) body
+
+let find_first_none_iff_count_zero =
+  let body ((module S : Belnap_vec.SIZE), xs) =
+    let module M = Belnap_vec.Make (S) in
+    let v = M.of_list xs in
+    M.find_first t v = None = (M.count_true v = 0)
+    && M.find_first f v = None = (M.count_false v = 0)
+    && M.find_first b v = None = (M.count_both v = 0)
+    && M.find_first u v = None = (M.count_unknown v = 0)
+  in
+  QCheck2.Test.make ~name:"find_first_none_iff_count_zero" ~print:print_s1 gen_s1 body
+
+(* Get/set roundtrip — n >= 1 so a valid index exists *)
+
+let get_set_roundtrip =
+  let print ((module S : Belnap_vec.SIZE), xs, i, _) =
+    Printf.sprintf "n=%d i=%d xs=%s" S.n i (pp_blist xs)
+  in
+  let body ((module S : Belnap_vec.SIZE), xs, i, v) =
+    let module M = Belnap_vec.Make (S) in
+    let vec = M.of_list xs in
+    M.set vec (M.index_exn i) v;
+    Belnap.equal (M.get vec (M.index_exn i)) v
+  in
+  QCheck2.Test.make ~name:"get_set_roundtrip" ~print gen_s_get_set body
+
 let qcheck_tests =
   [
-    (* Truth-order lattice laws (|| and &&) *)
-    QCheck2.Test.make
-      ~name:"or_commutativity"
-      ~print:print_s2
-      gen_s2
-      (fun ((module S : Belnap_vec.SIZE), xs, ys) ->
-        let module M = Belnap_vec.Make (S) in
-        let a = M.of_list xs and b = M.of_list ys in
-        M.equal (M.( || ) a b) (M.( || ) b a));
-    QCheck2.Test.make
-      ~name:"or_associativity"
-      ~print:print_s3
-      gen_s3
-      (fun ((module S : Belnap_vec.SIZE), xs, ys, zs) ->
-        let module M = Belnap_vec.Make (S) in
-        let a = M.of_list xs and b = M.of_list ys and c = M.of_list zs in
-        M.equal (M.( || ) (M.( || ) a b) c) (M.( || ) a (M.( || ) b c)));
-    QCheck2.Test.make
-      ~name:"or_idempotency"
-      ~print:print_s1
-      gen_s1
-      (fun ((module S : Belnap_vec.SIZE), xs) ->
-        let module M = Belnap_vec.Make (S) in
-        let a = M.of_list xs in
-        M.equal (M.( || ) a a) a);
-    QCheck2.Test.make
-      ~name:"and_commutativity"
-      ~print:print_s2
-      gen_s2
-      (fun ((module S : Belnap_vec.SIZE), xs, ys) ->
-        let module M = Belnap_vec.Make (S) in
-        let a = M.of_list xs and b = M.of_list ys in
-        M.equal (M.( && ) a b) (M.( && ) b a));
-    QCheck2.Test.make
-      ~name:"and_associativity"
-      ~print:print_s3
-      gen_s3
-      (fun ((module S : Belnap_vec.SIZE), xs, ys, zs) ->
-        let module M = Belnap_vec.Make (S) in
-        let a = M.of_list xs and b = M.of_list ys and c = M.of_list zs in
-        M.equal (M.( && ) (M.( && ) a b) c) (M.( && ) a (M.( && ) b c)));
-    QCheck2.Test.make
-      ~name:"and_idempotency"
-      ~print:print_s1
-      gen_s1
-      (fun ((module S : Belnap_vec.SIZE), xs) ->
-        let module M = Belnap_vec.Make (S) in
-        let a = M.of_list xs in
-        M.equal (M.( && ) a a) a);
-    QCheck2.Test.make
-      ~name:"absorption_or_and"
-      ~print:print_s2
-      gen_s2
-      (fun ((module S : Belnap_vec.SIZE), xs, ys) ->
-        let module M = Belnap_vec.Make (S) in
-        let a = M.of_list xs and b = M.of_list ys in
-        M.equal (M.( || ) a (M.( && ) a b)) a);
-    QCheck2.Test.make
-      ~name:"absorption_and_or"
-      ~print:print_s2
-      gen_s2
-      (fun ((module S : Belnap_vec.SIZE), xs, ys) ->
-        let module M = Belnap_vec.Make (S) in
-        let a = M.of_list xs and b = M.of_list ys in
-        M.equal (M.( && ) a (M.( || ) a b)) a);
-    QCheck2.Test.make
-      ~name:"or_bottom_identity"
-      ~print:print_s1
-      gen_s1
-      (fun ((module S : Belnap_vec.SIZE), xs) ->
-        let module M = Belnap_vec.Make (S) in
-        let a = M.of_list xs in
-        M.equal (M.( || ) a (M.all_false ())) a);
-    QCheck2.Test.make
-      ~name:"and_top_identity"
-      ~print:print_s1
-      gen_s1
-      (fun ((module S : Belnap_vec.SIZE), xs) ->
-        let module M = Belnap_vec.Make (S) in
-        let a = M.of_list xs in
-        M.equal (M.( && ) a (M.all_true ())) a);
-    (* Knowledge-order join semilattice laws (merge) *)
-    QCheck2.Test.make
-      ~name:"merge_commutativity"
-      ~print:print_s2
-      gen_s2
-      (fun ((module S : Belnap_vec.SIZE), xs, ys) ->
-        let module M = Belnap_vec.Make (S) in
-        let a = M.of_list xs and b = M.of_list ys in
-        M.equal (M.merge a b) (M.merge b a));
-    QCheck2.Test.make
-      ~name:"merge_associativity"
-      ~print:print_s3
-      gen_s3
-      (fun ((module S : Belnap_vec.SIZE), xs, ys, zs) ->
-        let module M = Belnap_vec.Make (S) in
-        let a = M.of_list xs and b = M.of_list ys and c = M.of_list zs in
-        M.equal (M.merge (M.merge a b) c) (M.merge a (M.merge b c)));
-    QCheck2.Test.make
-      ~name:"merge_idempotency"
-      ~print:print_s1
-      gen_s1
-      (fun ((module S : Belnap_vec.SIZE), xs) ->
-        let module M = Belnap_vec.Make (S) in
-        let a = M.of_list xs in
-        M.equal (M.merge a a) a);
-    QCheck2.Test.make
-      ~name:"merge_bottom_identity"
-      ~print:print_s1
-      gen_s1
-      (fun ((module S : Belnap_vec.SIZE), xs) ->
-        let module M = Belnap_vec.Make (S) in
-        let a = M.of_list xs in
-        M.equal (M.merge (M.make ()) a) a);
-    (* Auxiliary consistency properties *)
-    QCheck2.Test.make
-      ~name:"count_nonneg"
-      ~print:print_s1
-      gen_s1
-      (fun ((module S : Belnap_vec.SIZE), xs) ->
-        let module M = Belnap_vec.Make (S) in
-        let v = M.of_list xs in
-        M.count_true v >= 0 && M.count_false v >= 0 && M.count_both v >= 0 && M.count_unknown v >= 0);
-    QCheck2.Test.make
-      ~name:"not_involutive"
-      ~print:print_s1
-      gen_s1
-      (fun ((module S : Belnap_vec.SIZE), xs) ->
-        let module M = Belnap_vec.Make (S) in
-        let v = M.of_list xs in
-        M.equal (M.not (M.not v)) v);
-    QCheck2.Test.make
-      ~name:"is_consistent_iff_no_both"
-      ~print:print_s1
-      gen_s1
-      (fun ((module S : Belnap_vec.SIZE), xs) ->
-        let module M = Belnap_vec.Make (S) in
-        let v = M.of_list xs in
-        M.is_consistent v = (M.count_both v = 0));
-    QCheck2.Test.make
-      ~name:"is_all_determined_iff"
-      ~print:print_s1
-      gen_s1
-      (fun ((module S : Belnap_vec.SIZE), xs) ->
-        let module M = Belnap_vec.Make (S) in
-        let v = M.of_list xs in
-        M.is_all_determined v = (M.count_unknown v = 0 && M.count_both v = 0));
-    QCheck2.Test.make
-      ~name:"is_all_true_iff"
-      ~print:print_s1
-      gen_s1
-      (fun ((module S : Belnap_vec.SIZE), xs) ->
-        let module M = Belnap_vec.Make (S) in
-        let v = M.of_list xs in
-        M.is_all_true v = (M.count_true v = S.n));
-    QCheck2.Test.make
-      ~name:"is_all_false_iff"
-      ~print:print_s1
-      gen_s1
-      (fun ((module S : Belnap_vec.SIZE), xs) ->
-        let module M = Belnap_vec.Make (S) in
-        let v = M.of_list xs in
-        M.is_all_false v = (M.count_false v = S.n));
-    (* to_list / to_array *)
-    QCheck2.Test.make
-      ~name:"of_list_to_list_roundtrip"
-      ~print:print_s1
-      gen_s1
-      (fun ((module S : Belnap_vec.SIZE), xs) ->
-        let module M = Belnap_vec.Make (S) in
-        List.equal Belnap.equal (M.to_list (M.of_list xs)) xs);
-    QCheck2.Test.make
-      ~name:"of_array_to_array_roundtrip"
-      ~print:print_s1
-      gen_s1
-      (fun ((module S : Belnap_vec.SIZE), xs) ->
-        let module M = Belnap_vec.Make (S) in
-        let arr = Array.of_list xs in
-        array_equal Belnap.equal (M.to_array (M.of_array arr)) arr);
-    QCheck2.Test.make
-      ~name:"of_array_of_list_consistent"
-      ~print:print_s1
-      gen_s1
-      (fun ((module S : Belnap_vec.SIZE), xs) ->
-        let module M = Belnap_vec.Make (S) in
-        M.equal (M.of_list xs) (M.of_array (Array.of_list xs)));
-    QCheck2.Test.make
-      ~name:"to_list_matches_get"
-      ~print:print_s1
-      gen_s1
-      (fun ((module S : Belnap_vec.SIZE), xs) ->
-        let module M = Belnap_vec.Make (S) in
-        let v = M.of_list xs in
-        List.equal Belnap.equal (M.to_list v) (List.init S.n (fun i -> M.get v (M.index_exn i))));
-    (* find_first correctness *)
-    QCheck2.Test.make
-      ~name:"find_first_returns_correct_value"
-      ~print:(fun (needle, s1) -> Format.asprintf "needle=%a %s" Belnap.pp needle (print_s1 s1))
-      QCheck2.Gen.(pair gen_belnap gen_s1)
-      (fun (needle, ((module S : Belnap_vec.SIZE), xs)) ->
-        let module M = Belnap_vec.Make (S) in
-        let v = M.of_list xs in
-        match M.find_first needle v with
-        | None -> true
-        | Some i -> Belnap.equal (M.get v (M.index_exn i)) needle);
-    QCheck2.Test.make
-      ~name:"find_first_is_minimum"
-      ~print:(fun (needle, s1) -> Format.asprintf "needle=%a %s" Belnap.pp needle (print_s1 s1))
-      QCheck2.Gen.(pair gen_belnap gen_s1)
-      (fun (needle, ((module S : Belnap_vec.SIZE), xs)) ->
-        let module M = Belnap_vec.Make (S) in
-        let v = M.of_list xs in
-        match M.find_first needle v with
-        | None -> true
-        | Some i ->
-            let rec all_before j =
-              j >= i || ((not (Belnap.equal (M.get v (M.index_exn j)) needle)) && all_before (j + 1))
-            in
-            all_before 0);
-    QCheck2.Test.make
-      ~name:"find_first_none_iff_count_zero"
-      ~print:print_s1
-      gen_s1
-      (fun ((module S : Belnap_vec.SIZE), xs) ->
-        let module M = Belnap_vec.Make (S) in
-        let v = M.of_list xs in
-        M.find_first t v = None = (M.count_true v = 0)
-        && M.find_first f v = None = (M.count_false v = 0)
-        && M.find_first b v = None = (M.count_both v = 0)
-        && M.find_first u v = None = (M.count_unknown v = 0));
-    (* Get/set roundtrip — n >= 1 so a valid index exists *)
-    QCheck2.Test.make
-      ~name:"get_set_roundtrip"
-      ~print:(fun ((module S : Belnap_vec.SIZE), xs, i, _) ->
-        Printf.sprintf "n=%d i=%d xs=%s" S.n i (pp_blist xs))
-      gen_s_get_set
-      (fun ((module S : Belnap_vec.SIZE), xs, i, v) ->
-        let module M = Belnap_vec.Make (S) in
-        let vec = M.of_list xs in
-        M.set vec (M.index_exn i) v;
-        Belnap.equal (M.get vec (M.index_exn i)) v);
+    or_commutativity;
+    or_associativity;
+    or_idempotency;
+    and_commutativity;
+    and_associativity;
+    and_idempotency;
+    absorption_or_and;
+    absorption_and_or;
+    or_bottom_identity;
+    and_top_identity;
+    merge_commutativity;
+    merge_associativity;
+    merge_idempotency;
+    merge_bottom_identity;
+    count_nonneg;
+    not_involutive;
+    is_consistent_iff_no_both;
+    is_all_determined_iff;
+    is_all_true_iff;
+    is_all_false_iff;
+    of_list_to_list_roundtrip;
+    of_array_to_array_roundtrip;
+    of_array_of_list_consistent;
+    to_list_matches_get;
+    find_first_returns_correct_value;
+    find_first_is_minimum;
+    find_first_none_iff_count_zero;
+    get_set_roundtrip;
   ]
 
 let () =
