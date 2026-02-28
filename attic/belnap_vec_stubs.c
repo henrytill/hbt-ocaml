@@ -10,6 +10,10 @@
 #    error "__builtin_popcountll is required"
 #endif
 
+#if !defined(__has_builtin) || !__has_builtin(__builtin_ctzll)
+#    error "__builtin_ctzll is required"
+#endif
+
 /* Must match bits_log2 / BITS_MASK in belnap_vec.ml. */
 enum
 {
@@ -390,4 +394,60 @@ CAMLprim value caml_bv_init_from_list(value vbv, value vlist)
         i++;
     }
     CAMLreturn(Val_unit);
+}
+
+/* caml_bv_to_array(vbv, vwidth) → OCaml array of raw Belnap ints.
+   bv is a major-heap custom block and never moves, so w/nwords remain
+   valid across the caml_alloc call. */
+CAMLprim value caml_bv_to_array(value vbv, value vwidth)
+{
+    CAMLparam2(vbv, vwidth);
+    CAMLlocal1(arr);
+    struct belnap_vec const *const bv = Bv_val(vbv);
+    int const width = Int_val(vwidth);
+    int const nwords = bv->nwords;
+    uint64_t const *const w = bv->words;
+    if (width == 0)
+        CAMLreturn(Atom(0));
+    arr = caml_alloc(width, 0);
+    /* No allocation below; fill loop cannot trigger GC. */
+    for (int i = 0; i < nwords; i++)
+    {
+        uint64_t const pos = w[i * 2];
+        uint64_t const neg = w[i * 2 + 1];
+        int const base = i << BITS_LOG2;
+        int const limit = base + 64 < width ? 64 : width - base;
+        for (int bit = 0; bit < limit; bit++)
+        {
+            int const raw = (int)(((pos >> bit) & 1) | (((neg >> bit) & 1) << 1));
+            Field(arr, base + bit) = Val_int(raw);
+        }
+    }
+    CAMLreturn(arr);
+}
+
+/* caml_bv_find_first(vbv, vwidth, vraw) → index of first element matching
+   raw Belnap value, or -1 if not found. [@@noalloc] */
+CAMLprim value caml_bv_find_first(value vbv, value vwidth, value vraw)
+{
+    uint64_t const *const w = Bv_val(vbv)->words;
+    int const nw = Bv_val(vbv)->nwords;
+    int const width = Int_val(vwidth);
+    int const raw = Int_val(vraw);
+    uint64_t const want_pos = (uint64_t)(raw & 1);
+    uint64_t const want_neg = (uint64_t)((raw >> 1) & 1);
+
+    for (int i = 0; i < nw; i++)
+    {
+        uint64_t const m = (i == nw - 1) ? tail_mask(width) : ALL_ONES;
+        uint64_t const pos_word = w[i * 2];
+        uint64_t const neg_word = w[i * 2 + 1];
+        /* Match positions where pos == want_pos AND neg == want_neg. */
+        uint64_t const pos_match = want_pos ? pos_word : ~pos_word;
+        uint64_t const neg_match = want_neg ? neg_word : ~neg_word;
+        uint64_t const candidates = pos_match & neg_match & m;
+        if (candidates != 0)
+            return Val_int(i * 64 + __builtin_ctzll(candidates));
+    }
+    return Val_int(-1);
 }

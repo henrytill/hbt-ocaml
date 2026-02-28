@@ -13,6 +13,7 @@ let words_needed n = (n + bits_mask) lsr bits_log2
 external bv_alloc : int -> bv = "caml_bv_alloc"
 external bv_blit_grow : bv -> int -> bv = "caml_bv_blit_grow"
 external bv_init_from_list : bv -> Belnap.t list -> unit = "caml_bv_init_from_list"
+external bv_to_array : bv -> int -> Belnap.t array = "caml_bv_to_array"
 
 (* C stubs — all [@@noalloc] *)
 external bv_get : bv -> int -> int = "caml_bv_get" [@@noalloc]
@@ -31,6 +32,7 @@ external bv_count_true : bv -> int = "caml_bv_count_true" [@@noalloc]
 external bv_count_false : bv -> int = "caml_bv_count_false" [@@noalloc]
 external bv_count_both : bv -> int = "caml_bv_count_both" [@@noalloc]
 external bv_equal : bv -> bv -> int = "caml_bv_equal" [@@noalloc]
+external bv_find_first : bv -> int -> int -> int = "caml_bv_find_first" [@@noalloc]
 
 let create () = { width = 0; data = bv_alloc 0 }
 
@@ -56,6 +58,13 @@ let of_list vals =
   let data = bv_alloc nw in
   bv_init_from_list data vals;
   { width; data }
+
+let to_array vec = bv_to_array vec.data vec.width
+let to_list vec = Array.to_list (to_array vec)
+
+let find_first needle vec =
+  let idx = bv_find_first vec.data vec.width (Belnap.to_bits needle) in
+  if idx = -1 then None else Some idx
 
 let width vec = vec.width
 

@@ -148,6 +148,43 @@ let test_width_63 () =
   check "get 62 still True after resize to 127" t (Belnap_vec.get v2 62);
   check "get 63 is Unknown after resize to 127" u (Belnap_vec.get v2 63)
 
+let belnap_t = Alcotest.testable Belnap.pp Belnap.equal
+let belnap_list = Alcotest.(list belnap_t)
+let belnap_array = Alcotest.(array belnap_t)
+
+let test_to_list_roundtrip () =
+  Alcotest.(check belnap_list) "empty" [] (Belnap_vec.to_list (Belnap_vec.of_list []));
+  let xs = [ u; t; f; b ] in
+  Alcotest.(check belnap_list) "4 elems" xs (Belnap_vec.to_list (Belnap_vec.of_list xs));
+  (* 64 elements exercises exactly one full word-pair *)
+  let xs64 = List.init 64 (fun _ -> t) in
+  Alcotest.(check belnap_list) "64 elems" xs64 (Belnap_vec.to_list (Belnap_vec.all_true 64));
+  (* 65 elements: last element is in word-pair 1, bit 0 *)
+  let xs65 = List.init 65 (fun i -> if i = 64 then f else t) in
+  Alcotest.(check belnap_list) "65 elems" xs65 (Belnap_vec.to_list (Belnap_vec.of_list xs65))
+
+let test_to_array_roundtrip () =
+  Alcotest.(check belnap_array) "empty" [||] (Belnap_vec.to_array (Belnap_vec.of_list []));
+  let xs = [| u; t; f; b |] in
+  Alcotest.(check belnap_array)
+    "4 elems"
+    xs
+    (Belnap_vec.to_array (Belnap_vec.of_list (Array.to_list xs)))
+
+let test_find_first () =
+  let chk = Alcotest.(check (option int)) in
+  let v = Belnap_vec.of_list [ f; f; t; b ] in
+  chk "first true" (Some 2) (Belnap_vec.find_first t v);
+  chk "first false" (Some 0) (Belnap_vec.find_first f v);
+  chk "first both" (Some 3) (Belnap_vec.find_first b v);
+  chk "no unknown" None (Belnap_vec.find_first u v);
+  chk "empty" None (Belnap_vec.find_first t (Belnap_vec.make 0));
+  (* first match at word boundary (index 64, word-pair 1) *)
+  let v2 = Belnap_vec.of_list (List.init 65 (fun i -> if i = 64 then t else f)) in
+  chk "word boundary idx 64" (Some 64) (Belnap_vec.find_first t v2);
+  (* all_true 128: first in first word-pair *)
+  chk "all_true first" (Some 0) (Belnap_vec.find_first t (Belnap_vec.all_true 128))
+
 let tests =
   let open Alcotest in
   [
@@ -165,6 +202,9 @@ let tests =
         test_case "different_widths" `Quick test_different_widths;
         test_case "word_boundaries" `Quick test_word_boundaries;
         test_case "width_63" `Quick test_width_63;
+        test_case "to_list_roundtrip" `Quick test_to_list_roundtrip;
+        test_case "to_array_roundtrip" `Quick test_to_array_roundtrip;
+        test_case "find_first" `Quick test_find_first;
       ] );
   ]
 
@@ -204,7 +244,23 @@ let gen_get_set =
             bind gen_belnap (fun v -> map (fun vec -> (vec, i, v)) (gen_belnap_vec_of_width n)))))
 
 (* --- Print helpers --- *)
-let print_belnap_vec v = Printf.sprintf "width=%d" (Belnap_vec.width v)
+let print_belnap_vec v =
+  let w = Belnap_vec.width v in
+  if w > 20 then
+    Printf.sprintf "width=%d" w
+  else
+    String.init (w + 2) (fun i ->
+        if i = 0 then
+          '['
+        else if i = w + 1 then
+          ']'
+        else
+          match Belnap.to_view (Belnap_vec.get v (i - 1)) with
+          | Belnap.Unknown -> 'U'
+          | Belnap.True -> 'T'
+          | Belnap.False -> 'F'
+          | Belnap.Both -> 'B')
+
 let print_pair (a, b) = Printf.sprintf "(w=%d, w=%d)" (Belnap_vec.width a) (Belnap_vec.width b)
 
 let print_triple (a, b, c) =
@@ -277,6 +333,46 @@ let qcheck_tests =
       (fun (vec, i, v) ->
         Belnap_vec.set vec i v;
         Belnap.equal (Belnap_vec.get vec i) v);
+    (* to_list / to_array *)
+    QCheck2.Test.make
+      ~name:"of_list_to_list_roundtrip"
+      ~print:(fun xs -> Printf.sprintf "len=%d" (List.length xs))
+      QCheck2.Gen.(list gen_belnap)
+      (fun xs -> List.equal Belnap.equal (Belnap_vec.to_list (Belnap_vec.of_list xs)) xs);
+    QCheck2.Test.make ~name:"to_list_matches_get" ~print:print_belnap_vec gen_single (fun v ->
+        let lst = Belnap_vec.to_list v in
+        let expected = List.init (Belnap_vec.width v) (Belnap_vec.get v) in
+        List.equal Belnap.equal lst expected);
+    (* find_first correctness *)
+    QCheck2.Test.make
+      ~name:"find_first_returns_correct_value"
+      ~print:(fun (_, v) -> print_belnap_vec v)
+      QCheck2.Gen.(pair gen_belnap gen_single)
+      (fun (needle, v) ->
+        match Belnap_vec.find_first needle v with
+        | None -> true
+        | Some i -> Belnap.equal (Belnap_vec.get v i) needle);
+    QCheck2.Test.make
+      ~name:"find_first_is_minimum"
+      ~print:(fun (_, v) -> print_belnap_vec v)
+      QCheck2.Gen.(pair gen_belnap gen_single)
+      (fun (needle, v) ->
+        match Belnap_vec.find_first needle v with
+        | None -> true
+        | Some i ->
+            let rec all_before j =
+              j >= i || ((not (Belnap.equal (Belnap_vec.get v j) needle)) && all_before (j + 1))
+            in
+            all_before 0);
+    QCheck2.Test.make
+      ~name:"find_first_none_iff_count_zero"
+      ~print:print_belnap_vec
+      gen_single
+      (fun v ->
+        Belnap_vec.find_first t v = None = (Belnap_vec.count_true v = 0)
+        && Belnap_vec.find_first f v = None = (Belnap_vec.count_false v = 0)
+        && Belnap_vec.find_first b v = None = (Belnap_vec.count_both v = 0)
+        && Belnap_vec.find_first u v = None = (Belnap_vec.count_unknown v = 0));
   ]
 
 let () =
