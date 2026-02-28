@@ -149,4 +149,5 @@ let count_true vec = bv_count_true vec.data
 let count_false vec = bv_count_false vec.data
 let count_both vec = bv_count_both vec.data
 let count_unknown vec = vec.width - count_true vec - count_false vec - count_both vec
+let pp fmt vec = Fmt.brackets (Fmt.array ~sep:Fmt.semi Belnap.pp) fmt (to_array vec)
 let equal a b = Stdlib.( && ) (a.width = b.width) (bv_equal a.data b.data = 1)

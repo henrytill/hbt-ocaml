@@ -27,4 +27,5 @@ val count_true : t -> int
 val count_false : t -> int
 val count_both : t -> int
 val count_unknown : t -> int
+val pp : Format.formatter -> t -> unit
 val equal : t -> t -> bool

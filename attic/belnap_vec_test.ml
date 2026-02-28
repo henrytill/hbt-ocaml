@@ -261,22 +261,7 @@ let gen_get_set =
             bind gen_belnap (fun v -> map (fun vec -> (vec, i, v)) (gen_belnap_vec_of_width n)))))
 
 (* --- Print helpers --- *)
-let print_belnap_vec v =
-  let w = Belnap_vec.width v in
-  if w > 20 then
-    Printf.sprintf "width=%d" w
-  else
-    String.init (w + 2) (fun i ->
-        if i = 0 then
-          '['
-        else if i = w + 1 then
-          ']'
-        else
-          match Belnap.to_view (Belnap_vec.get v (i - 1)) with
-          | Belnap.Unknown -> 'U'
-          | Belnap.True -> 'T'
-          | Belnap.False -> 'F'
-          | Belnap.Both -> 'B')
+let print_belnap_vec v = Format.asprintf "%a" Belnap_vec.pp v
 
 let print_pair (a, b) = Printf.sprintf "(w=%d, w=%d)" (Belnap_vec.width a) (Belnap_vec.width b)
 
