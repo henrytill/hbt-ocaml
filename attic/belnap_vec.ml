@@ -29,6 +29,7 @@ external bv_is_all_false : bv -> int -> int = "caml_bv_is_all_false" [@@noalloc]
 external bv_count_true : bv -> int = "caml_bv_count_true" [@@noalloc]
 external bv_count_false : bv -> int = "caml_bv_count_false" [@@noalloc]
 external bv_count_both : bv -> int = "caml_bv_count_both" [@@noalloc]
+external bv_equal : bv -> bv -> int = "caml_bv_equal" [@@noalloc]
 
 let create () = { width = 0; data = bv_alloc 0 }
 
@@ -122,3 +123,4 @@ let count_true vec = bv_count_true vec.data
 let count_false vec = bv_count_false vec.data
 let count_both vec = bv_count_both vec.data
 let count_unknown vec = vec.width - count_true vec - count_false vec - count_both vec
+let equal a b = Stdlib.( && ) (a.width = b.width) (bv_equal a.data b.data = 1)

@@ -353,3 +353,13 @@ CAMLprim value caml_bv_count_both(value vbv)
         n += popcount64(w[i * 2] & w[i * 2 + 1]);
     return Val_int(n);
 }
+
+/* bv_equal(va, vb) — 1 if same nwords and memcmp == 0, else 0 [@@noalloc] */
+CAMLprim value caml_bv_equal(value va, value vb)
+{
+    struct belnap_vec const *a = Bv_val(va);
+    struct belnap_vec const *b = Bv_val(vb);
+    if (a->nwords != b->nwords)
+        return Val_int(0);
+    return Val_int(memcmp(a->words, b->words, BV_WORDS_BYTES(a->nwords)) == 0);
+}

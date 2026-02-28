@@ -22,3 +22,4 @@ val count_true : t -> int
 val count_false : t -> int
 val count_both : t -> int
 val count_unknown : t -> int
+val equal : t -> t -> bool

@@ -214,61 +214,48 @@ let print_pair (a, b) = Printf.sprintf "(w=%d, w=%d)" (Belnap_vec.width a) (Beln
 let print_triple (a, b, c) =
   Printf.sprintf "(w=%d, w=%d, w=%d)" (Belnap_vec.width a) (Belnap_vec.width b) (Belnap_vec.width c)
 
-(* --- Element-wise equality --- *)
-let vecs_equal a b =
-  Belnap_vec.width a = Belnap_vec.width b
-  &&
-  let n = Belnap_vec.width a in
-  let rec loop i =
-    if i >= n then
-      true
-    else
-      Belnap.equal (Belnap_vec.get a i) (Belnap_vec.get b i) && loop (i + 1)
-  in
-  loop 0
-
 (* --- QCheck2 property tests --- *)
 let qcheck_tests =
   [
     (* Truth-order lattice laws (|| and &&) *)
     QCheck2.Test.make ~name:"or_commutativity" ~print:print_pair gen_pair (fun (a, b) ->
-        vecs_equal (Belnap_vec.( || ) a b) (Belnap_vec.( || ) b a));
+        Belnap_vec.equal (Belnap_vec.( || ) a b) (Belnap_vec.( || ) b a));
     QCheck2.Test.make ~name:"or_associativity" ~print:print_triple gen_triple (fun (a, b, c) ->
-        vecs_equal
+        Belnap_vec.equal
           (Belnap_vec.( || ) (Belnap_vec.( || ) a b) c)
           (Belnap_vec.( || ) a (Belnap_vec.( || ) b c)));
     QCheck2.Test.make ~name:"or_idempotency" ~print:print_belnap_vec gen_single (fun a ->
-        vecs_equal (Belnap_vec.( || ) a a) a);
+        Belnap_vec.equal (Belnap_vec.( || ) a a) a);
     QCheck2.Test.make ~name:"and_commutativity" ~print:print_pair gen_pair (fun (a, b) ->
-        vecs_equal (Belnap_vec.( && ) a b) (Belnap_vec.( && ) b a));
+        Belnap_vec.equal (Belnap_vec.( && ) a b) (Belnap_vec.( && ) b a));
     QCheck2.Test.make ~name:"and_associativity" ~print:print_triple gen_triple (fun (a, b, c) ->
-        vecs_equal
+        Belnap_vec.equal
           (Belnap_vec.( && ) (Belnap_vec.( && ) a b) c)
           (Belnap_vec.( && ) a (Belnap_vec.( && ) b c)));
     QCheck2.Test.make ~name:"and_idempotency" ~print:print_belnap_vec gen_single (fun a ->
-        vecs_equal (Belnap_vec.( && ) a a) a);
+        Belnap_vec.equal (Belnap_vec.( && ) a a) a);
     QCheck2.Test.make ~name:"absorption_or_and" ~print:print_pair gen_pair (fun (a, b) ->
-        vecs_equal (Belnap_vec.( || ) a (Belnap_vec.( && ) a b)) a);
+        Belnap_vec.equal (Belnap_vec.( || ) a (Belnap_vec.( && ) a b)) a);
     QCheck2.Test.make ~name:"absorption_and_or" ~print:print_pair gen_pair (fun (a, b) ->
-        vecs_equal (Belnap_vec.( && ) a (Belnap_vec.( || ) a b)) a);
+        Belnap_vec.equal (Belnap_vec.( && ) a (Belnap_vec.( || ) a b)) a);
     QCheck2.Test.make ~name:"or_bottom_identity" ~print:print_belnap_vec gen_single (fun a ->
         let n = Belnap_vec.width a in
-        vecs_equal (Belnap_vec.( || ) a (Belnap_vec.all_false n)) a);
+        Belnap_vec.equal (Belnap_vec.( || ) a (Belnap_vec.all_false n)) a);
     QCheck2.Test.make ~name:"and_top_identity" ~print:print_belnap_vec gen_single (fun a ->
         let n = Belnap_vec.width a in
-        vecs_equal (Belnap_vec.( && ) a (Belnap_vec.all_true n)) a);
+        Belnap_vec.equal (Belnap_vec.( && ) a (Belnap_vec.all_true n)) a);
     (* Knowledge-order join semilattice laws (merge) *)
     QCheck2.Test.make ~name:"merge_commutativity" ~print:print_pair gen_pair (fun (a, b) ->
-        vecs_equal (Belnap_vec.merge a b) (Belnap_vec.merge b a));
+        Belnap_vec.equal (Belnap_vec.merge a b) (Belnap_vec.merge b a));
     QCheck2.Test.make ~name:"merge_associativity" ~print:print_triple gen_triple (fun (a, b, c) ->
-        vecs_equal
+        Belnap_vec.equal
           (Belnap_vec.merge (Belnap_vec.merge a b) c)
           (Belnap_vec.merge a (Belnap_vec.merge b c)));
     QCheck2.Test.make ~name:"merge_idempotency" ~print:print_belnap_vec gen_single (fun a ->
-        vecs_equal (Belnap_vec.merge a a) a);
+        Belnap_vec.equal (Belnap_vec.merge a a) a);
     QCheck2.Test.make ~name:"merge_bottom_identity" ~print:print_belnap_vec gen_single (fun a ->
         let n = Belnap_vec.width a in
-        vecs_equal (Belnap_vec.merge (Belnap_vec.make n) a) a);
+        Belnap_vec.equal (Belnap_vec.merge (Belnap_vec.make n) a) a);
     (* Auxiliary consistency properties *)
     QCheck2.Test.make ~name:"count_nonneg" ~print:print_belnap_vec gen_single (fun v ->
         Belnap_vec.count_true v >= 0
@@ -276,7 +263,7 @@ let qcheck_tests =
         && Belnap_vec.count_both v >= 0
         && Belnap_vec.count_unknown v >= 0);
     QCheck2.Test.make ~name:"not_involutive" ~print:print_belnap_vec gen_single (fun v ->
-        vecs_equal (Belnap_vec.not (Belnap_vec.not v)) v);
+        Belnap_vec.equal (Belnap_vec.not (Belnap_vec.not v)) v);
     QCheck2.Test.make ~name:"is_consistent_iff_no_both" ~print:print_belnap_vec gen_single (fun v ->
         Belnap_vec.is_consistent v = (Belnap_vec.count_both v = 0));
     QCheck2.Test.make ~name:"is_all_determined_iff" ~print:print_belnap_vec gen_single (fun v ->
