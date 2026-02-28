@@ -171,6 +171,14 @@ let test_to_array_roundtrip () =
     xs
     (Belnap_vec.to_array (Belnap_vec.of_list (Array.to_list xs)))
 
+let test_of_array_roundtrip () =
+  Alcotest.(check belnap_array) "empty" [||] (Belnap_vec.to_array (Belnap_vec.of_array [||]));
+  let xs = [| u; t; f; b |] in
+  Alcotest.(check belnap_array) "4 elems" xs (Belnap_vec.to_array (Belnap_vec.of_array xs));
+  (* word boundary: 65 elements, last in word-pair 1 *)
+  let xs65 = Array.init 65 (fun i -> if i = 64 then b else f) in
+  Alcotest.(check belnap_array) "65 elems" xs65 (Belnap_vec.to_array (Belnap_vec.of_array xs65))
+
 let test_find_first () =
   let chk = Alcotest.(check (option int)) in
   let v = Belnap_vec.of_list [ f; f; t; b ] in
@@ -204,6 +212,7 @@ let tests =
         test_case "width_63" `Quick test_width_63;
         test_case "to_list_roundtrip" `Quick test_to_list_roundtrip;
         test_case "to_array_roundtrip" `Quick test_to_array_roundtrip;
+        test_case "of_array_roundtrip" `Quick test_of_array_roundtrip;
         test_case "find_first" `Quick test_find_first;
       ] );
   ]
@@ -339,6 +348,22 @@ let qcheck_tests =
       ~print:(fun xs -> Printf.sprintf "len=%d" (List.length xs))
       QCheck2.Gen.(list gen_belnap)
       (fun xs -> List.equal Belnap.equal (Belnap_vec.to_list (Belnap_vec.of_list xs)) xs);
+    (* TODO: Array.equal is available from OCaml 5.4; replace the Array.to_list
+       conversions below with Array.equal Belnap.equal once we require >= 5.4. *)
+    QCheck2.Test.make
+      ~name:"of_array_to_array_roundtrip"
+      ~print:(fun arr -> Printf.sprintf "len=%d" (Array.length arr))
+      QCheck2.Gen.(array gen_belnap)
+      (fun arr ->
+        List.equal
+          Belnap.equal
+          (Array.to_list (Belnap_vec.to_array (Belnap_vec.of_array arr)))
+          (Array.to_list arr));
+    QCheck2.Test.make
+      ~name:"of_array_of_list_consistent"
+      ~print:(fun xs -> Printf.sprintf "len=%d" (List.length xs))
+      QCheck2.Gen.(list gen_belnap)
+      (fun xs -> Belnap_vec.equal (Belnap_vec.of_array (Array.of_list xs)) (Belnap_vec.of_list xs));
     QCheck2.Test.make ~name:"to_list_matches_get" ~print:print_belnap_vec gen_single (fun v ->
         let lst = Belnap_vec.to_list v in
         let expected = List.init (Belnap_vec.width v) (Belnap_vec.get v) in

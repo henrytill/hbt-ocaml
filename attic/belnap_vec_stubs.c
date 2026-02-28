@@ -396,6 +396,31 @@ CAMLprim value caml_bv_init_from_list(value vbv, value vlist)
     CAMLreturn(Val_unit);
 }
 
+/* bv_init_from_array(vbv, varr) — fill bv from an OCaml int array of Belnap.to_bits values.
+   Assumes bv is already zero-initialised (from bv_alloc). No allocation; [@@noalloc]. */
+CAMLprim value caml_bv_init_from_array(value vbv, value varr)
+{
+    struct belnap_vec *bv = Bv_val(vbv);
+    int const width = (int)Wosize_val(varr);
+    uint64_t pos = 0, neg = 0;
+    for (int i = 0; i < width; i++)
+    {
+        int const raw = Int_val(Field(varr, i));
+        int const bit = i & BITS_MASK;
+        pos |= (uint64_t)(raw & 1) << bit;
+        neg |= (uint64_t)((raw >> 1) & 1) << bit;
+        if (bit == BITS_MASK || i == width - 1)
+        {
+            int const word = i >> BITS_LOG2;
+            bv->words[word * 2] = pos;
+            bv->words[word * 2 + 1] = neg;
+            pos = 0;
+            neg = 0;
+        }
+    }
+    return Val_unit;
+}
+
 /* caml_bv_to_array(vbv, vwidth) → OCaml array of raw Belnap ints.
    bv is a major-heap custom block and never moves, so w/nwords remain
    valid across the caml_alloc call. */

@@ -5,6 +5,7 @@ val make : int -> t
 val all_true : int -> t
 val all_false : int -> t
 val of_list : Belnap.t list -> t
+val of_array : Belnap.t array -> t
 val to_list : t -> Belnap.t list
 val to_array : t -> Belnap.t array
 val find_first : Belnap.t -> t -> int option

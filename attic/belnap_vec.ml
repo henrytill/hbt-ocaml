@@ -14,6 +14,7 @@ external bv_alloc : int -> bv = "caml_bv_alloc"
 external bv_blit_grow : bv -> int -> bv = "caml_bv_blit_grow"
 external bv_init_from_list : bv -> Belnap.t list -> unit = "caml_bv_init_from_list"
 external bv_to_array : bv -> int -> Belnap.t array = "caml_bv_to_array"
+external bv_init_from_array : bv -> Belnap.t array -> unit = "caml_bv_init_from_array" [@@noalloc]
 
 (* C stubs — all [@@noalloc] *)
 external bv_get : bv -> int -> int = "caml_bv_get" [@@noalloc]
@@ -57,6 +58,13 @@ let of_list vals =
   let nw = words_needed width in
   let data = bv_alloc nw in
   bv_init_from_list data vals;
+  { width; data }
+
+let of_array arr =
+  let width = Array.length arr in
+  let nw = words_needed width in
+  let data = bv_alloc nw in
+  bv_init_from_array data arr;
   { width; data }
 
 let to_array vec = bv_to_array vec.data vec.width
