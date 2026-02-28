@@ -5,6 +5,14 @@ let t = Belnap.(of_view True)
 let f = Belnap.(of_view False)
 let b = Belnap.(of_view Both)
 
+(* TODO: replace body with Array.equal eq a b once we require OCaml >= 5.4 *)
+let array_equal eq a b =
+  let n = Array.length a in
+  Array.length b = n
+  &&
+  let rec go i = i >= n || (eq a.(i) b.(i) && go (i + 1)) in
+  go 0
+
 let check =
   let belnap = Alcotest.testable Belnap.pp Belnap.equal in
   Alcotest.(check belnap)
@@ -348,17 +356,11 @@ let qcheck_tests =
       ~print:(fun xs -> Printf.sprintf "len=%d" (List.length xs))
       QCheck2.Gen.(list gen_belnap)
       (fun xs -> List.equal Belnap.equal (Belnap_vec.to_list (Belnap_vec.of_list xs)) xs);
-    (* TODO: Array.equal is available from OCaml 5.4; replace the Array.to_list
-       conversions below with Array.equal Belnap.equal once we require >= 5.4. *)
     QCheck2.Test.make
       ~name:"of_array_to_array_roundtrip"
       ~print:(fun arr -> Printf.sprintf "len=%d" (Array.length arr))
       QCheck2.Gen.(array gen_belnap)
-      (fun arr ->
-        List.equal
-          Belnap.equal
-          (Array.to_list (Belnap_vec.to_array (Belnap_vec.of_array arr)))
-          (Array.to_list arr));
+      (fun arr -> array_equal Belnap.equal (Belnap_vec.to_array (Belnap_vec.of_array arr)) arr);
     QCheck2.Test.make
       ~name:"of_array_of_list_consistent"
       ~print:(fun xs -> Printf.sprintf "len=%d" (List.length xs))
