@@ -88,6 +88,58 @@ let test_implies () =
     check "B implies F" b (implies b f);
     check "B implies B" b (implies b b))
 
+let test_leq_truth () =
+  (* Truth order: False < {Unknown, Both} < True; Unknown and Both incomparable *)
+  let leq = Belnap.leq_truth in
+  (* reflexive *)
+  check_bool "U ≤_t U" true (leq u u);
+  check_bool "T ≤_t T" true (leq t t);
+  check_bool "F ≤_t F" true (leq f f);
+  check_bool "B ≤_t B" true (leq b b);
+  (* False is bottom *)
+  check_bool "F ≤_t U" true (leq f u);
+  check_bool "F ≤_t T" true (leq f t);
+  check_bool "F ≤_t B" true (leq f b);
+  (* True is top *)
+  check_bool "U ≤_t T" true (leq u t);
+  check_bool "B ≤_t T" true (leq b t);
+  (* incomparable pairs *)
+  check_bool "U ≤_t B" false (leq u b);
+  check_bool "B ≤_t U" false (leq b u);
+  (* strict: non-bottom not ≤ False *)
+  check_bool "U ≤_t F" false (leq u f);
+  check_bool "T ≤_t F" false (leq t f);
+  check_bool "B ≤_t F" false (leq b f);
+  (* strict: True not ≤ non-top *)
+  check_bool "T ≤_t U" false (leq t u);
+  check_bool "T ≤_t B" false (leq t b)
+
+let test_leq_knowledge () =
+  (* Knowledge order: Unknown < {True, False} < Both; True and False incomparable *)
+  let leq = Belnap.leq_knowledge in
+  (* reflexive *)
+  check_bool "U ≤_k U" true (leq u u);
+  check_bool "T ≤_k T" true (leq t t);
+  check_bool "F ≤_k F" true (leq f f);
+  check_bool "B ≤_k B" true (leq b b);
+  (* Unknown is bottom *)
+  check_bool "U ≤_k T" true (leq u t);
+  check_bool "U ≤_k F" true (leq u f);
+  check_bool "U ≤_k B" true (leq u b);
+  (* Both is top *)
+  check_bool "T ≤_k B" true (leq t b);
+  check_bool "F ≤_k B" true (leq f b);
+  (* incomparable pairs *)
+  check_bool "T ≤_k F" false (leq t f);
+  check_bool "F ≤_k T" false (leq f t);
+  (* strict: non-bottom not ≤ Unknown *)
+  check_bool "T ≤_k U" false (leq t u);
+  check_bool "F ≤_k U" false (leq f u);
+  check_bool "B ≤_k U" false (leq b u);
+  (* strict: Both not ≤ non-top *)
+  check_bool "B ≤_k T" false (leq b t);
+  check_bool "B ≤_k F" false (leq b f)
+
 let test_merge () =
   check "U merge U" u (Belnap.merge u u);
   check "U merge T" t (Belnap.merge u t);
@@ -117,6 +169,8 @@ let tests =
         test_case "implies" `Quick test_implies;
         test_case "merge" `Quick test_merge;
         test_case "queries" `Quick test_queries;
+        test_case "leq_truth" `Quick test_leq_truth;
+        test_case "leq_knowledge" `Quick test_leq_knowledge;
       ] );
   ]
 

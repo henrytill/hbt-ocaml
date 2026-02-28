@@ -14,6 +14,8 @@ val of_bits : int -> t
 val to_bits : t -> int
 val pp : Format.formatter -> t -> unit
 val equal : t -> t -> bool
+val leq_truth : t -> t -> bool
+val leq_knowledge : t -> t -> bool
 val not : t -> t
 val ( && ) : t -> t -> t
 val ( || ) : t -> t -> t

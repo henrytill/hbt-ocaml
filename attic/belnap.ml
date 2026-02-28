@@ -42,6 +42,8 @@ let pp fmt s =
     end
 
 let equal : t -> t -> bool = Int.equal
+let leq_truth a b = a land 1 <= b land 1 && a lsr 1 >= b lsr 1
+let leq_knowledge a b = a land b = a
 let not a = ((a land 1) lsl 1) lor (a lsr 1)
 
 let ( && ) a b =
