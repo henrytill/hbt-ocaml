@@ -44,8 +44,12 @@ static struct custom_operations bv_ops = {
     custom_fixed_length_default,
 };
 
-#define Bv_val(v)          ((struct belnap_vec *)Data_custom_val(v))
-#define BV_WORDS_BYTES(nw) (2 * (size_t)(nw) * sizeof(uint64_t))
+#define Bv_val(v) ((struct belnap_vec *)Data_custom_val(v))
+
+static inline size_t bv_words_bytes(int nw)
+{
+    return 2 * (size_t)(nw) * sizeof(uint64_t);
+}
 
 static inline int popcount64(uint64_t x)
 {
@@ -56,10 +60,10 @@ static inline int popcount64(uint64_t x)
 CAMLprim value caml_bv_alloc(value vnw)
 {
     int const nwords = Int_val(vnw);
-    mlsize_t const bsz = sizeof(struct belnap_vec) + BV_WORDS_BYTES(nwords);
+    mlsize_t const bsz = sizeof(struct belnap_vec) + bv_words_bytes(nwords);
     value v = caml_alloc_custom(&bv_ops, bsz, 0, 1);
     Bv_val(v)->nwords = nwords;
-    memset(Bv_val(v)->words, 0, BV_WORDS_BYTES(nwords));
+    memset(Bv_val(v)->words, 0, bv_words_bytes(nwords));
     return v;
 }
 
@@ -68,15 +72,15 @@ CAMLprim value caml_bv_blit_grow(value vsrc, value vnew_nw)
 {
     CAMLparam1(vsrc);
     int const new_nwords = Int_val(vnew_nw);
-    mlsize_t const bsz = sizeof(struct belnap_vec) + BV_WORDS_BYTES(new_nwords);
+    mlsize_t const bsz = sizeof(struct belnap_vec) + bv_words_bytes(new_nwords);
     CAMLlocal1(vdst);
     vdst = caml_alloc_custom(&bv_ops, bsz, 0, 1);
     struct belnap_vec *dst = Bv_val(vdst);
     struct belnap_vec const *src = Bv_val(vsrc);
     int const old_nwords = src->nwords;
     dst->nwords = new_nwords;
-    memcpy(dst->words, src->words, BV_WORDS_BYTES(old_nwords));
-    memset(dst->words + (2 * old_nwords), 0, BV_WORDS_BYTES(new_nwords - old_nwords));
+    memcpy(dst->words, src->words, bv_words_bytes(old_nwords));
+    memset(dst->words + (2 * old_nwords), 0, bv_words_bytes(new_nwords - old_nwords));
     CAMLreturn(vdst);
 }
 
@@ -365,7 +369,7 @@ CAMLprim value caml_bv_equal(value va, value vb)
     struct belnap_vec const *b = Bv_val(vb);
     if (a->nwords != b->nwords)
         return Val_int(0);
-    return Val_int(memcmp(a->words, b->words, BV_WORDS_BYTES(a->nwords)) == 0);
+    return Val_int(memcmp(a->words, b->words, bv_words_bytes(a->nwords)) == 0);
 }
 
 /* bv_init_from_list(vbv, vlist) — fill bv from an OCaml list of Belnap.to_bits ints.
