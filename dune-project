@@ -39,7 +39,11 @@
   (alcotest
    (and
     :with-test
-    (>= 1.7.0)))))
+    (>= 1.7.0)))
+  (qcheck-alcotest
+   (and
+    :with-test
+    (>= 0.91)))))
 
 (package
  (name hbt-pinboard)

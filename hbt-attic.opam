@@ -13,6 +13,7 @@ depends: [
   "ocaml" {>= "5.2.0"}
   "fmt" {>= "0.11.0"}
   "alcotest" {with-test & >= "1.7.0"}
+  "qcheck-alcotest" {with-test & >= "0.91"}
   "odoc" {with-doc}
 ]
 build: [

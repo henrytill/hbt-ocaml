@@ -23,4 +23,4 @@
  (name belnap_vec_test)
  (modules belnap_vec_test)
  (package hbt-attic)
- (libraries alcotest hbt-attic))
+ (libraries alcotest hbt-attic qcheck-core qcheck-alcotest))
