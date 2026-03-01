@@ -18,7 +18,7 @@ struct belnap_vec;
 
 #define Bv_val(v) ((struct belnap_vec *)Data_custom_val(v))
 
-/* Must match bits_log2 / BITS_MASK in belnap_vec.ml. */
+/* Must match bits_log2 / bits_mask in belnap_vec.ml. */
 enum
 {
     BITS_LOG2 = 6,
@@ -53,7 +53,6 @@ static inline size_t bv_words_bytes(int nw)
     return 2 * (size_t)(nw) * sizeof(uint64_t);
 }
 
-/* bv_alloc(vnw) — allocate a zeroed custom block for nw per-plane words. */
 CAMLprim value bv_alloc(value vnw)
 {
     CAMLparam1(vnw);
@@ -66,7 +65,6 @@ CAMLprim value bv_alloc(value vnw)
     CAMLreturn(v);
 }
 
-/* bv_blit_grow(vsrc, vnew_nw) — allocate larger block, copy old words, zero rest. */
 CAMLprim value bv_blit_grow(value vsrc, value vnew_nw)
 {
     CAMLparam2(vsrc, vnew_nw);
@@ -83,7 +81,6 @@ CAMLprim value bv_blit_grow(value vsrc, value vnew_nw)
     CAMLreturn(vdst);
 }
 
-/* bv_get(vbv, vi) -> Val_int(2-bit Belnap encoding). */
 CAMLprim value bv_get(value vbv, value vi)
 {
     CAMLparam2(vbv, vi);
@@ -97,7 +94,6 @@ CAMLprim value bv_get(value vbv, value vi)
     CAMLreturn(Val_int((neg_bit << 1) | pos_bit));
 }
 
-/* bv_set(vbv, vi, vraw) — raw is Val_int(Belnap.to_bits v). */
 CAMLprim value bv_set(value vbv, value vi, value vraw)
 {
     CAMLparam3(vbv, vi, vraw);
@@ -115,7 +111,6 @@ CAMLprim value bv_set(value vbv, value vi, value vraw)
     CAMLreturn(Val_unit);
 }
 
-/* bv_mask_tail(vbv, vwidth) — clears bits >= (width & 63) in last word-pair. */
 CAMLprim value bv_mask_tail(value vbv, value vwidth)
 {
     CAMLparam2(vbv, vwidth);
@@ -134,7 +129,6 @@ CAMLprim value bv_mask_tail(value vbv, value vwidth)
     CAMLreturn(Val_unit);
 }
 
-/* bv_fill(vbv, vfrom, vto, vraw) — fills word-pairs [from, to). */
 CAMLprim value bv_fill(value vbv, value vfrom, value vto, value vraw)
 {
     CAMLparam4(vbv, vfrom, vto, vraw);
@@ -155,7 +149,6 @@ CAMLprim value bv_fill(value vbv, value vfrom, value vto, value vraw)
     CAMLreturn(Val_unit);
 }
 
-/* bv_not(src, dst) */
 CAMLprim value bv_not(value src, value dst)
 {
     CAMLparam2(src, dst);
@@ -172,7 +165,6 @@ CAMLprim value bv_not(value src, value dst)
     CAMLreturn(Val_unit);
 }
 
-/* bv_and(va, vb, dst) — a/b may have different nwords; dst is zero-initialized */
 CAMLprim value bv_and(value va, value vb, value dst)
 {
     CAMLparam3(va, vb, dst);
@@ -197,7 +189,6 @@ CAMLprim value bv_and(value va, value vb, value dst)
     CAMLreturn(Val_unit);
 }
 
-/* bv_or(va, vb, dst) */
 CAMLprim value bv_or(value va, value vb, value dst)
 {
     CAMLparam3(va, vb, dst);
@@ -222,7 +213,6 @@ CAMLprim value bv_or(value va, value vb, value dst)
     CAMLreturn(Val_unit);
 }
 
-/* bv_merge(va, vb, dst) */
 CAMLprim value bv_merge(value va, value vb, value dst)
 {
     CAMLparam3(va, vb, dst);
@@ -247,14 +237,12 @@ CAMLprim value bv_merge(value va, value vb, value dst)
     CAMLreturn(Val_unit);
 }
 
-/* Query helpers: build a tail mask for the last word-pair */
 static inline uint64_t tail_mask(int const width)
 {
     int const r = width & BITS_MASK;
     return r == 0 ? ALL_ONES : (UINT64_C(1) << r) - 1;
 }
 
-/* bv_is_consistent(vbv, vwidth) — true if no pos & neg set simultaneously. */
 CAMLprim value bv_is_consistent(value vbv, value vwidth)
 {
     CAMLparam2(vbv, vwidth);
@@ -272,7 +260,6 @@ CAMLprim value bv_is_consistent(value vbv, value vwidth)
     CAMLreturn(Val_int(1));
 }
 
-/* bv_is_all_determined(vbv, vwidth) — true if every live bit has pos XOR neg. */
 CAMLprim value bv_is_all_determined(value vbv, value vwidth)
 {
     CAMLparam2(vbv, vwidth);
@@ -291,7 +278,6 @@ CAMLprim value bv_is_all_determined(value vbv, value vwidth)
     CAMLreturn(Val_int(1));
 }
 
-/* bv_is_all_true(vbv, vwidth). */
 CAMLprim value bv_is_all_true(value vbv, value vwidth)
 {
     CAMLparam2(vbv, vwidth);
@@ -311,7 +297,6 @@ CAMLprim value bv_is_all_true(value vbv, value vwidth)
     CAMLreturn(Val_int(1));
 }
 
-/* bv_is_all_false(vbv, vwidth). */
 CAMLprim value bv_is_all_false(value vbv, value vwidth)
 {
     CAMLparam2(vbv, vwidth);
@@ -336,7 +321,6 @@ static inline int popcount64(uint64_t x)
     return __builtin_popcountll(x);
 }
 
-/* bv_count_true(vbv) — popcount(pos & ~neg) over all word-pairs */
 CAMLprim value bv_count_true(value vbv)
 {
     CAMLparam1(vbv);
@@ -349,7 +333,6 @@ CAMLprim value bv_count_true(value vbv)
     CAMLreturn(Val_int(n));
 }
 
-/* bv_count_false(vbv) — popcount(~pos & neg) */
 CAMLprim value bv_count_false(value vbv)
 {
     CAMLparam1(vbv);
@@ -362,7 +345,6 @@ CAMLprim value bv_count_false(value vbv)
     CAMLreturn(Val_int(n));
 }
 
-/* bv_count_both(vbv) — popcount(pos & neg) */
 CAMLprim value bv_count_both(value vbv)
 {
     CAMLparam1(vbv);
@@ -375,7 +357,6 @@ CAMLprim value bv_count_both(value vbv)
     CAMLreturn(Val_int(n));
 }
 
-/* bv_equal(va, vb) — 1 if same nwords and memcmp == 0, else 0 [@@noalloc] */
 CAMLprim value bv_equal(value va, value vb)
 {
     CAMLparam2(va, vb);
@@ -386,8 +367,6 @@ CAMLprim value bv_equal(value va, value vb)
     CAMLreturn(Val_int(memcmp(a->words, b->words, bv_words_bytes(a->nwords)) == 0));
 }
 
-/* bv_init_from_list(vbv, vlist) — fill bv from an OCaml list of Belnap.to_bits ints.
-   Assumes bv is already zero-initialised (from bv_alloc). No allocation; [@@noalloc]. */
 CAMLprim value bv_init_from_list(value vbv, value vlist)
 {
     CAMLparam2(vbv, vlist);
@@ -414,8 +393,6 @@ CAMLprim value bv_init_from_list(value vbv, value vlist)
     CAMLreturn(Val_unit);
 }
 
-/* bv_init_from_array(vbv, varr) — fill bv from an OCaml int array of Belnap.to_bits values.
-   Assumes bv is already zero-initialised (from bv_alloc). No allocation; [@@noalloc]. */
 CAMLprim value bv_init_from_array(value vbv, value varr)
 {
     CAMLparam2(vbv, varr);
@@ -440,7 +417,6 @@ CAMLprim value bv_init_from_array(value vbv, value varr)
     CAMLreturn(Val_unit);
 }
 
-/* bv_to_array(vbv, vwidth) → OCaml array of raw Belnap ints. */
 CAMLprim value bv_to_array(value vbv, value vwidth)
 {
     CAMLparam2(vbv, vwidth);
@@ -469,8 +445,6 @@ CAMLprim value bv_to_array(value vbv, value vwidth)
     CAMLreturn(arr);
 }
 
-/* bv_find_first(vbv, vwidth, vraw) → index of first element matching
-   raw Belnap value, or -1 if not found. [@@noalloc] */
 CAMLprim value bv_find_first(value vbv, value vwidth, value vraw)
 {
     CAMLparam3(vbv, vwidth, vraw);
