@@ -406,7 +406,7 @@ module Html = struct
         let time = parse_timestamp v in
         { e with last_visited_at = Last_visited_at.of_time time }
     | "tags" when v <> String.empty ->
-        let tag_list = Str.split r v in
+        let tag_list = Str.split (Lazy.force r) v in
         let labels =
           Label_set.of_seq
             (Seq.filter_map
@@ -423,7 +423,7 @@ module Html = struct
   let tag_splitter = lazy (Str.regexp "[,]+")
 
   let entity_of_attrs attributes names folder_labels extended : t =
-    let f = build (Lazy.force tag_splitter) in
+    let f = build tag_splitter in
     let entity = List.fold_left f { empty with names; extended } attributes in
     let labels = Label_set.union entity.labels folder_labels in
     { entity with labels }
