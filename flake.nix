@@ -72,6 +72,7 @@
             scope = on.buildOpamProject' {
               inherit pkgs;
               resolveArgs = {
+                with-doc = true;
                 with-test = true;
               };
             } self query;
