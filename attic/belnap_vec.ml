@@ -6,11 +6,11 @@ let words_needed n = (n + bits_mask) lsr bits_log2
 
 (* Allocating stubs *)
 external bv_alloc : int -> bv = "caml_bv_alloc"
-external bv_init_from_list : bv -> Belnap.t list -> unit = "caml_bv_init_from_list"
 external bv_to_array : bv -> int -> Belnap.t array = "caml_bv_to_array"
-external bv_init_from_array : bv -> Belnap.t array -> unit = "caml_bv_init_from_array" [@@noalloc]
 
-(* C stubs — all [@@noalloc] *)
+(* Non-allocating stubs *)
+external bv_init_from_list : bv -> Belnap.t list -> unit = "caml_bv_init_from_list" [@@noalloc]
+external bv_init_from_array : bv -> Belnap.t array -> unit = "caml_bv_init_from_array" [@@noalloc]
 external bv_get : bv -> int -> int = "caml_bv_get" [@@noalloc]
 external bv_set : bv -> int -> int -> unit = "caml_bv_set" [@@noalloc]
 external bv_mask_tail : bv -> int -> unit = "caml_bv_mask_tail" [@@noalloc]
@@ -45,8 +45,8 @@ module Make (S : SIZE) = struct
     bv_mask_tail data S.n;
     { data }
 
-  let all_true () = filled (Belnap.of_view Belnap.True)
-  let all_false () = filled (Belnap.of_view Belnap.False)
+  let all_true () = filled Belnap.(of_view True)
+  let all_false () = filled Belnap.(of_view False)
 
   let of_array a =
     if Array.length a <> S.n then

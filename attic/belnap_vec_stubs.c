@@ -369,10 +369,9 @@ CAMLprim value caml_bv_equal(value va, value vb)
 }
 
 /* bv_init_from_list(vbv, vlist) — fill bv from an OCaml list of Belnap.to_bits ints.
-   Assumes bv is already zero-initialised (from bv_alloc). */
+   Assumes bv is already zero-initialised (from bv_alloc). No allocation; [@@noalloc]. */
 CAMLprim value caml_bv_init_from_list(value vbv, value vlist)
 {
-    CAMLparam2(vbv, vlist);
     struct belnap_vec *bv = Bv_val(vbv);
     int i = 0;
     uint64_t pos = 0, neg = 0;
@@ -393,7 +392,7 @@ CAMLprim value caml_bv_init_from_list(value vbv, value vlist)
         }
         i++;
     }
-    CAMLreturn(Val_unit);
+    return Val_unit;
 }
 
 /* bv_init_from_array(vbv, varr) — fill bv from an OCaml int array of Belnap.to_bits values.
