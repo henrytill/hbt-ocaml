@@ -22,7 +22,7 @@ jobs:
       - run: nix flake check -L
       - run: nix build -L .#hbt-cli -o result-hbt-ocaml
       - run: nix build -L .#hbt-cli-static -o result-hbt-ocaml-static
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: hbt-x86_64-unknown-linux-musl
           path: result-hbt-ocaml-static/bin/hbt
