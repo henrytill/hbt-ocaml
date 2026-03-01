@@ -5,29 +5,29 @@ let bits_mask = (1 lsl bits_log2) - 1
 let words_needed n = (n + bits_mask) lsr bits_log2
 
 (* Allocating stubs *)
-external bv_alloc : int -> bv = "caml_bv_alloc"
-external bv_to_array : bv -> int -> Belnap.t array = "caml_bv_to_array"
+external bv_alloc : int -> bv = "bv_alloc"
+external bv_to_array : bv -> int -> Belnap.t array = "bv_to_array"
 
 (* Non-allocating stubs *)
-external bv_init_from_list : bv -> Belnap.t list -> unit = "caml_bv_init_from_list" [@@noalloc]
-external bv_init_from_array : bv -> Belnap.t array -> unit = "caml_bv_init_from_array" [@@noalloc]
-external bv_get : bv -> int -> int = "caml_bv_get" [@@noalloc]
-external bv_set : bv -> int -> int -> unit = "caml_bv_set" [@@noalloc]
-external bv_mask_tail : bv -> int -> unit = "caml_bv_mask_tail" [@@noalloc]
-external bv_fill : bv -> int -> int -> int -> unit = "caml_bv_fill" [@@noalloc]
-external bv_not : bv -> bv -> unit = "caml_bv_not" [@@noalloc]
-external bv_and : bv -> bv -> bv -> unit = "caml_bv_and" [@@noalloc]
-external bv_or : bv -> bv -> bv -> unit = "caml_bv_or" [@@noalloc]
-external bv_merge : bv -> bv -> bv -> unit = "caml_bv_merge" [@@noalloc]
-external bv_is_consistent : bv -> int -> int = "caml_bv_is_consistent" [@@noalloc]
-external bv_is_all_determined : bv -> int -> int = "caml_bv_is_all_determined" [@@noalloc]
-external bv_is_all_true : bv -> int -> int = "caml_bv_is_all_true" [@@noalloc]
-external bv_is_all_false : bv -> int -> int = "caml_bv_is_all_false" [@@noalloc]
-external bv_count_true : bv -> int = "caml_bv_count_true" [@@noalloc]
-external bv_count_false : bv -> int = "caml_bv_count_false" [@@noalloc]
-external bv_count_both : bv -> int = "caml_bv_count_both" [@@noalloc]
-external bv_equal : bv -> bv -> int = "caml_bv_equal" [@@noalloc]
-external bv_find_first : bv -> int -> int -> int = "caml_bv_find_first" [@@noalloc]
+external bv_init_from_list : bv -> Belnap.t list -> unit = "bv_init_from_list" [@@noalloc]
+external bv_init_from_array : bv -> Belnap.t array -> unit = "bv_init_from_array" [@@noalloc]
+external bv_get : bv -> int -> int = "bv_get" [@@noalloc]
+external bv_set : bv -> int -> int -> unit = "bv_set" [@@noalloc]
+external bv_mask_tail : bv -> int -> unit = "bv_mask_tail" [@@noalloc]
+external bv_fill : bv -> int -> int -> int -> unit = "bv_fill" [@@noalloc]
+external bv_not : bv -> bv -> unit = "bv_not" [@@noalloc]
+external bv_and : bv -> bv -> bv -> unit = "bv_and" [@@noalloc]
+external bv_or : bv -> bv -> bv -> unit = "bv_or" [@@noalloc]
+external bv_merge : bv -> bv -> bv -> unit = "bv_merge" [@@noalloc]
+external bv_is_consistent : bv -> int -> int = "bv_is_consistent" [@@noalloc]
+external bv_is_all_determined : bv -> int -> int = "bv_is_all_determined" [@@noalloc]
+external bv_is_all_true : bv -> int -> int = "bv_is_all_true" [@@noalloc]
+external bv_is_all_false : bv -> int -> int = "bv_is_all_false" [@@noalloc]
+external bv_count_true : bv -> int = "bv_count_true" [@@noalloc]
+external bv_count_false : bv -> int = "bv_count_false" [@@noalloc]
+external bv_count_both : bv -> int = "bv_count_both" [@@noalloc]
+external bv_equal : bv -> bv -> int = "bv_equal" [@@noalloc]
+external bv_find_first : bv -> int -> int -> int = "bv_find_first" [@@noalloc]
 
 include Belnap_vec_intf
 
