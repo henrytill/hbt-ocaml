@@ -158,6 +158,24 @@ let test_merge () =
   check "B merge F" b (Belnap.merge b f);
   check "B merge B" b (Belnap.merge b b)
 
+let test_consensus () =
+  check "U consensus U" u (Belnap.consensus u u);
+  check "U consensus T" u (Belnap.consensus u t);
+  check "U consensus F" u (Belnap.consensus u f);
+  check "U consensus B" u (Belnap.consensus u b);
+  check "T consensus U" u (Belnap.consensus t u);
+  check "T consensus T" t (Belnap.consensus t t);
+  check "T consensus F" u (Belnap.consensus t f);
+  check "T consensus B" t (Belnap.consensus t b);
+  check "F consensus U" u (Belnap.consensus f u);
+  check "F consensus T" u (Belnap.consensus f t);
+  check "F consensus F" f (Belnap.consensus f f);
+  check "F consensus B" f (Belnap.consensus f b);
+  check "B consensus U" u (Belnap.consensus b u);
+  check "B consensus T" t (Belnap.consensus b t);
+  check "B consensus F" f (Belnap.consensus b f);
+  check "B consensus B" b (Belnap.consensus b b)
+
 let tests =
   let open Alcotest in
   [
@@ -168,6 +186,7 @@ let tests =
         test_case "or" `Quick test_or;
         test_case "implies" `Quick test_implies;
         test_case "merge" `Quick test_merge;
+        test_case "consensus" `Quick test_consensus;
         test_case "queries" `Quick test_queries;
         test_case "leq_truth" `Quick test_leq_truth;
         test_case "leq_knowledge" `Quick test_leq_knowledge;

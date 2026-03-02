@@ -98,6 +98,13 @@ let test_bulk_merge () =
   let all_both = V64.of_list (List.init 64 (fun _ -> Belnap.(of_view Both))) in
   Alcotest.(check v64_t) "merge all_true all_false = all_both" all_both r
 
+let test_bulk_consensus () =
+  let a = V64.all_true () in
+  let c = V64.all_false () in
+  let r = V64.consensus a c in
+  let all_unknown = V64.make () in
+  Alcotest.(check v64_t) "consensus all_true all_false = all_unknown" all_unknown r
+
 let test_is_consistent () =
   let v = V4.make () in
   V4.set v (v4i 0) t;
@@ -218,6 +225,7 @@ let tests =
         test_case "bulk_or" `Quick test_bulk_or;
         test_case "bulk_not" `Quick test_bulk_not;
         test_case "bulk_merge" `Quick test_bulk_merge;
+        test_case "bulk_consensus" `Quick test_bulk_consensus;
         test_case "is_consistent" `Quick test_is_consistent;
         test_case "is_all_determined" `Quick test_is_all_determined;
         test_case "counts" `Quick test_counts;
@@ -404,6 +412,40 @@ let merge_bottom_identity =
   in
   QCheck2.Test.make ~name:"merge_bottom_identity" ~print:print_s1 gen_s1 body
 
+(* Knowledge-order meet semilattice laws (consensus) *)
+
+let consensus_commutativity =
+  let body ((module S : Belnap_vec.SIZE), xs, ys) =
+    let module M = Belnap_vec.Make (S) in
+    let a = M.of_list xs and b = M.of_list ys in
+    M.equal (M.consensus a b) (M.consensus b a)
+  in
+  QCheck2.Test.make ~name:"consensus_commutativity" ~print:print_s2 gen_s2 body
+
+let consensus_associativity =
+  let body ((module S : Belnap_vec.SIZE), xs, ys, zs) =
+    let module M = Belnap_vec.Make (S) in
+    let a = M.of_list xs and b = M.of_list ys and c = M.of_list zs in
+    M.equal (M.consensus (M.consensus a b) c) (M.consensus a (M.consensus b c))
+  in
+  QCheck2.Test.make ~name:"consensus_associativity" ~print:print_s3 gen_s3 body
+
+let consensus_idempotency =
+  let body ((module S : Belnap_vec.SIZE), xs) =
+    let module M = Belnap_vec.Make (S) in
+    let a = M.of_list xs in
+    M.equal (M.consensus a a) a
+  in
+  QCheck2.Test.make ~name:"consensus_idempotency" ~print:print_s1 gen_s1 body
+
+let consensus_top_identity =
+  let body ((module S : Belnap_vec.SIZE), xs) =
+    let module M = Belnap_vec.Make (S) in
+    let a = M.of_list xs in
+    M.equal (M.consensus a (M.all_both ())) a
+  in
+  QCheck2.Test.make ~name:"consensus_top_identity" ~print:print_s1 gen_s1 body
+
 (* Auxiliary consistency properties *)
 
 let count_nonneg =
@@ -559,6 +601,10 @@ let qcheck_tests =
     merge_associativity;
     merge_idempotency;
     merge_bottom_identity;
+    consensus_commutativity;
+    consensus_associativity;
+    consensus_idempotency;
+    consensus_top_identity;
     count_nonneg;
     not_involutive;
     is_consistent_iff_no_both;

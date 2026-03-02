@@ -64,6 +64,7 @@ let merge a b =
   let neg = (a lsr 1) lor (b lsr 1) in
   (neg lsl 1) lor pos
 
+let consensus a b = a land b
 let is_known a = a <> 0b00
 let is_determined a = a land 1 lxor (a lsr 1) <> 0
 let is_contradicted a = a = 0b11

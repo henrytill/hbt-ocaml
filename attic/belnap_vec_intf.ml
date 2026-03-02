@@ -15,6 +15,7 @@ module type S = sig
   val make : unit -> t
   val all_true : unit -> t
   val all_false : unit -> t
+  val all_both : unit -> t
 
   val of_array : Belnap.t array -> t
   (** [of_array a] raises [Invalid_argument] unless [Array.length a = n]. *)
@@ -45,6 +46,7 @@ module type S = sig
   val ( && ) : t -> t -> t
   val ( || ) : t -> t -> t
   val merge : t -> t -> t
+  val consensus : t -> t -> t
   val implies : t -> t -> t
 
   (** {2 Predicates} *)

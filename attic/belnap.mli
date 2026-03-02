@@ -22,6 +22,7 @@ val ( || ) : t -> t -> t
 val implies : t -> t -> t
 val empty : t
 val merge : t -> t -> t
+val consensus : t -> t -> t
 val is_known : t -> bool
 val is_determined : t -> bool
 val is_contradicted : t -> bool

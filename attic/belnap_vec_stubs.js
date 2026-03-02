@@ -158,6 +158,20 @@ function bv_merge(a, b, dst) {
     return 0;
 }
 
+//Provides: bv_consensus
+function bv_consensus(a, b, dst) {
+    var nw = a.nwords > b.nwords ? a.nwords : b.nwords;
+    for (var i = 0; i < nw; i++) {
+        var ap = i < a.nwords ? a.words[i * 2] : 0n;
+        var an = i < a.nwords ? a.words[i * 2 + 1] : 0n;
+        var bp = i < b.nwords ? b.words[i * 2] : 0n;
+        var bn = i < b.nwords ? b.words[i * 2 + 1] : 0n;
+        dst.words[i * 2] = ap & bp;
+        dst.words[i * 2 + 1] = an & bn;
+    }
+    return 0;
+}
+
 //Provides: bv_is_consistent
 //Requires: bv_all_ones, bv_tail_mask
 function bv_is_consistent(bv, width) {

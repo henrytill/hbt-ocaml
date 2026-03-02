@@ -19,6 +19,7 @@ external bv_not : bv -> bv -> unit = "bv_not" [@@noalloc]
 external bv_and : bv -> bv -> bv -> unit = "bv_and" [@@noalloc]
 external bv_or : bv -> bv -> bv -> unit = "bv_or" [@@noalloc]
 external bv_merge : bv -> bv -> bv -> unit = "bv_merge" [@@noalloc]
+external bv_consensus : bv -> bv -> bv -> unit = "bv_consensus" [@@noalloc]
 external bv_is_consistent : bv -> int -> int = "bv_is_consistent" [@@noalloc]
 external bv_is_all_determined : bv -> int -> int = "bv_is_all_determined" [@@noalloc]
 external bv_is_all_true : bv -> int -> int = "bv_is_all_true" [@@noalloc]
@@ -47,6 +48,7 @@ module Make (S : SIZE) = struct
 
   let all_true () = filled Belnap.(of_view True)
   let all_false () = filled Belnap.(of_view False)
+  let all_both () = filled Belnap.(of_view Both)
 
   let of_array a =
     if Array.length a <> S.n then
@@ -95,6 +97,11 @@ module Make (S : SIZE) = struct
   let merge a b =
     let data = bv_alloc nw in
     bv_merge a.data b.data data;
+    { data }
+
+  let consensus a b =
+    let data = bv_alloc nw in
+    bv_consensus a.data b.data data;
     { data }
 
   let implies a b = (not a) || b

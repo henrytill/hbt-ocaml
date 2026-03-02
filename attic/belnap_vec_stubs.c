@@ -237,6 +237,30 @@ CAMLprim value bv_merge(value va, value vb, value dst)
     CAMLreturn(Val_unit);
 }
 
+CAMLprim value bv_consensus(value va, value vb, value dst)
+{
+    CAMLparam3(va, vb, dst);
+    uint64_t const *const a = Bv_val(va)->words;
+    uint64_t const *const b = Bv_val(vb)->words;
+    uint64_t *const d = Bv_val(dst)->words;
+    int const nwa = Bv_val(va)->nwords;
+    int const nwb = Bv_val(vb)->nwords;
+
+    int const nw = nwa > nwb ? nwa : nwb;
+
+    for (int i = 0; i < nw; i++)
+    {
+        uint64_t const ap = i < nwa ? a[i * 2] : 0;
+        uint64_t const an = i < nwa ? a[i * 2 + 1] : 0;
+        uint64_t const bp = i < nwb ? b[i * 2] : 0;
+        uint64_t const bn = i < nwb ? b[i * 2 + 1] : 0;
+        d[i * 2] = ap & bp;        /* pos plane: AND */
+        d[i * 2 + 1] = an & bn;   /* neg plane: AND */
+    }
+
+    CAMLreturn(Val_unit);
+}
+
 static inline uint64_t tail_mask(int const width)
 {
     int const r = width & BITS_MASK;
