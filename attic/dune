@@ -5,16 +5,20 @@
  (foreign_stubs
   (language c)
   (names belnap_vec_stubs))
+ (js_of_ocaml
+  (javascript_files belnap_vec_stubs.js))
  (libraries fmt))
 
 (test
  (name belnap_test)
  (modules belnap_test)
  (package hbt-attic)
+ (modes exe js)
  (libraries alcotest hbt-attic))
 
 (test
  (name belnap_vec_test)
  (modules belnap_vec_test)
  (package hbt-attic)
+ (modes exe js)
  (libraries alcotest fmt hbt-attic qcheck-core qcheck-alcotest))

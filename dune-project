@@ -40,6 +40,11 @@
    (and
     :with-test
     (>= 1.7.0)))
+  (conf-npm :with-test)
+  (js_of_ocaml-compiler
+   (and
+    :with-test
+    (>= 6.2.0)))
   (qcheck-alcotest
    (and
     :with-test

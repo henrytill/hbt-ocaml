@@ -143,8 +143,15 @@
               ocp-index-wrapped
               pkgs.bear
               pkgs.clang-tools
+              pkgs.importNpmLock.hooks.linkNodeModulesHook
+              pkgs.nodejs
               pkgs.yaml-language-server
             ];
+
+            npmDeps = pkgs.importNpmLock.buildNodeModules {
+              inherit (pkgs) nodejs;
+              npmRoot = self;
+            };
 
             EMACSLOADPATH = "${scope.dune}/share/emacs/site-lisp:";
             OCAML_TOPLEVEL_PATH = "${toplevelPath}";

@@ -1,0 +1,14 @@
+{
+  "name": "hbt-ocaml",
+  "version": "0.1.0",
+  "private": true,
+  "files": [
+    "attic/belnap_vec_stubs.js"
+  ],
+  "scripts": {
+    "fmt": "prettier -w attic"
+  },
+  "devDependencies": {
+    "prettier": "^3.8.1"
+  }
+}
