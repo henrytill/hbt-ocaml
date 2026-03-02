@@ -58,12 +58,7 @@ let ( || ) a b =
 
 let implies a b = (not a) || b
 let empty = 0b00
-
-let merge a b =
-  let pos = a land 1 lor (b land 1) in
-  let neg = (a lsr 1) lor (b lsr 1) in
-  (neg lsl 1) lor pos
-
+let merge a b = a lor b
 let consensus a b = a land b
 let is_known a = a <> 0b00
 let is_determined a = a land 1 lxor (a lsr 1) <> 0
