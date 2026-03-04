@@ -51,9 +51,9 @@ module Make (S : SIZE) = struct
   let all_both () = filled Belnap.(of_view Both)
 
   let of_array a =
-    if Array.length a <> S.n then
-      invalid_arg
-        (Printf.sprintf "Belnap_vec.of_array: expected %d elements, got %d" S.n (Array.length a));
+    let len = Array.length a in
+    if len <> S.n then
+      invalid_arg (Printf.sprintf "Belnap_vec.of_array: expected %d elements, got %d" S.n len);
     let data = bv_alloc nw in
     bv_init_from_array data a;
     { data }
