@@ -26,6 +26,6 @@ val edges : t -> Id.t -> Id.t array
 val entities : t -> Entity.t array
 val t_of_yaml : Yaml.value -> t
 val yaml_of_t : t -> Yaml.value
-val map_labels : (Entity.Label_set.t -> Entity.Label_set.t) -> t -> t
-val update_labels : Yaml.value -> t -> t
+val iter_labels : (Entity.Label_set.t -> Entity.Label_set.t) -> t -> unit
+val update_labels : t -> Yaml.value -> unit
 val of_posts : Pinboard.Post.t list -> t

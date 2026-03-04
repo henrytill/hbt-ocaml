@@ -132,9 +132,8 @@ let yaml_of_t c =
       ("value", `A items);
     ]
 
-let map_labels (f : Entity.Label_set.t -> Entity.Label_set.t) (c : t) : t =
-  let nodes = Dynarray.map (Entity.map_labels f) c.nodes in
-  { c with nodes }
+let iter_labels (f : Entity.Label_set.t -> Entity.Label_set.t) (c : t) : unit =
+  Dynarray.iteri (fun i e -> Dynarray.set c.nodes i (Entity.map_labels f e)) c.nodes
 
 let yaml_to_map (yaml : Yaml.value) : Entity.Label.t Entity.Label_map.t =
   let f acc (k, v) =
@@ -144,10 +143,10 @@ let yaml_to_map (yaml : Yaml.value) : Entity.Label.t Entity.Label_map.t =
   in
   Yaml_ext.fold_object_exn f Entity.Label_map.empty yaml
 
-let update_labels (yaml : Yaml.value) : t -> t =
+let update_labels (c : t) (yaml : Yaml.value) : unit =
   let mapping = yaml_to_map yaml in
   let f label = Option.value ~default:label (Entity.Label_map.find_opt label mapping) in
-  map_labels (Entity.Label_set.map f)
+  iter_labels (Entity.Label_set.map f) c
 
 let of_posts (ps : Pinboard.Post.t list) : t =
   let module Post = Pinboard.Post in
