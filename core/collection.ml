@@ -25,7 +25,6 @@ module Id = struct
   let to_int id = id.index
   let equal a b = a.tag == b.tag && Int.equal a.index b.index
   let pp fmt id = Fmt.int fmt id.index
-  let yaml_of_t id = Yaml.Util.float (float_of_int id.index)
 end
 
 module Uri_hashtbl = Hashtbl.Make (Entity.Uri)
