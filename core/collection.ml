@@ -29,7 +29,7 @@ end
 
 module Uri_hashtbl = Hashtbl.Make (Entity.Uri)
 
-type edges = Id.t Dynarray.t
+type edges = int Dynarray.t
 
 type t = {
   tag : unit ref;
@@ -94,8 +94,9 @@ let add_edge c from target =
   check_tag c from;
   check_tag c target;
   let from_edges = Dynarray.get c.edges (Id.to_int from) in
-  if not (Dynarray.exists (Id.equal target) from_edges) then
-    Dynarray.add_last from_edges target
+  let target_index = Id.to_int target in
+  if not (Dynarray.exists (Int.equal target_index) from_edges) then
+    Dynarray.add_last from_edges target_index
 
 let add_edges c from target =
   add_edge c from target;
@@ -107,7 +108,7 @@ let entity c id =
 
 let edges c id =
   check_tag c id;
-  Dynarray.(to_array (get c.edges (Id.to_int id)))
+  Dynarray.(to_array (map (Id.make c.tag) (get c.edges (Id.to_int id))))
 
 let entities c = Dynarray.to_array c.nodes
 
@@ -123,9 +124,7 @@ let t_of_yaml value =
     let i = get_field ~key:"id" pairs |> int_of_float_exn in
     let entity = get_field ~key:"entity" pairs |> Entity.t_of_yaml in
     let edges =
-      get_field ~key:"edges" pairs
-      |> map_array_exn (fun v -> Id.make coll.tag (int_of_float_exn v))
-      |> Dynarray.of_list
+      get_field ~key:"edges" pairs |> map_array_exn int_of_float_exn |> Dynarray.of_list
     in
     let uri = Entity.uri entity in
     Dynarray.set coll.nodes i entity;
@@ -139,9 +138,7 @@ let yaml_of_t c =
   let f i entity =
     assert (Option.equal Id.equal (id c (Entity.uri entity)) (Some (Id.make c.tag i)));
     let entity_yaml = Entity.yaml_of_t entity in
-    let edges_yaml =
-      Dynarray.(to_list (map (fun e -> `Float (float_of_int (Id.to_int e))) (get c.edges i)))
-    in
+    let edges_yaml = Dynarray.(to_list (map (fun e -> `Float (float_of_int e)) (get c.edges i))) in
     `O [ ("id", `Float (float_of_int i)); ("entity", entity_yaml); ("edges", `A edges_yaml) ]
   in
   let items = Dynarray.(to_list (mapi f c.nodes)) in
