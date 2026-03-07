@@ -15,42 +15,41 @@ module Version = struct
   let yaml_of_t version = Yaml.Util.string (Semver.to_string version)
 end
 
-module Id = struct
-  type t = {
-    tag : unit ref;
-    index : int;
-  }
-
-  let make tag index = { tag; index }
-  let to_int id = id.index
-  let equal a b = a.tag == b.tag && Int.equal a.index b.index
-  let pp fmt id = Fmt.int fmt id.index
-end
-
 module Uri_hashtbl = Hashtbl.Make (Entity.Uri)
 
 type edges = int Dynarray.t
 
-type t = {
-  tag : unit ref;
+type collection = {
   nodes : Entity.t Dynarray.t;
   edges : edges Dynarray.t;
   uris : int Uri_hashtbl.t;
 }
 
+module Id = struct
+  type t = {
+    owner : collection;
+    index : int;
+  }
+
+  let make owner index = { owner; index }
+  let to_int id = id.index
+  let equal a b = a.owner == b.owner && Int.equal a.index b.index
+  let pp fmt id = Fmt.int fmt id.index
+end
+
+type t = collection
+
 let create () =
-  let tag = ref () in
   let nodes = Dynarray.create () in
   let edges = Dynarray.create () in
   let uris = Uri_hashtbl.create 1024 in
-  { tag; nodes; edges; uris }
+  { nodes; edges; uris }
 
 let make n =
-  let tag = ref () in
   let nodes = Dynarray.make n Entity.empty in
   let edges = Dynarray.make n (Dynarray.create ()) in
   let uris = Uri_hashtbl.create n in
-  { tag; nodes; edges; uris }
+  { nodes; edges; uris }
 
 let length c =
   let ret = Dynarray.length c.nodes in
@@ -62,12 +61,12 @@ let is_empty c =
   assert (ret = Dynarray.is_empty c.edges);
   ret
 
-let id c uri = Option.map (Id.make c.tag) (Uri_hashtbl.find_opt c.uris uri)
+let id c uri = Option.map (Id.make c) (Uri_hashtbl.find_opt c.uris uri)
 let contains c uri = Option.is_some (id c uri)
 
 let insert c e =
   let index = length c in
-  let id = Id.make c.tag index in
+  let id = Id.make c index in
   Dynarray.add_last c.nodes e;
   Dynarray.add_last c.edges (Dynarray.create ());
   let uri = Entity.uri (Dynarray.get c.nodes index) in
@@ -87,7 +86,7 @@ let upsert c e =
       id
 
 let check_tag c id =
-  if not (id.Id.tag == c.tag) then
+  if not (id.Id.owner == c) then
     invalid_arg "Collection: id belongs to a different collection"
 
 let add_edge c from target =
@@ -108,7 +107,7 @@ let entity c id =
 
 let edges c id =
   check_tag c id;
-  Dynarray.(to_array (map (Id.make c.tag) (get c.edges (Id.to_int id))))
+  Dynarray.(to_array (map (Id.make c) (get c.edges (Id.to_int id))))
 
 let entities c = Dynarray.to_array c.nodes
 
@@ -136,7 +135,7 @@ let t_of_yaml value =
 
 let yaml_of_t c =
   let f i entity =
-    assert (Option.equal Id.equal (id c (Entity.uri entity)) (Some (Id.make c.tag i)));
+    assert (Option.equal Id.equal (id c (Entity.uri entity)) (Some (Id.make c i)));
     let entity_yaml = Entity.yaml_of_t entity in
     let edges_yaml = Dynarray.(to_list (map (fun e -> `Float (float_of_int e)) (get c.edges i))) in
     `O [ ("id", `Float (float_of_int i)); ("entity", entity_yaml); ("edges", `A edges_yaml) ]
