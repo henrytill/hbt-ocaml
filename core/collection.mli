@@ -3,9 +3,7 @@ module Id : sig
 
   val to_int : t -> int
   val equal : t -> t -> bool
-  val compare : t -> t -> int
   val pp : Format.formatter -> t -> unit
-  val t_of_yaml : Yaml.value -> t
   val yaml_of_t : t -> Yaml.value
 end
 

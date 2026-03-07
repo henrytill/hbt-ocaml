@@ -133,6 +133,29 @@ let test_collection_add_edge () =
   Alcotest.(check (array testable_id)) same_edges edges_a (Collection.edges coll id_a);
   Alcotest.(check (array testable_id)) same_edges edges_b (Collection.edges coll id_b)
 
+let test_collection_id_protection () =
+  let open Entity in
+  let uri_a = Uri.of_string "https://foo.org" in
+  let uri_b = Uri.of_string "https://bar.org" in
+  let created = Time.of_string "September 2, 2024" in
+  let coll_a = Collection.create () in
+  let coll_b = Collection.create () in
+  let id_a = Collection.insert coll_a (Entity.make uri_a created ()) in
+  let id_b = Collection.insert coll_b (Entity.make uri_b created ()) in
+  Alcotest.(check (neg (module Collection.Id)))
+    "ids from different collections are unequal"
+    id_a
+    id_b;
+  let foreign_id_err = Invalid_argument "Collection: id belongs to a different collection" in
+  Alcotest.check_raises "entity rejects foreign id" foreign_id_err (fun () ->
+      ignore (Collection.entity coll_b id_a));
+  Alcotest.check_raises "edges rejects foreign id" foreign_id_err (fun () ->
+      ignore (Collection.edges coll_b id_a));
+  Alcotest.check_raises "add_edge rejects foreign from" foreign_id_err (fun () ->
+      Collection.add_edge coll_b id_a id_b);
+  Alcotest.check_raises "add_edge rejects foreign target" foreign_id_err (fun () ->
+      Collection.add_edge coll_b id_b id_a)
+
 let tests =
   let open Alcotest in
   [
@@ -147,6 +170,7 @@ let tests =
       [
         test_case "insert" `Quick test_collection_upsert;
         test_case "add_edge" `Quick test_collection_add_edge;
+        test_case "id protection" `Quick test_collection_id_protection;
       ] );
   ]
 
