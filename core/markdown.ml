@@ -145,5 +145,4 @@ let parse input =
   let doc = Doc.of_string input in
   let final, _state = Folder.fold_doc folder (initial, state) doc in
   assert (initial == final);
-  assert (initial = final);
   final
