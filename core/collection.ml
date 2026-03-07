@@ -35,7 +35,7 @@ type t = {
   tag : unit ref;
   nodes : Entity.t Dynarray.t;
   edges : edges Dynarray.t;
-  uris : Id.t Uri_hashtbl.t;
+  uris : int Uri_hashtbl.t;
 }
 
 let create () =
@@ -62,15 +62,16 @@ let is_empty c =
   assert (ret = Dynarray.is_empty c.edges);
   ret
 
-let id c uri = Uri_hashtbl.find_opt c.uris uri
+let id c uri = Option.map (Id.make c.tag) (Uri_hashtbl.find_opt c.uris uri)
 let contains c uri = Option.is_some (id c uri)
 
 let insert c e =
-  let id = Id.make c.tag (length c) in
+  let index = length c in
+  let id = Id.make c.tag index in
   Dynarray.add_last c.nodes e;
   Dynarray.add_last c.edges (Dynarray.create ());
-  let uri = Entity.uri (Dynarray.get c.nodes (Id.to_int id)) in
-  Uri_hashtbl.add c.uris uri id;
+  let uri = Entity.uri (Dynarray.get c.nodes index) in
+  Uri_hashtbl.add c.uris uri index;
   id
 
 let upsert c e =
@@ -129,7 +130,7 @@ let t_of_yaml value =
     let uri = Entity.uri entity in
     Dynarray.set coll.nodes i entity;
     Dynarray.set coll.edges i edges;
-    Uri_hashtbl.add coll.uris uri (Id.make coll.tag i)
+    Uri_hashtbl.add coll.uris uri i
   in
   get_field ~key:"value" value |> iter_array_exn process_item;
   coll
