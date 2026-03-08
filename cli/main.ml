@@ -30,9 +30,9 @@ let read_file file =
   let finally () = close_in ic in
   Fun.protect ~finally (fun () -> really_input_string ic (in_channel_length ic))
 
-let update (coll : Collection.t) (args : Args.t) : unit =
+let update (coll : Collection.t) (args : Args.t) : Collection.t =
   match args.mappings_file with
-  | None -> ()
+  | None -> coll
   | Some file -> read_file file |> Yaml.of_string_exn |> Collection.update_labels coll
 
 let write (content : string) : string option -> unit = function
@@ -75,7 +75,7 @@ let process_file (args : Args.t) (file : string) : unit =
   let content = read_file file in
   let updated_args = { args with input_format = Some input_format } in
   let coll = Data.parse input_format content in
-  let () = update coll updated_args in
+  let coll = update coll updated_args in
   print file updated_args coll
 
 let from_format =

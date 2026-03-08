@@ -92,8 +92,8 @@ let test_collection_upsert () =
   let a = Entity.make uri created_a ~labels:labels_foo () in
   let b = Entity.make uri created_b ~maybe_name:(Some name) ~labels:labels_bar () in
   let coll = Collection.create () in
-  let id_a = Collection.upsert coll a in
-  let id_b = Collection.upsert coll b in
+  let coll, id_a = Collection.upsert coll a in
+  let coll, id_b = Collection.upsert coll b in
   let expected_length = 1 in
   Alcotest.(check int) same_length expected_length (Collection.length coll);
   Alcotest.(check (module Collection.Id)) "same id" id_a id_b;
@@ -117,19 +117,19 @@ let test_collection_add_edge () =
   let a = Entity.make uri_a created_a () in
   let b = Entity.make uri_b created_b () in
   let coll = Collection.create () in
-  let id_a = Collection.upsert coll a in
-  let id_b = Collection.upsert coll b in
+  let coll, id_a = Collection.upsert coll a in
+  let coll, id_b = Collection.upsert coll b in
   let expected_length = 2 in
   Alcotest.(check int) same_length expected_length (Collection.length coll);
-  let () = Collection.add_edge coll id_a id_b in
-  let () = Collection.add_edge coll id_b id_a in
+  let coll = Collection.add_edge coll id_a id_b in
+  let coll = Collection.add_edge coll id_b id_a in
   Alcotest.(check (neg testable_id)) "different id" id_a id_b;
   let edges_a = [| id_b |] in
   let edges_b = [| id_a |] in
   Alcotest.(check (array testable_id)) same_edges edges_a (Collection.edges coll id_a);
   Alcotest.(check (array testable_id)) same_edges edges_b (Collection.edges coll id_b);
-  let () = Collection.add_edge coll id_a id_b in
-  let () = Collection.add_edge coll id_b id_a in
+  let coll = Collection.add_edge coll id_a id_b in
+  let coll = Collection.add_edge coll id_b id_a in
   Alcotest.(check (array testable_id)) same_edges edges_a (Collection.edges coll id_a);
   Alcotest.(check (array testable_id)) same_edges edges_b (Collection.edges coll id_b)
 
@@ -140,8 +140,8 @@ let test_collection_id_protection () =
   let created = Time.of_string "September 2, 2024" in
   let coll_a = Collection.create () in
   let coll_b = Collection.create () in
-  let id_a = Collection.insert coll_a (Entity.make uri_a created ()) in
-  let id_b = Collection.insert coll_b (Entity.make uri_b created ()) in
+  let _coll_a, id_a = Collection.insert coll_a (Entity.make uri_a created ()) in
+  let _coll_b, id_b = Collection.insert coll_b (Entity.make uri_b created ()) in
   Alcotest.(check (neg (module Collection.Id)))
     "ids from different collections are unequal"
     id_a
@@ -152,9 +152,9 @@ let test_collection_id_protection () =
   Alcotest.check_raises "edges rejects foreign id" foreign_id_err (fun () ->
       ignore (Collection.edges coll_b id_a));
   Alcotest.check_raises "add_edge rejects foreign from" foreign_id_err (fun () ->
-      Collection.add_edge coll_b id_a id_b);
+      ignore (Collection.add_edge coll_b id_a id_b));
   Alcotest.check_raises "add_edge rejects foreign target" foreign_id_err (fun () ->
-      Collection.add_edge coll_b id_b id_a)
+      ignore (Collection.add_edge coll_b id_b id_a))
 
 let tests =
   let open Alcotest in

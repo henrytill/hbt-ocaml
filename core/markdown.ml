@@ -80,8 +80,12 @@ let block m ((c, st) : Collection.t * Fold_state.t) = function
 
 let save_entity c st =
   let entity = Option.get (Fold_state.to_entity st) in
-  let id = Collection.upsert c entity in
-  Option.iter (fun parent -> Collection.add_edges c parent id) (List_ext.hd_opt st.parents);
+  let c, id = Collection.upsert c entity in
+  let c =
+    match List_ext.hd_opt st.parents with
+    | None -> c
+    | Some parent -> Collection.add_edges c parent id
+  in
   let st = { st with uri = None; name = None; maybe_parent = Some id } in
   Folder.ret (c, st)
 
@@ -144,5 +148,4 @@ let parse input =
   let state = Fold_state.empty in
   let doc = Doc.of_string input in
   let final, _state = Folder.fold_doc folder (initial, state) doc in
-  assert (initial == final);
   final

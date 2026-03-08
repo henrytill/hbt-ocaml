@@ -28,6 +28,7 @@
   markup
   mustache
   semver
+  sek
   str
   unix
   uri

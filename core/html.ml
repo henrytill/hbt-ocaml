@@ -26,90 +26,103 @@ end
 
 let mk_labels acc s = Entity.(Label_set.add (Label.of_string s) acc)
 
-let parse content =
-  let coll = Collection.create () in
-  let maybe_description = ref None in
-  let maybe_extended = ref None in
-  let attributes = ref Attrs.empty in
-  let folder_stack = Stack.create () in
+module Text = struct
+  type t =
+    | Folder_name
+    | Bookmark_description
+    | Extended_description
+    | Nothing
+end
 
-  let module Text = struct
-    type t =
-      | Folder_name
-      | Bookmark_description
-      | Extended_description
-      | Nothing
-  end in
-  let waiting_for = ref Text.Nothing in
+type state = {
+  coll : Collection.t;
+  maybe_description : string option;
+  maybe_extended : string option;
+  attributes : Attrs.t;
+  folder_stack : string list;
+  elt_stack : Elt.t list;
+  waiting_for : Text.t;
+}
 
-  let add_pending () =
-    let entity =
-      let open Entity in
-      let some s = Name_set.singleton (Name.of_string s) in
-      let names = Option.fold ~none:Name_set.empty ~some !maybe_description in
-      let folder_labels = Stack.fold mk_labels Entity.Label_set.empty folder_stack in
-      let extended = Option.to_list (Option.map Extended.of_string !maybe_extended) in
-      Html.entity_of_attrs !attributes names folder_labels extended
-    in
-    ignore (Collection.upsert coll entity);
-    attributes := Attrs.empty;
-    maybe_description := None;
-    maybe_extended := None
+let add_pending st =
+  let entity =
+    let open Entity in
+    let some s = Name_set.singleton (Name.of_string s) in
+    let names = Option.fold ~none:Name_set.empty ~some st.maybe_description in
+    let folder_labels = List.fold_left mk_labels Entity.Label_set.empty st.folder_stack in
+    let extended = Option.to_list (Option.map Extended.of_string st.maybe_extended) in
+    Html.entity_of_attrs st.attributes names folder_labels extended
   in
+  let coll, _ = Collection.upsert st.coll entity in
+  { st with coll; attributes = Attrs.empty; maybe_description = None; maybe_extended = None }
 
+let step st signal =
+  match signal with
+  | `Start_element ((_, name), _) when Elt.(equals (of_string name) H3) ->
+      { st with elt_stack = Elt.H3 :: st.elt_stack; waiting_for = Folder_name }
+  | `Start_element ((_, name), _) when Elt.(equals (of_string name) Dt) ->
+      let st = { st with elt_stack = Elt.Dt :: st.elt_stack } in
+      if Attrs.is_empty st.attributes then st else add_pending st
+  | `Start_element ((_, name), attrs) when Elt.(equals (of_string name) A) ->
+      {
+        st with
+        elt_stack = Elt.A :: st.elt_stack;
+        attributes = attrs;
+        waiting_for = Bookmark_description;
+      }
+  | `Start_element ((_, name), _) when Elt.(equals (of_string name) Dd) ->
+      let waiting_for =
+        if Attrs.is_empty st.attributes then Text.Nothing else Text.Extended_description
+      in
+      { st with elt_stack = Elt.Dd :: st.elt_stack; waiting_for }
+  | `Start_element ((_, name), _) -> { st with elt_stack = Elt.of_string name :: st.elt_stack }
+  | `Text xs -> begin
+      match st.waiting_for with
+      | Folder_name ->
+          let folder_name = String.(trim (concat empty xs)) in
+          { st with folder_stack = folder_name :: st.folder_stack; waiting_for = Nothing }
+      | Bookmark_description ->
+          let description = String.(trim (concat empty xs)) in
+          { st with maybe_description = Some description; waiting_for = Nothing }
+      | Extended_description ->
+          let extended = String.(trim (concat empty xs)) in
+          let st = { st with maybe_extended = Some extended; waiting_for = Nothing } in
+          if Attrs.is_empty st.attributes then st else add_pending st
+      | Nothing -> st
+    end
+  | `End_element -> begin
+      match st.elt_stack with
+      | Elt.Dl :: rest ->
+          let st = if Attrs.is_empty st.attributes then st else add_pending st in
+          let folder_stack =
+            match st.folder_stack with
+            | _ :: tl -> tl
+            | [] -> []
+          in
+          { st with elt_stack = rest; folder_stack }
+      | _ :: rest -> { st with elt_stack = rest }
+      | [] -> st
+    end
+  | _ -> st
+
+let parse content =
   let stream = Markup.string content in
   let html = Markup.parse_html stream in
   let signals = Markup.signals html in
-
-  let elt_stack = Stack.create () in
-  let continue = ref true in
-
-  while !continue do
-    match Markup.next signals with
-    | None ->
-        assert (Attrs.is_empty !attributes);
-        continue := false
-    | Some (`Start_element ((_, name), _)) when Elt.(equals (of_string name) H3) ->
-        Stack.push Elt.H3 elt_stack;
-        waiting_for := Folder_name
-    | Some (`Start_element ((_, name), _)) when Elt.(equals (of_string name) Dt) ->
-        Stack.push Elt.Dt elt_stack;
-        unless (Attrs.is_empty !attributes) add_pending
-    | Some (`Start_element ((_, name), attrs)) when Elt.(equals (of_string name) A) ->
-        Stack.push Elt.A elt_stack;
-        attributes := attrs;
-        waiting_for := Bookmark_description
-    | Some (`Start_element ((_, name), _)) when Elt.(equals (of_string name) Dd) ->
-        Stack.push Elt.Dd elt_stack;
-        unless (Attrs.is_empty !attributes) (fun () -> waiting_for := Extended_description)
-    | Some (`Start_element ((_, name), _)) -> Stack.push (Elt.of_string name) elt_stack
-    | Some (`Text xs) -> begin
-        match !waiting_for with
-        | Folder_name ->
-            let folder_name = String.(trim (concat empty xs)) in
-            Stack.push folder_name folder_stack;
-            waiting_for := Nothing
-        | Bookmark_description ->
-            let description = String.(trim (concat empty xs)) in
-            maybe_description := Some description;
-            waiting_for := Nothing
-        | Extended_description ->
-            let extended = String.(trim (concat empty xs)) in
-            maybe_extended := Some extended;
-            unless (Attrs.is_empty !attributes) add_pending;
-            waiting_for := Nothing
-        | Nothing -> ()
-      end
-    | Some `End_element ->
-        let maybe_head = Stack.pop_opt elt_stack in
-        if maybe_head = Some Elt.Dl then begin
-          unless (Attrs.is_empty !attributes) add_pending;
-          ignore (Stack.pop_opt folder_stack)
-        end
-    | Some _ -> ()
-  done;
-
-  coll
+  let init =
+    {
+      coll = Collection.create ();
+      maybe_description = None;
+      maybe_extended = None;
+      attributes = Attrs.empty;
+      folder_stack = [];
+      elt_stack = [];
+      waiting_for = Text.Nothing;
+    }
+  in
+  let final = Markup.fold step init signals in
+  assert (Attrs.is_empty final.attributes);
+  final.coll
 
 module Template_entity = struct
   open Prelude
