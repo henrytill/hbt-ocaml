@@ -32,7 +32,6 @@ module Id = struct
   }
 
   let make owner index = { owner; index }
-  let to_int id = id.index
   let equal a b = a.owner == b.owner && Int.equal a.index b.index
   let pp fmt id = Fmt.int fmt id.index
 end
@@ -77,11 +76,11 @@ let upsert c e =
   match id c (Entity.uri e) with
   | None -> insert c e
   | Some id ->
-      let existing = Dynarray.get c.nodes (Id.to_int id) in
+      let existing = Dynarray.get c.nodes id.index in
       let updated = Entity.absorb e existing in
       let () =
         if not (Entity.equal updated existing) then
-          Dynarray.(set c.nodes (Id.to_int id) updated)
+          Dynarray.(set c.nodes id.index updated)
       in
       id
 
@@ -92,8 +91,8 @@ let check_id c Id.{ owner; _ } =
 let add_edge c from target =
   check_id c from;
   check_id c target;
-  let from_edges = Dynarray.get c.edges (Id.to_int from) in
-  let target_index = Id.to_int target in
+  let from_edges = Dynarray.get c.edges from.index in
+  let target_index = target.index in
   if not (Dynarray.exists (Int.equal target_index) from_edges) then
     Dynarray.add_last from_edges target_index
 
@@ -103,11 +102,11 @@ let add_edges c from target =
 
 let entity c id =
   check_id c id;
-  Dynarray.get c.nodes (Id.to_int id)
+  Dynarray.get c.nodes id.index
 
 let edges c id =
   check_id c id;
-  Dynarray.(to_array (map (Id.make c) (get c.edges (Id.to_int id))))
+  Dynarray.(to_array (map (Id.make c) (get c.edges id.index)))
 
 let entities c = Dynarray.to_array c.nodes
 

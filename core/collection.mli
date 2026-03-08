@@ -1,7 +1,6 @@
 module Id : sig
   type t
 
-  val to_int : t -> int
   val equal : t -> t -> bool
   val pp : Format.formatter -> t -> unit
 end
