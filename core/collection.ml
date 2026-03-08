@@ -65,12 +65,11 @@ let contains c uri = Option.is_some (id c uri)
 
 let insert c e =
   let index = length c in
-  let id = Id.make c index in
   Dynarray.add_last c.nodes e;
   Dynarray.add_last c.edges (Dynarray.create ());
   let uri = Entity.uri (Dynarray.get c.nodes index) in
   Uri_hashtbl.add c.uris uri index;
-  id
+  Id.make c index
 
 let upsert c e =
   match id c (Entity.uri e) with
