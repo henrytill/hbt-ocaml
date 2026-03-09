@@ -34,6 +34,23 @@
         "type": "github"
       }
     },
+    "markup-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1773017406,
+        "narHash": "sha256-0LwuKdBwBkRKbz04F4UQqa9NEyBodR30eoXVZRt3nQk=",
+        "owner": "henrytill",
+        "repo": "markup.ml",
+        "rev": "a92acb2921e480f00c33fc62116279df1c9ccdd1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "henrytill",
+        "ref": "claude-performance-improvements",
+        "repo": "markup.ml",
+        "type": "github"
+      }
+    },
     "mirage-opam-overlays": {
       "flake": false,
       "locked": {
@@ -154,6 +171,7 @@
           "opam-nix",
           "flake-utils"
         ],
+        "markup-src": "markup-src",
         "nixpkgs": "nixpkgs",
         "opam-nix": "opam-nix",
         "opam-repository": "opam-repository"

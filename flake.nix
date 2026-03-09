@@ -14,6 +14,10 @@
     flake-utils = {
       follows = "opam-nix/flake-utils";
     };
+    markup-src = {
+      url = "github:henrytill/markup.ml/claude-performance-improvements";
+      flake = false;
+    };
   };
 
   outputs =
@@ -23,6 +27,7 @@
       opam-nix,
       nixpkgs,
       opam-repository,
+      markup-src,
       ...
     }@inputs:
     flake-utils.lib.eachDefaultSystem (
@@ -47,6 +52,9 @@
               '';
             }
           );
+          markup = prev.markup.overrideAttrs (_: {
+            src = markup-src;
+          });
         };
 
         devPackagesQuery = {
