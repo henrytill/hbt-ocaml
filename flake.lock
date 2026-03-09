@@ -37,11 +37,11 @@
     "markup-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1773017406,
-        "narHash": "sha256-0LwuKdBwBkRKbz04F4UQqa9NEyBodR30eoXVZRt3nQk=",
+        "lastModified": 1773019085,
+        "narHash": "sha256-KwCm/CSLUcA4oC5f+qeLD4opMIru6SfgUOyhx+nEUgk=",
         "owner": "henrytill",
         "repo": "markup.ml",
-        "rev": "a92acb2921e480f00c33fc62116279df1c9ccdd1",
+        "rev": "b6685158aef1684c0cac309ae56d2eff15757648",
         "type": "github"
       },
       "original": {
