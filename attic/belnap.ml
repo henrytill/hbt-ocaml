@@ -30,17 +30,14 @@ let to_bool a =
 let of_bits x = x
 let to_bits x = x
 
-let pp fmt s =
-  Fmt.string
-    fmt
-    begin
-      match to_view s with
-      | Unknown -> "Unknown"
-      | True -> "True"
-      | False -> "False"
-      | Both -> "Both"
-    end
+let to_string a =
+  match to_view a with
+  | Unknown -> "Unknown"
+  | True -> "True"
+  | False -> "False"
+  | Both -> "Both"
 
+let pp fmt a = Fmt.string fmt (to_string a)
 let equal : t -> t -> bool = Int.equal
 let leq_truth a b = a land 1 <= b land 1 && a lsr 1 >= b lsr 1
 let leq_knowledge a b = a land b = a
