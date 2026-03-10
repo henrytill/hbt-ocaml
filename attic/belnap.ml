@@ -27,8 +27,8 @@ let to_bool a =
   | True -> Some true
   | False -> Some false
 
-let of_bits x = x
-let to_bits x = x
+let of_bits a = a
+let to_bits a = a
 
 let to_string a =
   match to_view a with
