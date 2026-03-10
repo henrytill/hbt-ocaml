@@ -11,6 +11,8 @@ module Uri : sig
   val hash : t -> int
   val t_of_yaml : Yaml.value -> t
   val yaml_of_t : t -> Yaml.value
+  val void : t
+  val tomb : t
 end
 
 module Name : sig

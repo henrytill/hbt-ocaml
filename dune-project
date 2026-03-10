@@ -93,6 +93,8 @@
    (and
     :with-test
     (>= 0.7.3)))
+  (hachis
+   (>= 20240918))
   (markup
    (>= 1.0.3))
   (mustache

@@ -25,6 +25,7 @@
   hbt-pinboard
   cmarkit
   fmt
+  hachis
   markup
   mustache
   semver

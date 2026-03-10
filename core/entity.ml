@@ -19,6 +19,8 @@ module Uri = struct
 
   let t_of_yaml value = of_string (Yaml.Util.to_string_exn value)
   let yaml_of_t uri = Yaml.Util.string (to_string uri)
+  let void = empty
+  let tomb = Uri.of_string "https://tombstone.invalid"
 end
 
 module Name = struct

@@ -15,14 +15,18 @@ module Version = struct
   let yaml_of_t version = Yaml.Util.string (Semver.to_string version)
 end
 
-module Uri_hashtbl = Hashtbl.Make (Entity.Uri)
+module Uri_hashtbl =
+  Hachis.HashMap.Make (Entity.Uri) (Entity.Uri)
+    (struct
+      type t = int
+    end)
 
 type edges = int Dynarray.t
 
 type collection = {
   nodes : Entity.t Dynarray.t;
   edges : edges Dynarray.t;
-  uris : int Uri_hashtbl.t;
+  uris : Uri_hashtbl.t;
 }
 
 module Id = struct
@@ -41,13 +45,13 @@ type t = collection
 let create () =
   let nodes = Dynarray.create () in
   let edges = Dynarray.create () in
-  let uris = Uri_hashtbl.create 1024 in
+  let uris = Uri_hashtbl.create () in
   { nodes; edges; uris }
 
 let make n =
   let nodes = Dynarray.make n Entity.empty in
   let edges = Dynarray.make n (Dynarray.create ()) in
-  let uris = Uri_hashtbl.create n in
+  let uris = Uri_hashtbl.create () in
   { nodes; edges; uris }
 
 let length c =
@@ -60,7 +64,7 @@ let is_empty c =
   assert (ret = Dynarray.is_empty c.edges);
   ret
 
-let id c uri = Option.map (Id.make c) (Uri_hashtbl.find_opt c.uris uri)
+let id c uri = try Some (Id.make c (Uri_hashtbl.find c.uris uri)) with Not_found -> None
 let contains c uri = Option.is_some (id c uri)
 
 let insert c e =
@@ -68,7 +72,7 @@ let insert c e =
   Dynarray.add_last c.nodes e;
   Dynarray.add_last c.edges (Dynarray.create ());
   let uri = Entity.uri (Dynarray.get c.nodes index) in
-  Uri_hashtbl.add c.uris uri index;
+  ignore (Uri_hashtbl.replace c.uris uri index);
   Id.make c index
 
 let upsert c e =
@@ -126,7 +130,7 @@ let t_of_yaml value =
     let uri = Entity.uri entity in
     Dynarray.set coll.nodes i entity;
     Dynarray.set coll.edges i edges;
-    Uri_hashtbl.add coll.uris uri i
+    ignore (Uri_hashtbl.replace coll.uris uri i)
   in
   get_field ~key:"value" value |> iter_array_exn process_item;
   coll
