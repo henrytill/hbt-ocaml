@@ -32,6 +32,29 @@
 
         version = "0.1.0-${self.shortRev or self.dirtyShortRev}";
 
+        flambdaPackages = [
+          "hbt-prelude"
+          "hbt-attic"
+          "hbt-pinboard"
+          "hbt-core"
+          "hbt-cli"
+        ];
+
+        applyFlambda =
+          final: prev:
+          builtins.listToAttrs (
+            map (name: {
+              inherit name;
+              value = prev.${name}.overrideAttrs (_: {
+                buildPhase = ''
+                  runHook preBuild
+                  dune build -p ${name} --profile flambda -j $NIX_BUILD_CORES
+                  runHook postBuild
+                '';
+              });
+            }) flambdaPackages
+          );
+
         applyOverrides = pkgs: isStatic: final: prev: {
           hbt-core = prev.hbt-core.overrideAttrs (as: {
             CPP_FLAGS = ''-DVERSION="${version}"'';
@@ -67,7 +90,9 @@
               in
               if isStatic then ps.pkgsMusl else ps;
             query = devPackagesQuery // {
-              ocaml-base-compiler = "5.3.0";
+              ocaml-compiler = "5.3.0";
+              ocaml-variants = "5.3.0+options";
+              ocaml-option-flambda = "*";
             };
             scope = on.buildOpamProject' {
               inherit pkgs;
@@ -76,7 +101,7 @@
                 with-test = true;
               };
             } self query;
-            overlay = applyOverrides pkgs isStatic;
+            overlay = pkgs.lib.composeExtensions applyFlambda (applyOverrides pkgs isStatic);
           in
           scope.overrideScope overlay;
 

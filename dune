@@ -2,6 +2,9 @@
  (static
   (link_flags
    (:standard -ccopt -static)))
+ (flambda
+  (ocamlopt_flags
+   (:standard -O2)))
  (ubsan
   (c_flags
    (:standard -O0 -fno-wrapv -fsanitize=undefined -fno-sanitize-recover=all))
