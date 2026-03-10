@@ -37,16 +37,16 @@
     "markup-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1773112511,
-        "narHash": "sha256-481Uz7kz0YKzqrFQfDT7nM+PPecAlTcKc3rRmrAmOnU=",
+        "lastModified": 1773130325,
+        "narHash": "sha256-ZbwiXWKbGFV+LtXpFM2+t39H2e8dF3UwLeHwKrojS1Y=",
         "owner": "henrytill",
         "repo": "markup.ml",
-        "rev": "5d3945c7876a4adcd0dd16df521d478f1812ad6f",
+        "rev": "402374be3982c3c8f9b7d3893014821f68aeaf13",
         "type": "github"
       },
       "original": {
         "owner": "henrytill",
-        "ref": "claude-performance-improvements",
+        "ref": "direct-rewrite",
         "repo": "markup.ml",
         "type": "github"
       }

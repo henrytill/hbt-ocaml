@@ -15,7 +15,7 @@
       follows = "opam-nix/flake-utils";
     };
     markup-src = {
-      url = "github:henrytill/markup.ml/claude-performance-improvements";
+      url = "github:henrytill/markup.ml/direct-rewrite";
       flake = false;
     };
   };
