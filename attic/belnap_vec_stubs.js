@@ -278,9 +278,9 @@ function bv_equal(a, b) {
 
 //Provides: bv_init_from_list
 function bv_init_from_list(bv, list) {
-    var i = 0,
-        pos = 0n,
-        neg = 0n;
+    var i = 0;
+    var pos = 0n;
+    var neg = 0n;
     // 0 = Val_emptylist in jsoo
     while (list !== 0) {
         // Field(list, 0): head
@@ -306,8 +306,8 @@ function bv_init_from_list(bv, list) {
 function bv_init_from_array(bv, arr) {
     // Wosize_val: arr = [tag, v0, …]
     var width = arr.length - 1;
-    var pos = 0n,
-        neg = 0n;
+    var pos = 0n;
+    var neg = 0n;
     for (var i = 0; i < width; i++) {
         // Field(arr, i)
         var raw = arr[i + 1];
