@@ -33,6 +33,7 @@
         version = "0.1.0-${self.shortRev or self.dirtyShortRev}";
 
         applyOverrides = pkgs: isStatic: final: prev: {
+          conf-npm = pkgs.nodejs;
           hbt-core = prev.hbt-core.overrideAttrs (as: {
             CPP_FLAGS = ''-DVERSION="${version}"'';
             nativeBuildInputs = as.nativeBuildInputs ++ [ pkgs.tzdata ];
