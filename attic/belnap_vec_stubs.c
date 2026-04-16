@@ -142,8 +142,9 @@ CAMLprim value bv_fill(value vbv, value vfrom, value vto, value vraw)
 
     for (int i = from; i < to_; i++)
     {
-        w[i * 2] = pos;
-        w[i * 2 + 1] = neg;
+        int const base = i * 2;
+        w[base] = pos;
+        w[base + 1] = neg;
     }
 
     CAMLreturn(Val_unit);
@@ -158,8 +159,9 @@ CAMLprim value bv_not(value src, value dst)
 
     for (int i = 0; i < nw; i++)
     {
-        d[i * 2] = s[i * 2 + 1];
-        d[i * 2 + 1] = s[i * 2];
+        int const base = i * 2;
+        d[base] = s[base + 1];
+        d[base + 1] = s[base];
     }
 
     CAMLreturn(Val_unit);
@@ -178,12 +180,13 @@ CAMLprim value bv_and(value va, value vb, value dst)
 
     for (int i = 0; i < nw; i++)
     {
-        uint64_t const ap = i < nwa ? a[i * 2] : 0;
-        uint64_t const an = i < nwa ? a[i * 2 + 1] : 0;
-        uint64_t const bp = i < nwb ? b[i * 2] : 0;
-        uint64_t const bn = i < nwb ? b[i * 2 + 1] : 0;
-        d[i * 2] = ap & bp;
-        d[i * 2 + 1] = an | bn;
+        int const base = i * 2;
+        uint64_t const ap = i < nwa ? a[base] : 0;
+        uint64_t const an = i < nwa ? a[base + 1] : 0;
+        uint64_t const bp = i < nwb ? b[base] : 0;
+        uint64_t const bn = i < nwb ? b[base + 1] : 0;
+        d[base] = ap & bp;
+        d[base + 1] = an | bn;
     }
 
     CAMLreturn(Val_unit);
@@ -202,12 +205,13 @@ CAMLprim value bv_or(value va, value vb, value dst)
 
     for (int i = 0; i < nw; i++)
     {
-        uint64_t const ap = i < nwa ? a[i * 2] : 0;
-        uint64_t const an = i < nwa ? a[i * 2 + 1] : 0;
-        uint64_t const bp = i < nwb ? b[i * 2] : 0;
-        uint64_t const bn = i < nwb ? b[i * 2 + 1] : 0;
-        d[i * 2] = ap | bp;
-        d[i * 2 + 1] = an & bn;
+        int const base = i * 2;
+        uint64_t const ap = i < nwa ? a[base] : 0;
+        uint64_t const an = i < nwa ? a[base + 1] : 0;
+        uint64_t const bp = i < nwb ? b[base] : 0;
+        uint64_t const bn = i < nwb ? b[base + 1] : 0;
+        d[base] = ap | bp;
+        d[base + 1] = an & bn;
     }
 
     CAMLreturn(Val_unit);
@@ -226,12 +230,13 @@ CAMLprim value bv_merge(value va, value vb, value dst)
 
     for (int i = 0; i < nw; i++)
     {
-        uint64_t const ap = i < nwa ? a[i * 2] : 0;
-        uint64_t const an = i < nwa ? a[i * 2 + 1] : 0;
-        uint64_t const bp = i < nwb ? b[i * 2] : 0;
-        uint64_t const bn = i < nwb ? b[i * 2 + 1] : 0;
-        d[i * 2] = ap | bp;
-        d[i * 2 + 1] = an | bn;
+        int const base = i * 2;
+        uint64_t const ap = i < nwa ? a[base] : 0;
+        uint64_t const an = i < nwa ? a[base + 1] : 0;
+        uint64_t const bp = i < nwb ? b[base] : 0;
+        uint64_t const bn = i < nwb ? b[base + 1] : 0;
+        d[base] = ap | bp;
+        d[base + 1] = an | bn;
     }
 
     CAMLreturn(Val_unit);
@@ -250,12 +255,13 @@ CAMLprim value bv_consensus(value va, value vb, value dst)
 
     for (int i = 0; i < nw; i++)
     {
-        uint64_t const ap = i < nwa ? a[i * 2] : 0;
-        uint64_t const an = i < nwa ? a[i * 2 + 1] : 0;
-        uint64_t const bp = i < nwb ? b[i * 2] : 0;
-        uint64_t const bn = i < nwb ? b[i * 2 + 1] : 0;
-        d[i * 2] = ap & bp;        /* pos plane: AND */
-        d[i * 2 + 1] = an & bn;   /* neg plane: AND */
+        int const base = i * 2;
+        uint64_t const ap = i < nwa ? a[base] : 0;
+        uint64_t const an = i < nwa ? a[base + 1] : 0;
+        uint64_t const bp = i < nwb ? b[base] : 0;
+        uint64_t const bn = i < nwb ? b[base + 1] : 0;
+        d[base] = ap & bp;     /* pos plane: AND */
+        d[base + 1] = an & bn; /* neg plane: AND */
     }
 
     CAMLreturn(Val_unit);
@@ -311,10 +317,11 @@ CAMLprim value bv_is_all_true(value vbv, value vwidth)
 
     for (int i = 0; i < nw; i++)
     {
+        int const base = i * 2;
         uint64_t const m = (i == nw - 1) ? tail_mask(width) : ALL_ONES;
-        if ((w[i * 2] & m) != m)
+        if ((w[base] & m) != m)
             CAMLreturn(Val_int(0)); /* not all pos set */
-        if ((w[i * 2 + 1] & m) != 0)
+        if ((w[base + 1] & m) != 0)
             CAMLreturn(Val_int(0)); /* some neg set */
     }
 
@@ -330,10 +337,11 @@ CAMLprim value bv_is_all_false(value vbv, value vwidth)
 
     for (int i = 0; i < nw; i++)
     {
+        int const base = i * 2;
         uint64_t const m = (i == nw - 1) ? tail_mask(width) : ALL_ONES;
-        if ((w[i * 2] & m) != 0)
+        if ((w[base] & m) != 0)
             CAMLreturn(Val_int(0)); /* some pos set */
-        if ((w[i * 2 + 1] & m) != m)
+        if ((w[base + 1] & m) != m)
             CAMLreturn(Val_int(0)); /* not all neg set */
     }
 

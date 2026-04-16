@@ -100,8 +100,9 @@ function bv_fill(bv, from, to, raw) {
     var pos = raw & 1 ? bv_all_ones : 0n;
     var neg = (raw >> 1) & 1 ? bv_all_ones : 0n;
     for (var i = from; i < to; i++) {
-        bv.words[i * 2] = pos;
-        bv.words[i * 2 + 1] = neg;
+        var base = i * 2;
+        bv.words[base] = pos;
+        bv.words[base + 1] = neg;
     }
     return 0;
 }
@@ -110,8 +111,9 @@ function bv_fill(bv, from, to, raw) {
 function bv_not(src, dst) {
     var nw = src.nwords;
     for (var i = 0; i < nw; i++) {
-        dst.words[i * 2] = src.words[i * 2 + 1];
-        dst.words[i * 2 + 1] = src.words[i * 2];
+        var base = i * 2;
+        dst.words[base] = src.words[base + 1];
+        dst.words[base + 1] = src.words[base];
     }
     return 0;
 }
@@ -120,12 +122,13 @@ function bv_not(src, dst) {
 function bv_and(a, b, dst) {
     var nw = a.nwords > b.nwords ? a.nwords : b.nwords;
     for (var i = 0; i < nw; i++) {
-        var ap = i < a.nwords ? a.words[i * 2] : 0n;
-        var an = i < a.nwords ? a.words[i * 2 + 1] : 0n;
-        var bp = i < b.nwords ? b.words[i * 2] : 0n;
-        var bn = i < b.nwords ? b.words[i * 2 + 1] : 0n;
-        dst.words[i * 2] = ap & bp;
-        dst.words[i * 2 + 1] = an | bn;
+        var base = i * 2;
+        var ap = i < a.nwords ? a.words[base] : 0n;
+        var an = i < a.nwords ? a.words[base + 1] : 0n;
+        var bp = i < b.nwords ? b.words[base] : 0n;
+        var bn = i < b.nwords ? b.words[base + 1] : 0n;
+        dst.words[base] = ap & bp;
+        dst.words[base + 1] = an | bn;
     }
     return 0;
 }
@@ -134,12 +137,13 @@ function bv_and(a, b, dst) {
 function bv_or(a, b, dst) {
     var nw = a.nwords > b.nwords ? a.nwords : b.nwords;
     for (var i = 0; i < nw; i++) {
-        var ap = i < a.nwords ? a.words[i * 2] : 0n;
-        var an = i < a.nwords ? a.words[i * 2 + 1] : 0n;
-        var bp = i < b.nwords ? b.words[i * 2] : 0n;
-        var bn = i < b.nwords ? b.words[i * 2 + 1] : 0n;
-        dst.words[i * 2] = ap | bp;
-        dst.words[i * 2 + 1] = an & bn;
+        var base = i * 2;
+        var ap = i < a.nwords ? a.words[base] : 0n;
+        var an = i < a.nwords ? a.words[base + 1] : 0n;
+        var bp = i < b.nwords ? b.words[base] : 0n;
+        var bn = i < b.nwords ? b.words[base + 1] : 0n;
+        dst.words[base] = ap | bp;
+        dst.words[base + 1] = an & bn;
     }
     return 0;
 }
@@ -148,12 +152,13 @@ function bv_or(a, b, dst) {
 function bv_merge(a, b, dst) {
     var nw = a.nwords > b.nwords ? a.nwords : b.nwords;
     for (var i = 0; i < nw; i++) {
-        var ap = i < a.nwords ? a.words[i * 2] : 0n;
-        var an = i < a.nwords ? a.words[i * 2 + 1] : 0n;
-        var bp = i < b.nwords ? b.words[i * 2] : 0n;
-        var bn = i < b.nwords ? b.words[i * 2 + 1] : 0n;
-        dst.words[i * 2] = ap | bp;
-        dst.words[i * 2 + 1] = an | bn;
+        var base = i * 2;
+        var ap = i < a.nwords ? a.words[base] : 0n;
+        var an = i < a.nwords ? a.words[base + 1] : 0n;
+        var bp = i < b.nwords ? b.words[base] : 0n;
+        var bn = i < b.nwords ? b.words[base + 1] : 0n;
+        dst.words[base] = ap | bp;
+        dst.words[base + 1] = an | bn;
     }
     return 0;
 }
@@ -162,12 +167,13 @@ function bv_merge(a, b, dst) {
 function bv_consensus(a, b, dst) {
     var nw = a.nwords > b.nwords ? a.nwords : b.nwords;
     for (var i = 0; i < nw; i++) {
-        var ap = i < a.nwords ? a.words[i * 2] : 0n;
-        var an = i < a.nwords ? a.words[i * 2 + 1] : 0n;
-        var bp = i < b.nwords ? b.words[i * 2] : 0n;
-        var bn = i < b.nwords ? b.words[i * 2 + 1] : 0n;
-        dst.words[i * 2] = ap & bp;
-        dst.words[i * 2 + 1] = an & bn;
+        var base = i * 2;
+        var ap = i < a.nwords ? a.words[base] : 0n;
+        var an = i < a.nwords ? a.words[base + 1] : 0n;
+        var bp = i < b.nwords ? b.words[base] : 0n;
+        var bn = i < b.nwords ? b.words[base + 1] : 0n;
+        dst.words[base] = ap & bp;
+        dst.words[base + 1] = an & bn;
     }
     return 0;
 }
@@ -204,12 +210,13 @@ function bv_is_all_determined(bv, width) {
 function bv_is_all_true(bv, width) {
     var nw = bv.nwords;
     for (var i = 0; i < nw; i++) {
+        var base = i * 2;
         var m = i === nw - 1 ? bv_tail_mask(width) : bv_all_ones;
-        if ((bv.words[i * 2] & m) !== m) {
+        if ((bv.words[base] & m) !== m) {
             // not all pos set
             return 0;
         }
-        if ((bv.words[i * 2 + 1] & m) !== 0n) {
+        if ((bv.words[base + 1] & m) !== 0n) {
             // some neg set
             return 0;
         }
@@ -222,12 +229,13 @@ function bv_is_all_true(bv, width) {
 function bv_is_all_false(bv, width) {
     var nw = bv.nwords;
     for (var i = 0; i < nw; i++) {
+        var base = i * 2;
         var m = i === nw - 1 ? bv_tail_mask(width) : bv_all_ones;
-        if ((bv.words[i * 2] & m) !== 0n) {
+        if ((bv.words[base] & m) !== 0n) {
             // some pos set
             return 0;
         }
-        if ((bv.words[i * 2 + 1] & m) !== m) {
+        if ((bv.words[base + 1] & m) !== m) {
             // not all neg set
             return 0;
         }
