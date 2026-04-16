@@ -1,3 +1,4 @@
+module Post = Pinboard.Post
 open Prelude
 
 let pp_print_set pp_item = Fmt.(braces (list ~sep:semi pp_item))
@@ -376,7 +377,6 @@ let absorb other existing =
 let map_labels f e = { e with labels = f e.labels }
 
 let of_post (p : Pinboard.Post.t) : t =
-  let module Post = Pinboard.Post in
   let uri = Uri.of_string (Post.href p) in
   let created_at = Time.of_string (Post.time p) in
   let maybe_name = Option.map Name.of_string (Post.description p) in

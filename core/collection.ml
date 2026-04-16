@@ -1,3 +1,4 @@
+module Post = Pinboard.Post
 module Yaml_ext = Prelude.Yaml_ext
 
 module Version = struct
@@ -162,8 +163,7 @@ let update_labels (c : t) (yaml : Yaml.value) : unit =
   let f label = Option.value ~default:label (Entity.Label_map.find_opt label mapping) in
   iter_labels (Entity.Label_set.map f) c
 
-let of_posts (ps : Pinboard.Post.t list) : t =
-  let module Post = Pinboard.Post in
+let of_posts (ps : Post.t list) : t =
   let coll = create () in
   let sorted = List.sort (fun a b -> String.compare (Post.time a) (Post.time b)) ps in
   List.iter (fun post -> ignore (insert coll (Entity.of_post post))) sorted;

@@ -66,16 +66,12 @@ module Yaml_parser = struct
     Collection.t_of_yaml yaml
 end
 
-let parse (format : input) : string -> Collection.t =
-  let (module Parser : PARSER) =
-    match format with
-    | Json -> (module Json_parser)
-    | Xml -> (module Xml_parser)
-    | Markdown -> (module Markdown)
-    | Html -> (module Html)
-    | Yaml -> (module Yaml_parser)
-  in
-  Parser.parse
+let parse : input -> string -> Collection.t = function
+  | Json -> Json_parser.parse
+  | Xml -> Xml_parser.parse
+  | Markdown -> Markdown.parse
+  | Html -> Html.parse
+  | Yaml -> Yaml_parser.parse
 
 module Yaml_formatter = struct
   exception Yaml_conversion_error of string
@@ -88,10 +84,6 @@ module Yaml_formatter = struct
     | Error (`Msg e) -> raise (Yaml_conversion_error e)
 end
 
-let format (format : output) : Collection.t -> string =
-  let (module Formatter : FORMATTER) =
-    match format with
-    | Html -> (module Html)
-    | Yaml -> (module Yaml_formatter)
-  in
-  Formatter.format
+let format : output -> Collection.t -> string = function
+  | Html -> Html.format
+  | Yaml -> Yaml_formatter.format
