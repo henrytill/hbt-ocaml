@@ -40,50 +40,20 @@ let detect_output_format (filename : string) : output option =
   | ".yaml" -> Some Yaml
   | _ -> None
 
-module type PARSER = sig
-  val parse : string -> Collection.t
-end
-
-module type FORMATTER = sig
-  val format : Collection.t -> string
-end
-
-module Json_parser = struct
-  let parse input =
-    let ps = Pinboard.Post.from_json input in
-    Collection.of_posts ps
-end
-
-module Xml_parser = struct
-  let parse input =
-    let ps = Pinboard.Post.from_xml input in
-    Collection.of_posts ps
-end
-
-module Yaml_parser = struct
-  let parse input =
-    let yaml = Yaml.of_string_exn input in
-    Collection.t_of_yaml yaml
-end
-
 let parse : input -> string -> Collection.t = function
-  | Json -> Json_parser.parse
-  | Xml -> Xml_parser.parse
+  | Json -> fun s -> Collection.of_posts (Pinboard.Post.from_json s)
+  | Xml -> fun s -> Collection.of_posts (Pinboard.Post.from_xml s)
   | Markdown -> Markdown.parse
   | Html -> Html.parse
-  | Yaml -> Yaml_parser.parse
+  | Yaml -> fun s -> Collection.t_of_yaml (Yaml.of_string_exn s)
 
-module Yaml_formatter = struct
-  exception Yaml_conversion_error of string
-
-  let format coll =
-    let len = 1024 * 1024 in
-    let yaml = Collection.yaml_of_t coll in
-    match Yaml.to_string ~len yaml with
-    | Ok s -> s
-    | Error (`Msg e) -> raise (Yaml_conversion_error e)
-end
+exception Yaml_conversion_error of string
 
 let format : output -> Collection.t -> string = function
   | Html -> Html.format
-  | Yaml -> Yaml_formatter.format
+  | Yaml -> begin
+      fun coll ->
+        match Yaml.to_string ~len:(1024 * 1024) (Collection.yaml_of_t coll) with
+        | Ok s -> s
+        | Error (`Msg e) -> raise (Yaml_conversion_error e)
+    end
