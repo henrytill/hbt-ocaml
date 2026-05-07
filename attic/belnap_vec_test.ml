@@ -67,42 +67,37 @@ let test_get_set () =
   check "get 3" b (get v (index_exn 3))
 
 let test_bulk_and () =
-  let open V64 in
-  let a = all_true () in
-  let c = all_false () in
-  let r = a && c in
-  Alcotest.(check v64_t) "all_true && all_false = all_false" (all_false ()) r
+  Alcotest.(check v64_t)
+    "all_true && all_false = all_false"
+    V64.(all_false ())
+    V64.(all_true () && all_false ())
 
 let test_bulk_or () =
-  let open V64 in
-  let a = all_false () in
-  let c = all_true () in
-  let r = a || c in
-  Alcotest.(check v64_t) "all_false || all_true = all_true" (all_true ()) r
+  Alcotest.(check v64_t)
+    "all_false || all_true = all_true"
+    V64.(all_true ())
+    V64.(all_false () || all_true ())
 
 let test_bulk_not () =
   let open V100 in
-  let a = all_true () in
-  let r = not a in
+  let r = not (all_true ()) in
   Alcotest.(check v100_t) "not all_true = all_false" (all_false ()) r;
-  let rr = not r in
-  Alcotest.(check v100_t) "not not all_true = all_true" (all_true ()) rr
+  Alcotest.(check v100_t) "not not all_true = all_true" (all_true ()) (not r)
 
 let test_bulk_merge () =
   let open V64 in
-  let a = all_true () in
-  let c = all_false () in
-  let r = merge a c in
   let all_both = of_list (List.init 64 (Fun.const b)) in
-  Alcotest.(check v64_t) "merge all_true all_false = all_both" all_both r
+  Alcotest.(check v64_t)
+    "merge all_true all_false = all_both"
+    all_both
+    (merge (all_true ()) (all_false ()))
 
 let test_bulk_consensus () =
   let open V64 in
-  let a = all_true () in
-  let c = all_false () in
-  let r = consensus a c in
-  let all_unknown = make () in
-  Alcotest.(check v64_t) "consensus all_true all_false = all_unknown" all_unknown r
+  Alcotest.(check v64_t)
+    "consensus all_true all_false = all_unknown"
+    (make ())
+    (consensus (all_true ()) (all_false ()))
 
 let test_is_consistent () =
   let open V4 in
@@ -177,9 +172,7 @@ let test_width_63 () =
   Alcotest.(check bool) "is_all_determined" true (is_all_determined v);
   Alcotest.(check bool) "is_consistent" true (is_consistent v);
   check "get 62 is True" t (get v (index_exn 62));
-  let w = all_false () in
-  let r = merge v w in
-  Alcotest.(check int) "count_both after merge" 63 (count_both r)
+  Alcotest.(check int) "count_both after merge" 63 (count_both (merge v (all_false ())))
 
 let test_to_list_roundtrip () =
   Alcotest.(check belnap_list) "empty" [] (V0.to_list (V0.make ()));
