@@ -362,6 +362,24 @@ let absorption_and_or =
   in
   QCheck2.Test.make ~name:"a && (a || b) = a" ~print:print_s2 gen_s2 body
 
+let and_distributes_over_or =
+  let body ((module S : Belnap_vec.SIZE), xs, ys, zs) =
+    let module M = Belnap_vec.Make (S) in
+    let open M in
+    let a = of_list xs and b = of_list ys and c = of_list zs in
+    equal (a && (b || c)) ((a && b) || (a && c))
+  in
+  QCheck2.Test.make ~name:"a && (b || c) = (a && b) || (a && c)" ~print:print_s3 gen_s3 body
+
+let or_distributes_over_and =
+  let body ((module S : Belnap_vec.SIZE), xs, ys, zs) =
+    let module M = Belnap_vec.Make (S) in
+    let open M in
+    let a = of_list xs and b = of_list ys and c = of_list zs in
+    equal (a || (b && c)) ((a || b) && (a || c))
+  in
+  QCheck2.Test.make ~name:"a || (b && c) = (a || b) && (a || c)" ~print:print_s3 gen_s3 body
+
 let or_bottom_identity =
   let body ((module S : Belnap_vec.SIZE), xs) =
     let module M = Belnap_vec.Make (S) in
@@ -678,6 +696,8 @@ let qcheck_tests =
     and_idempotency;
     absorption_or_and;
     absorption_and_or;
+    and_distributes_over_or;
+    or_distributes_over_and;
     or_bottom_identity;
     and_top_identity;
     or_top_annihilator;
