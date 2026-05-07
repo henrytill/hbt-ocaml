@@ -233,9 +233,7 @@ let tests =
 
 (* --- QCheck2 generators and property tests with shrinkable width --- *)
 
-let gen_belnap : Belnap.t QCheck2.Gen.t =
-  QCheck2.Gen.oneof
-    [ QCheck2.Gen.return u; QCheck2.Gen.return t; QCheck2.Gen.return f; QCheck2.Gen.return b ]
+let gen_belnap : Belnap.t QCheck2.Gen.t = QCheck2.Gen.oneof_list [ u; t; f; b ]
 
 (* [make_size n] packages [n] as a first-class SIZE module. *)
 let make_size n =
