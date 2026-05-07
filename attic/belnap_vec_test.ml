@@ -512,6 +512,24 @@ let not_involutive =
   in
   QCheck2.Test.make ~name:"not is involutive" ~print:print_s1 gen_s1 body
 
+let de_morgan_and =
+  let body ((module S : Belnap_vec.SIZE), xs, ys) =
+    let module M = Belnap_vec.Make (S) in
+    let open M in
+    let a = of_list xs and b = of_list ys in
+    equal (not (a && b)) ((not a) || not b)
+  in
+  QCheck2.Test.make ~name:"not (a && b) = not a || not b" ~print:print_s2 gen_s2 body
+
+let de_morgan_or =
+  let body ((module S : Belnap_vec.SIZE), xs, ys) =
+    let module M = Belnap_vec.Make (S) in
+    let open M in
+    let a = of_list xs and b = of_list ys in
+    equal (not (a || b)) ((not a) && not b)
+  in
+  QCheck2.Test.make ~name:"not (a || b) = not a && not b" ~print:print_s2 gen_s2 body
+
 let is_consistent_iff_no_both =
   let body ((module S : Belnap_vec.SIZE), xs) =
     let module M = Belnap_vec.Make (S) in
@@ -676,6 +694,8 @@ let qcheck_tests =
     count_nonneg;
     counts_sum_to_n;
     not_involutive;
+    de_morgan_and;
+    de_morgan_or;
     is_consistent_iff_no_both;
     is_all_determined_iff;
     is_all_true_iff;
