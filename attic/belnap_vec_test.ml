@@ -13,7 +13,7 @@ let array_equal eq a b =
   let rec go i = i >= n || (eq a.(i) b.(i) && go (i + 1)) in
   go 0
 
-let belnap_t = Alcotest.testable Belnap.pp Belnap.equal
+let belnap_t : Belnap.t Alcotest.testable = (module Belnap)
 let belnap_list = Alcotest.(list belnap_t)
 let belnap_array = Alcotest.(array belnap_t)
 let check = Alcotest.(check belnap_t)
@@ -51,9 +51,8 @@ module V128 = Belnap_vec.Make (struct
   let n = 128
 end)
 
-(* Per-module Alcotest testable helpers *)
-let v64_t = Alcotest.testable V64.pp V64.equal
-let v100_t = Alcotest.testable V100.pp V100.equal
+let v64_t : V64.t Alcotest.testable = (module V64)
+let v100_t : V100.t Alcotest.testable = (module V100)
 
 let test_get_set () =
   let v = V4.make () in
