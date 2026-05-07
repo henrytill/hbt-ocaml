@@ -254,13 +254,13 @@ let gen_s2 =
   QCheck2.Gen.(
     bind gen_n (fun n ->
         let g = list_size (return n) gen_belnap in
-        pair g g |> map (fun (xs, ys) -> (make_size n, xs, ys))))
+        map (fun (xs, ys) -> (make_size n, xs, ys)) (pair g g)))
 
 let gen_s3 =
   QCheck2.Gen.(
     bind gen_n (fun n ->
         let g = list_size (return n) gen_belnap in
-        triple g g g |> map (fun (xs, ys, zs) -> (make_size n, xs, ys, zs))))
+        map (fun (xs, ys, zs) -> (make_size n, xs, ys, zs)) (triple g g g)))
 
 (* n >= 1 so that a valid index exists *)
 let gen_s_get_set =
