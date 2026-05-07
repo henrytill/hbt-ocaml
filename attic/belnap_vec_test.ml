@@ -380,6 +380,17 @@ let and_top_identity =
   in
   QCheck2.Test.make ~name:"all_true is identity for &&" ~print:print_s1 gen_s1 body
 
+(* Implication *)
+
+let implies_definition =
+  let body ((module S : Belnap_vec.SIZE), xs, ys) =
+    let module M = Belnap_vec.Make (S) in
+    let open M in
+    let a = of_list xs and b = of_list ys in
+    equal (implies a b) ((not a) || b)
+  in
+  QCheck2.Test.make ~name:"implies a b = not a || b" ~print:print_s2 gen_s2 body
+
 (* Knowledge-order join semilattice laws (merge) *)
 
 let merge_commutativity =
@@ -625,6 +636,7 @@ let qcheck_tests =
     absorption_and_or;
     or_bottom_identity;
     and_top_identity;
+    implies_definition;
     merge_commutativity;
     merge_associativity;
     merge_idempotency;
