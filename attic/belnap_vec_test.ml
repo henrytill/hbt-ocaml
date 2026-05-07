@@ -550,10 +550,14 @@ let find_first_none_iff_count_zero =
   let body ((module S : Belnap_vec.SIZE), xs) =
     let module M = Belnap_vec.Make (S) in
     let v = M.of_list xs in
-    M.find_first t v = None = (M.count_true v = 0)
-    && M.find_first f v = None = (M.count_false v = 0)
-    && M.find_first b v = None = (M.count_both v = 0)
-    && M.find_first u v = None = (M.count_unknown v = 0)
+    List.for_all
+      (fun (result, count) -> Option.is_none result = (count = 0))
+      [
+        (M.find_first t v, M.count_true v);
+        (M.find_first f v, M.count_false v);
+        (M.find_first b v, M.count_both v);
+        (M.find_first u v, M.count_unknown v);
+      ]
   in
   QCheck2.Test.make ~name:"find_first_none_iff_count_zero" ~print:print_s1 gen_s1 body
 
