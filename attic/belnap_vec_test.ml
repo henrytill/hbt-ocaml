@@ -175,7 +175,7 @@ let test_to_list_roundtrip () =
   let xs = [ u; t; f; b ] in
   Alcotest.(check belnap_list) "4 elems" xs (V4.to_list (V4.of_list xs));
   (* 64 elements exercises exactly one full word-pair *)
-  let xs64 = List.init 64 (fun _ -> t) in
+  let xs64 = List.init 64 (Fun.const t) in
   Alcotest.(check belnap_list) "64 elems" xs64 (V64.to_list (V64.all_true ()));
   (* 65 elements: last element is in word-pair 1, bit 0 *)
   let xs65 = List.init 65 (fun i -> if i = 64 then f else t) in
