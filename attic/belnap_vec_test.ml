@@ -55,120 +55,131 @@ let v64_t : V64.t Alcotest.testable = (module V64)
 let v100_t : V100.t Alcotest.testable = (module V100)
 
 let test_get_set () =
-  let v = V4.make () in
-  V4.(set v (index_exn 0) u);
-  V4.(set v (index_exn 1) t);
-  V4.(set v (index_exn 2) f);
-  V4.(set v (index_exn 3) b);
-  check "get 0" u V4.(get v (index_exn 0));
-  check "get 1" t V4.(get v (index_exn 1));
-  check "get 2" f V4.(get v (index_exn 2));
-  check "get 3" b V4.(get v (index_exn 3))
+  let open V4 in
+  let v = make () in
+  set v (index_exn 0) u;
+  set v (index_exn 1) t;
+  set v (index_exn 2) f;
+  set v (index_exn 3) b;
+  check "get 0" u (get v (index_exn 0));
+  check "get 1" t (get v (index_exn 1));
+  check "get 2" f (get v (index_exn 2));
+  check "get 3" b (get v (index_exn 3))
 
 let test_bulk_and () =
-  let a = V64.all_true () in
-  let c = V64.all_false () in
-  let r = V64.( && ) a c in
-  Alcotest.(check v64_t) "all_true && all_false = all_false" (V64.all_false ()) r
+  let open V64 in
+  let a = all_true () in
+  let c = all_false () in
+  let r = a && c in
+  Alcotest.(check v64_t) "all_true && all_false = all_false" (all_false ()) r
 
 let test_bulk_or () =
-  let a = V64.all_false () in
-  let c = V64.all_true () in
-  let r = V64.( || ) a c in
-  Alcotest.(check v64_t) "all_false || all_true = all_true" (V64.all_true ()) r
+  let open V64 in
+  let a = all_false () in
+  let c = all_true () in
+  let r = a || c in
+  Alcotest.(check v64_t) "all_false || all_true = all_true" (all_true ()) r
 
 let test_bulk_not () =
-  let a = V100.all_true () in
-  let r = V100.not a in
-  Alcotest.(check v100_t) "not all_true = all_false" (V100.all_false ()) r;
-  let rr = V100.not r in
-  Alcotest.(check v100_t) "not not all_true = all_true" (V100.all_true ()) rr
+  let open V100 in
+  let a = all_true () in
+  let r = not a in
+  Alcotest.(check v100_t) "not all_true = all_false" (all_false ()) r;
+  let rr = not r in
+  Alcotest.(check v100_t) "not not all_true = all_true" (all_true ()) rr
 
 let test_bulk_merge () =
-  let a = V64.all_true () in
-  let c = V64.all_false () in
-  let r = V64.merge a c in
-  let all_both = V64.of_list (List.init 64 (Fun.const b)) in
+  let open V64 in
+  let a = all_true () in
+  let c = all_false () in
+  let r = merge a c in
+  let all_both = of_list (List.init 64 (Fun.const b)) in
   Alcotest.(check v64_t) "merge all_true all_false = all_both" all_both r
 
 let test_bulk_consensus () =
-  let a = V64.all_true () in
-  let c = V64.all_false () in
-  let r = V64.consensus a c in
-  let all_unknown = V64.make () in
+  let open V64 in
+  let a = all_true () in
+  let c = all_false () in
+  let r = consensus a c in
+  let all_unknown = make () in
   Alcotest.(check v64_t) "consensus all_true all_false = all_unknown" all_unknown r
 
 let test_is_consistent () =
-  let v = V4.make () in
-  V4.(set v (index_exn 0) t);
-  V4.(set v (index_exn 1) f);
-  V4.(set v (index_exn 2) u);
-  V4.(set v (index_exn 3) b);
-  Alcotest.(check bool) "with Both is not consistent" false (V4.is_consistent v);
-  let v2 = V4.make () in
-  V4.(set v2 (index_exn 0) t);
-  V4.(set v2 (index_exn 1) f);
-  V4.(set v2 (index_exn 2) u);
-  V4.(set v2 (index_exn 3) t);
-  Alcotest.(check bool) "without Both is consistent" true (V4.is_consistent v2)
+  let open V4 in
+  let v = make () in
+  set v (index_exn 0) t;
+  set v (index_exn 1) f;
+  set v (index_exn 2) u;
+  set v (index_exn 3) b;
+  Alcotest.(check bool) "with Both is not consistent" false (is_consistent v);
+  let v2 = make () in
+  set v2 (index_exn 0) t;
+  set v2 (index_exn 1) f;
+  set v2 (index_exn 2) u;
+  set v2 (index_exn 3) t;
+  Alcotest.(check bool) "without Both is consistent" true (is_consistent v2)
 
 let test_is_all_determined () =
-  let v = V4.make () in
-  V4.(set v (index_exn 0) t);
-  V4.(set v (index_exn 1) f);
-  V4.(set v (index_exn 2) t);
-  V4.(set v (index_exn 3) f);
-  Alcotest.(check bool) "true/false is_all_determined" true (V4.is_all_determined v);
-  let v2 = V4.make () in
-  V4.(set v2 (index_exn 0) t);
-  V4.(set v2 (index_exn 1) f);
-  V4.(set v2 (index_exn 2) u);
-  V4.(set v2 (index_exn 3) f);
-  Alcotest.(check bool) "with Unknown not is_all_determined" false (V4.is_all_determined v2);
-  let v3 = V4.make () in
-  V4.(set v3 (index_exn 0) t);
-  V4.(set v3 (index_exn 1) f);
-  V4.(set v3 (index_exn 2) b);
-  V4.(set v3 (index_exn 3) f);
-  Alcotest.(check bool) "with Both not is_all_determined" false (V4.is_all_determined v3)
+  let open V4 in
+  let v = make () in
+  set v (index_exn 0) t;
+  set v (index_exn 1) f;
+  set v (index_exn 2) t;
+  set v (index_exn 3) f;
+  Alcotest.(check bool) "true/false is_all_determined" true (is_all_determined v);
+  let v2 = make () in
+  set v2 (index_exn 0) t;
+  set v2 (index_exn 1) f;
+  set v2 (index_exn 2) u;
+  set v2 (index_exn 3) f;
+  Alcotest.(check bool) "with Unknown not is_all_determined" false (is_all_determined v2);
+  let v3 = make () in
+  set v3 (index_exn 0) t;
+  set v3 (index_exn 1) f;
+  set v3 (index_exn 2) b;
+  set v3 (index_exn 3) f;
+  Alcotest.(check bool) "with Both not is_all_determined" false (is_all_determined v3)
 
 let test_counts () =
-  let v = V8.make () in
-  V8.(set v (index_exn 0) t);
-  V8.(set v (index_exn 1) t);
-  V8.(set v (index_exn 2) f);
-  V8.(set v (index_exn 3) f);
-  V8.(set v (index_exn 4) b);
-  V8.(set v (index_exn 5) b);
-  V8.(set v (index_exn 6) u);
-  V8.(set v (index_exn 7) u);
-  Alcotest.(check int) "count_true" 2 (V8.count_true v);
-  Alcotest.(check int) "count_false" 2 (V8.count_false v);
-  Alcotest.(check int) "count_both" 2 (V8.count_both v);
-  Alcotest.(check int) "count_unknown" 2 (V8.count_unknown v)
+  let open V8 in
+  let v = make () in
+  set v (index_exn 0) t;
+  set v (index_exn 1) t;
+  set v (index_exn 2) f;
+  set v (index_exn 3) f;
+  set v (index_exn 4) b;
+  set v (index_exn 5) b;
+  set v (index_exn 6) u;
+  set v (index_exn 7) u;
+  Alcotest.(check int) "count_true" 2 (count_true v);
+  Alcotest.(check int) "count_false" 2 (count_false v);
+  Alcotest.(check int) "count_both" 2 (count_both v);
+  Alcotest.(check int) "count_unknown" 2 (count_unknown v)
 
 let test_word_boundaries () =
   (* Element 63: bit 63 (sign bit) of word-pair 0 *)
-  let v = V65.make () in
-  V65.(set v (index_exn 63) b);
-  check "get 63 is Both" b V65.(get v (index_exn 63));
-  check "get 62 is Unknown" u V65.(get v (index_exn 62));
-  check "get 64 is Unknown" u V65.(get v (index_exn 64));
+  let open V65 in
+  let v = make () in
+  set v (index_exn 63) b;
+  check "get 63 is Both" b (get v (index_exn 63));
+  check "get 62 is Unknown" u (get v (index_exn 62));
+  check "get 64 is Unknown" u (get v (index_exn 64));
   (* Element 64: bit 0 of word-pair 1 *)
-  V65.(set v (index_exn 64) t);
-  check "get 64 is True" t V65.(get v (index_exn 64));
-  check "get 63 still Both" b V65.(get v (index_exn 63))
+  set v (index_exn 64) t;
+  check "get 64 is True" t (get v (index_exn 64));
+  check "get 63 still Both" b (get v (index_exn 63))
 
 let test_width_63 () =
   (* width=63 exercises r=63 in bv_mask_tail and tail_mask *)
-  let v = V63.all_true () in
-  Alcotest.(check bool) "is_all_true" true (V63.is_all_true v);
-  Alcotest.(check bool) "is_all_determined" true (V63.is_all_determined v);
-  Alcotest.(check bool) "is_consistent" true (V63.is_consistent v);
-  check "get 62 is True" t V63.(get v (index_exn 62));
-  let w = V63.all_false () in
-  let r = V63.merge v w in
-  Alcotest.(check int) "count_both after merge" 63 (V63.count_both r)
+  let open V63 in
+  let v = all_true () in
+  Alcotest.(check bool) "is_all_true" true (is_all_true v);
+  Alcotest.(check bool) "is_all_determined" true (is_all_determined v);
+  Alcotest.(check bool) "is_consistent" true (is_consistent v);
+  check "get 62 is True" t (get v (index_exn 62));
+  let w = all_false () in
+  let r = merge v w in
+  Alcotest.(check int) "count_both after merge" 63 (count_both r)
 
 let test_to_list_roundtrip () =
   Alcotest.(check belnap_list) "empty" [] (V0.to_list (V0.make ()));
