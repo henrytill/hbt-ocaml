@@ -51,26 +51,20 @@ module V128 = Belnap_vec.Make (struct
   let n = 128
 end)
 
-(* Convenience shorthands for index_exn *)
-let v4i = V4.index_exn
-let v8i = V8.index_exn
-let v63i = V63.index_exn
-let v65i = V65.index_exn
-
 (* Per-module Alcotest testable helpers *)
 let v64_t = Alcotest.testable V64.pp V64.equal
 let v100_t = Alcotest.testable V100.pp V100.equal
 
 let test_get_set () =
   let v = V4.make () in
-  V4.set v (v4i 0) u;
-  V4.set v (v4i 1) t;
-  V4.set v (v4i 2) f;
-  V4.set v (v4i 3) b;
-  check "get 0" u (V4.get v (v4i 0));
-  check "get 1" t (V4.get v (v4i 1));
-  check "get 2" f (V4.get v (v4i 2));
-  check "get 3" b (V4.get v (v4i 3))
+  V4.(set v (index_exn 0) u);
+  V4.(set v (index_exn 1) t);
+  V4.(set v (index_exn 2) f);
+  V4.(set v (index_exn 3) b);
+  check "get 0" u V4.(get v (index_exn 0));
+  check "get 1" t V4.(get v (index_exn 1));
+  check "get 2" f V4.(get v (index_exn 2));
+  check "get 3" b V4.(get v (index_exn 3))
 
 let test_bulk_and () =
   let a = V64.all_true () in
@@ -107,48 +101,48 @@ let test_bulk_consensus () =
 
 let test_is_consistent () =
   let v = V4.make () in
-  V4.set v (v4i 0) t;
-  V4.set v (v4i 1) f;
-  V4.set v (v4i 2) u;
-  V4.set v (v4i 3) b;
+  V4.(set v (index_exn 0) t);
+  V4.(set v (index_exn 1) f);
+  V4.(set v (index_exn 2) u);
+  V4.(set v (index_exn 3) b);
   Alcotest.(check bool) "with Both is not consistent" false (V4.is_consistent v);
   let v2 = V4.make () in
-  V4.set v2 (v4i 0) t;
-  V4.set v2 (v4i 1) f;
-  V4.set v2 (v4i 2) u;
-  V4.set v2 (v4i 3) t;
+  V4.(set v2 (index_exn 0) t);
+  V4.(set v2 (index_exn 1) f);
+  V4.(set v2 (index_exn 2) u);
+  V4.(set v2 (index_exn 3) t);
   Alcotest.(check bool) "without Both is consistent" true (V4.is_consistent v2)
 
 let test_is_all_determined () =
   let v = V4.make () in
-  V4.set v (v4i 0) t;
-  V4.set v (v4i 1) f;
-  V4.set v (v4i 2) t;
-  V4.set v (v4i 3) f;
+  V4.(set v (index_exn 0) t);
+  V4.(set v (index_exn 1) f);
+  V4.(set v (index_exn 2) t);
+  V4.(set v (index_exn 3) f);
   Alcotest.(check bool) "true/false is_all_determined" true (V4.is_all_determined v);
   let v2 = V4.make () in
-  V4.set v2 (v4i 0) t;
-  V4.set v2 (v4i 1) f;
-  V4.set v2 (v4i 2) u;
-  V4.set v2 (v4i 3) f;
+  V4.(set v2 (index_exn 0) t);
+  V4.(set v2 (index_exn 1) f);
+  V4.(set v2 (index_exn 2) u);
+  V4.(set v2 (index_exn 3) f);
   Alcotest.(check bool) "with Unknown not is_all_determined" false (V4.is_all_determined v2);
   let v3 = V4.make () in
-  V4.set v3 (v4i 0) t;
-  V4.set v3 (v4i 1) f;
-  V4.set v3 (v4i 2) b;
-  V4.set v3 (v4i 3) f;
+  V4.(set v3 (index_exn 0) t);
+  V4.(set v3 (index_exn 1) f);
+  V4.(set v3 (index_exn 2) b);
+  V4.(set v3 (index_exn 3) f);
   Alcotest.(check bool) "with Both not is_all_determined" false (V4.is_all_determined v3)
 
 let test_counts () =
   let v = V8.make () in
-  V8.set v (v8i 0) t;
-  V8.set v (v8i 1) t;
-  V8.set v (v8i 2) f;
-  V8.set v (v8i 3) f;
-  V8.set v (v8i 4) b;
-  V8.set v (v8i 5) b;
-  V8.set v (v8i 6) u;
-  V8.set v (v8i 7) u;
+  V8.(set v (index_exn 0) t);
+  V8.(set v (index_exn 1) t);
+  V8.(set v (index_exn 2) f);
+  V8.(set v (index_exn 3) f);
+  V8.(set v (index_exn 4) b);
+  V8.(set v (index_exn 5) b);
+  V8.(set v (index_exn 6) u);
+  V8.(set v (index_exn 7) u);
   Alcotest.(check int) "count_true" 2 (V8.count_true v);
   Alcotest.(check int) "count_false" 2 (V8.count_false v);
   Alcotest.(check int) "count_both" 2 (V8.count_both v);
@@ -157,14 +151,14 @@ let test_counts () =
 let test_word_boundaries () =
   (* Element 63: bit 63 (sign bit) of word-pair 0 *)
   let v = V65.make () in
-  V65.set v (v65i 63) b;
-  check "get 63 is Both" b (V65.get v (v65i 63));
-  check "get 62 is Unknown" u (V65.get v (v65i 62));
-  check "get 64 is Unknown" u (V65.get v (v65i 64));
+  V65.(set v (index_exn 63) b);
+  check "get 63 is Both" b V65.(get v (index_exn 63));
+  check "get 62 is Unknown" u V65.(get v (index_exn 62));
+  check "get 64 is Unknown" u V65.(get v (index_exn 64));
   (* Element 64: bit 0 of word-pair 1 *)
-  V65.set v (v65i 64) t;
-  check "get 64 is True" t (V65.get v (v65i 64));
-  check "get 63 still Both" b (V65.get v (v65i 63))
+  V65.(set v (index_exn 64) t);
+  check "get 64 is True" t V65.(get v (index_exn 64));
+  check "get 63 still Both" b V65.(get v (index_exn 63))
 
 let test_width_63 () =
   (* width=63 exercises r=63 in bv_mask_tail and tail_mask *)
@@ -172,7 +166,7 @@ let test_width_63 () =
   Alcotest.(check bool) "is_all_true" true (V63.is_all_true v);
   Alcotest.(check bool) "is_all_determined" true (V63.is_all_determined v);
   Alcotest.(check bool) "is_consistent" true (V63.is_consistent v);
-  check "get 62 is True" t (V63.get v (v63i 62));
+  check "get 62 is True" t V63.(get v (index_exn 62));
   let w = V63.all_false () in
   let r = V63.merge v w in
   Alcotest.(check int) "count_both after merge" 63 (V63.count_both r)
@@ -524,7 +518,7 @@ let to_list_matches_get =
   let body ((module S : Belnap_vec.SIZE), xs) =
     let module M = Belnap_vec.Make (S) in
     let v = M.of_list xs in
-    List.equal Belnap.equal (M.to_list v) (List.init S.n (fun i -> M.get v (M.index_exn i)))
+    List.equal Belnap.equal (M.to_list v) (List.init S.n (fun i -> M.(get v (index_exn i))))
   in
   QCheck2.Test.make ~name:"to_list_matches_get" ~print:print_s1 gen_s1 body
 
@@ -537,7 +531,7 @@ let find_first_returns_correct_value =
     let v = M.of_list xs in
     match M.find_first needle v with
     | None -> true
-    | Some i -> Belnap.equal (M.get v (M.index_exn i)) needle
+    | Some i -> Belnap.equal M.(get v (index_exn i)) needle
   in
   QCheck2.Test.make
     ~name:"find_first_returns_correct_value"
@@ -554,7 +548,7 @@ let find_first_is_minimum =
     | None -> true
     | Some i ->
         let rec all_before j =
-          j >= i || ((not (Belnap.equal (M.get v (M.index_exn j)) needle)) && all_before (j + 1))
+          j >= i || ((not (Belnap.equal M.(get v (index_exn j)) needle)) && all_before (j + 1))
         in
         all_before 0
   in
@@ -580,8 +574,8 @@ let get_set_roundtrip =
   let body ((module S : Belnap_vec.SIZE), xs, i, v) =
     let module M = Belnap_vec.Make (S) in
     let vec = M.of_list xs in
-    M.set vec (M.index_exn i) v;
-    Belnap.equal (M.get vec (M.index_exn i)) v
+    M.(set vec (index_exn i) v);
+    Belnap.equal M.(get vec (index_exn i)) v
   in
   QCheck2.Test.make ~name:"get_set_roundtrip" ~print gen_s_get_set body
 
