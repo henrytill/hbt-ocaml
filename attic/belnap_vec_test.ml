@@ -88,7 +88,7 @@ let test_bulk_merge () =
   let a = V64.all_true () in
   let c = V64.all_false () in
   let r = V64.merge a c in
-  let all_both = V64.of_list (List.init 64 (fun _ -> Belnap.(of_view Both))) in
+  let all_both = V64.of_list (List.init 64 (Fun.const b)) in
   Alcotest.(check v64_t) "merge all_true all_false = all_both" all_both r
 
 let test_bulk_consensus () =
@@ -235,12 +235,7 @@ let tests =
 
 let gen_belnap : Belnap.t QCheck2.Gen.t =
   QCheck2.Gen.oneof
-    [
-      QCheck2.Gen.return (Belnap.of_view Belnap.Unknown);
-      QCheck2.Gen.return (Belnap.of_view Belnap.True);
-      QCheck2.Gen.return (Belnap.of_view Belnap.False);
-      QCheck2.Gen.return (Belnap.of_view Belnap.Both);
-    ]
+    [ QCheck2.Gen.return u; QCheck2.Gen.return t; QCheck2.Gen.return f; QCheck2.Gen.return b ]
 
 (* [make_size n] packages [n] as a first-class SIZE module. *)
 let make_size n =
