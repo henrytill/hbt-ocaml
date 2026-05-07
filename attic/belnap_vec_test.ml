@@ -477,6 +477,14 @@ let count_nonneg =
   in
   QCheck2.Test.make ~name:"counts are non-negative" ~print:print_s1 gen_s1 body
 
+let counts_sum_to_n =
+  let body ((module S : Belnap_vec.SIZE), xs) =
+    let module M = Belnap_vec.Make (S) in
+    let v = M.of_list xs in
+    M.count_true v + M.count_false v + M.count_both v + M.count_unknown v = S.n
+  in
+  QCheck2.Test.make ~name:"counts sum to n" ~print:print_s1 gen_s1 body
+
 let not_involutive =
   let body ((module S : Belnap_vec.SIZE), xs) =
     let module M = Belnap_vec.Make (S) in
@@ -646,6 +654,7 @@ let qcheck_tests =
     consensus_idempotency;
     consensus_top_identity;
     count_nonneg;
+    counts_sum_to_n;
     not_involutive;
     is_consistent_iff_no_both;
     is_all_determined_iff;
