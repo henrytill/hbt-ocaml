@@ -558,6 +558,11 @@ let find_first_returns_correct_value =
     QCheck2.Gen.(pair gen_belnap gen_s1)
     body
 
+let no_earlier_match (type a) (module M : Belnap_vec.S with type t = a) (needle : Belnap.t) (v : a)
+    (i : int) : bool =
+  let rec go j = j >= i || ((not (Belnap.equal M.(get v (index_exn j)) needle)) && go (j + 1)) in
+  go 0
+
 let find_first_is_minimum =
   let print (needle, s1) = Format.asprintf "needle=%a %s" Belnap.pp needle (print_s1 s1) in
   let body (needle, ((module S : Belnap_vec.SIZE), xs)) =
@@ -565,11 +570,7 @@ let find_first_is_minimum =
     let v = M.of_list xs in
     match M.(find_first needle v) with
     | None -> true
-    | Some i ->
-        let rec all_before j =
-          j >= i || ((not (Belnap.equal M.(get v (index_exn j)) needle)) && all_before (j + 1))
-        in
-        all_before 0
+    | Some i -> no_earlier_match (module M) needle v i
   in
   QCheck2.Test.make
     ~name:"find_first returns leftmost match"
