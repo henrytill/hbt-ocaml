@@ -175,42 +175,41 @@ let test_width_63 () =
   Alcotest.(check int) "count_both after merge" 63 (count_both (merge v (all_false ())))
 
 let test_to_list_roundtrip () =
-  Alcotest.(check belnap_list) "empty" [] (V0.to_list (V0.make ()));
+  Alcotest.(check belnap_list) "empty" [] V0.(to_list (make ()));
   let xs = [ u; t; f; b ] in
-  Alcotest.(check belnap_list) "4 elems" xs (V4.to_list (V4.of_list xs));
+  Alcotest.(check belnap_list) "4 elems" xs V4.(to_list (of_list xs));
   (* 64 elements exercises exactly one full word-pair *)
-  let xs64 = List.init 64 (Fun.const t) in
-  Alcotest.(check belnap_list) "64 elems" xs64 (V64.to_list (V64.all_true ()));
+  Alcotest.(check belnap_list) "64 elems" (List.init 64 (Fun.const t)) V64.(to_list (all_true ()));
   (* 65 elements: last element is in word-pair 1, bit 0 *)
   let xs65 = List.init 65 (fun i -> if i = 64 then f else t) in
-  Alcotest.(check belnap_list) "65 elems" xs65 (V65.to_list (V65.of_list xs65))
+  Alcotest.(check belnap_list) "65 elems" xs65 V65.(to_list (of_list xs65))
 
 let test_to_array_roundtrip () =
-  Alcotest.(check belnap_array) "empty" [||] (V0.to_array (V0.make ()));
+  Alcotest.(check belnap_array) "empty" [||] V0.(to_array (make ()));
   let xs = [| u; t; f; b |] in
-  Alcotest.(check belnap_array) "4 elems" xs (V4.to_array (V4.of_list (Array.to_list xs)))
+  Alcotest.(check belnap_array) "4 elems" xs V4.(to_array (of_list (Array.to_list xs)))
 
 let test_of_array_roundtrip () =
-  Alcotest.(check belnap_array) "empty" [||] (V0.to_array (V0.of_array [||]));
+  Alcotest.(check belnap_array) "empty" [||] V0.(to_array (of_array [||]));
   let xs = [| u; t; f; b |] in
-  Alcotest.(check belnap_array) "4 elems" xs (V4.to_array (V4.of_array xs));
+  Alcotest.(check belnap_array) "4 elems" xs V4.(to_array (of_array xs));
   (* word boundary: 65 elements, last in word-pair 1 *)
   let xs65 = Array.init 65 (fun i -> if i = 64 then b else f) in
-  Alcotest.(check belnap_array) "65 elems" xs65 (V65.to_array (V65.of_array xs65))
+  Alcotest.(check belnap_array) "65 elems" xs65 V65.(to_array (of_array xs65))
 
 let test_find_first () =
   let chk = Alcotest.(check (option int)) in
   let v = V4.of_list [ f; f; t; b ] in
-  chk "first true" (Some 2) (V4.find_first t v);
-  chk "first false" (Some 0) (V4.find_first f v);
-  chk "first both" (Some 3) (V4.find_first b v);
-  chk "no unknown" None (V4.find_first u v);
-  chk "empty" None (V0.find_first t (V0.make ()));
+  chk "first true" (Some 2) V4.(find_first t v);
+  chk "first false" (Some 0) V4.(find_first f v);
+  chk "first both" (Some 3) V4.(find_first b v);
+  chk "no unknown" None V4.(find_first u v);
+  chk "empty" None V0.(find_first t (make ()));
   (* first match at word boundary (index 64, word-pair 1) *)
   let v2 = V65.of_list (List.init 65 (fun i -> if i = 64 then t else f)) in
-  chk "word boundary idx 64" (Some 64) (V65.find_first t v2);
+  chk "word boundary idx 64" (Some 64) V65.(find_first t v2);
   (* all_true 128: first in first word-pair *)
-  chk "all_true first" (Some 0) (V128.find_first t (V128.all_true ()))
+  chk "all_true first" (Some 0) V128.(find_first t (all_true ()))
 
 let tests =
   let open Alcotest in
