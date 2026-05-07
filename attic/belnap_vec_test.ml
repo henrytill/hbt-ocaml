@@ -283,6 +283,9 @@ let print_s2 ((module S : Belnap_vec.SIZE), xs, ys) =
 let print_s3 ((module S : Belnap_vec.SIZE), xs, ys, zs) =
   Printf.sprintf "n=%d xs=%s ys=%s zs=%s" S.n (pp_blist xs) (pp_blist ys) (pp_blist zs)
 
+let print_needle_s1 (needle, s1) = Format.asprintf "needle=%a %s" Belnap.pp needle (print_s1 s1)
+let gen_needle_s1 = QCheck2.Gen.(pair gen_belnap gen_s1)
+
 (* --- QCheck2 property tests --- *)
 
 (* Truth-order lattice laws (|| and &&) *)
@@ -546,7 +549,6 @@ let to_list_matches_get =
 (* find_first correctness *)
 
 let find_first_returns_correct_value =
-  let print (needle, s1) = Format.asprintf "needle=%a %s" Belnap.pp needle (print_s1 s1) in
   let body (needle, ((module S : Belnap_vec.SIZE), xs)) =
     let module M = Belnap_vec.Make (S) in
     let open M in
@@ -557,8 +559,8 @@ let find_first_returns_correct_value =
   in
   QCheck2.Test.make
     ~name:"find_first returns element matching needle"
-    ~print
-    QCheck2.Gen.(pair gen_belnap gen_s1)
+    ~print:print_needle_s1
+    gen_needle_s1
     body
 
 let no_earlier_match (type a) (module M : Belnap_vec.S with type t = a) (needle : Belnap.t) (v : a)
@@ -567,7 +569,6 @@ let no_earlier_match (type a) (module M : Belnap_vec.S with type t = a) (needle 
   go 0
 
 let find_first_is_minimum =
-  let print (needle, s1) = Format.asprintf "needle=%a %s" Belnap.pp needle (print_s1 s1) in
   let body (needle, ((module S : Belnap_vec.SIZE), xs)) =
     let module M = Belnap_vec.Make (S) in
     let v = M.of_list xs in
@@ -577,8 +578,8 @@ let find_first_is_minimum =
   in
   QCheck2.Test.make
     ~name:"find_first returns leftmost match"
-    ~print
-    QCheck2.Gen.(pair gen_belnap gen_s1)
+    ~print:print_needle_s1
+    gen_needle_s1
     body
 
 let find_first_none_iff_count_zero =
