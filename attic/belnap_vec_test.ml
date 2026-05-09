@@ -241,10 +241,10 @@ module Gen = QCheck2.Gen
 let gen_belnap : Belnap.t Gen.t = Gen.oneof_list [ u; t; f; b ]
 
 (* [make_size n] packages [n] as a first-class SIZE module. *)
-let make_size n =
+let make_size (n : int) : (module Belnap_vec.SIZE) =
   (module struct
     let n = n
-  end : Belnap_vec.SIZE)
+  end)
 
 (* Each generator yields a SIZE module alongside Belnap.t list(s) of exactly
    S.n elements, all tied to the same randomly chosen [n].  When a property
