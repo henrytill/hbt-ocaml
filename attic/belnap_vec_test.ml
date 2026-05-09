@@ -16,7 +16,7 @@ let array_equal eq a b =
 let belnap_t : Belnap.t Alcotest.testable = (module Belnap)
 let belnap_list = Alcotest.(list belnap_t)
 let belnap_array = Alcotest.(array belnap_t)
-let check = Alcotest.(check belnap_t)
+let check = Alcotest.check belnap_t
 
 (* Modules used by unit tests *)
 module V0 = Belnap_vec.Make (struct
@@ -81,8 +81,8 @@ let test_bulk_or () =
 let test_bulk_not () =
   let open V100 in
   let r = not (all_true ()) in
-  Alcotest.(check v100_t) "not all_true = all_false" (all_false ()) r;
-  Alcotest.(check v100_t) "not not all_true = all_true" (all_true ()) (not r)
+  Alcotest.check v100_t "not all_true = all_false" (all_false ()) r;
+  Alcotest.check v100_t "not not all_true = all_true" (all_true ()) (not r)
 
 let test_bulk_merge () =
   let open V64 in
@@ -175,27 +175,27 @@ let test_width_63 () =
   Alcotest.(check int) "count_both after merge" 63 (count_both (merge v (all_false ())))
 
 let test_to_list_roundtrip () =
-  Alcotest.(check belnap_list) "empty" [] V0.(to_list (make ()));
+  Alcotest.check belnap_list "empty" [] V0.(to_list (make ()));
   let xs = [ u; t; f; b ] in
-  Alcotest.(check belnap_list) "4 elems" xs V4.(to_list (of_list xs));
+  Alcotest.check belnap_list "4 elems" xs V4.(to_list (of_list xs));
   (* 64 elements exercises exactly one full word-pair *)
-  Alcotest.(check belnap_list) "64 elems" (List.init 64 (Fun.const t)) V64.(to_list (all_true ()));
+  Alcotest.check belnap_list "64 elems" (List.init 64 (Fun.const t)) V64.(to_list (all_true ()));
   (* 65 elements: last element is in word-pair 1, bit 0 *)
   let xs65 = List.init 65 (fun i -> if i = 64 then f else t) in
-  Alcotest.(check belnap_list) "65 elems" xs65 V65.(to_list (of_list xs65))
+  Alcotest.check belnap_list "65 elems" xs65 V65.(to_list (of_list xs65))
 
 let test_to_array_roundtrip () =
-  Alcotest.(check belnap_array) "empty" [||] V0.(to_array (make ()));
+  Alcotest.check belnap_array "empty" [||] V0.(to_array (make ()));
   let xs = [| u; t; f; b |] in
-  Alcotest.(check belnap_array) "4 elems" xs V4.(to_array (of_list (Array.to_list xs)))
+  Alcotest.check belnap_array "4 elems" xs V4.(to_array (of_list (Array.to_list xs)))
 
 let test_of_array_roundtrip () =
-  Alcotest.(check belnap_array) "empty" [||] V0.(to_array (of_array [||]));
+  Alcotest.check belnap_array "empty" [||] V0.(to_array (of_array [||]));
   let xs = [| u; t; f; b |] in
-  Alcotest.(check belnap_array) "4 elems" xs V4.(to_array (of_array xs));
+  Alcotest.check belnap_array "4 elems" xs V4.(to_array (of_array xs));
   (* word boundary: 65 elements, last in word-pair 1 *)
   let xs65 = Array.init 65 (fun i -> if i = 64 then b else f) in
-  Alcotest.(check belnap_array) "65 elems" xs65 V65.(to_array (of_array xs65))
+  Alcotest.check belnap_array "65 elems" xs65 V65.(to_array (of_array xs65))
 
 let test_find_first () =
   let chk = Alcotest.(check (option int)) in
