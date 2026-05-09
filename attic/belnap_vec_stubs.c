@@ -134,13 +134,13 @@ CAMLprim value bv_fill(value vbv, value vfrom, value vto, value vraw)
     CAMLparam4(vbv, vfrom, vto, vraw);
     uint64_t *const w = Bv_val(vbv)->words;
     int const from = Int_val(vfrom);
-    int const to_ = Int_val(vto);
+    int const to = Int_val(vto);
     int const raw = Int_val(vraw);
 
     uint64_t const pos = (raw & 1) ? ALL_ONES : UINT64_C(0);
     uint64_t const neg = (raw >> 1) & 1 ? ALL_ONES : UINT64_C(0);
 
-    for (int i = from; i < to_; i++)
+    for (int i = from; i < to; i++)
     {
         int const base = i * 2;
         w[base] = pos;
