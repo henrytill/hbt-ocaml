@@ -19,8 +19,7 @@ struct belnap_vec;
 #define Bv_val(v) ((struct belnap_vec *)Data_custom_val(v))
 
 /* Must match bits_log2 / bits_mask in belnap_vec.ml. */
-enum
-{
+enum {
     BITS_LOG2 = 6,
     BITS_MASK = (1 << BITS_LOG2) - 1
 };
@@ -31,8 +30,7 @@ static uint64_t const ALL_ONES = ~UINT64_C(0);
    nwords is the per-plane word count = ceil(width/64).
    The flat array has 2*nwords uint64_t elements total. */
 
-struct belnap_vec
-{
+struct belnap_vec {
     int nwords;       /* per-plane word count = ceil(width/64) */
     uint64_t words[]; /* flexible array member; 2*nwords elements */
 };
@@ -119,8 +117,7 @@ CAMLprim value bv_mask_tail(value vbv, value vwidth)
     int const width = Int_val(vwidth);
 
     int const r = width & BITS_MASK;
-    if (nw > 0 && r != 0)
-    {
+    if (nw > 0 && r != 0) {
         uint64_t const mask = (UINT64_C(1) << r) - 1;
         int const base = (nw - 1) * 2;
         w[base] &= mask;
@@ -140,8 +137,7 @@ CAMLprim value bv_fill(value vbv, value vfrom, value vto, value vraw)
     uint64_t const pos = (raw & 1) ? ALL_ONES : UINT64_C(0);
     uint64_t const neg = (raw >> 1) & 1 ? ALL_ONES : UINT64_C(0);
 
-    for (int i = from; i < to; i++)
-    {
+    for (int i = from; i < to; i++) {
         int const base = i * 2;
         w[base] = pos;
         w[base + 1] = neg;
@@ -157,8 +153,7 @@ CAMLprim value bv_not(value src, value dst)
     uint64_t *const d = Bv_val(dst)->words;
     int const nw = Bv_val(src)->nwords;
 
-    for (int i = 0; i < nw; i++)
-    {
+    for (int i = 0; i < nw; i++) {
         int const base = i * 2;
         d[base] = s[base + 1];
         d[base + 1] = s[base];
@@ -178,8 +173,7 @@ CAMLprim value bv_and(value va, value vb, value dst)
 
     int const nw = nwa > nwb ? nwa : nwb;
 
-    for (int i = 0; i < nw; i++)
-    {
+    for (int i = 0; i < nw; i++) {
         int const base = i * 2;
         uint64_t const ap = i < nwa ? a[base] : 0;
         uint64_t const an = i < nwa ? a[base + 1] : 0;
@@ -203,8 +197,7 @@ CAMLprim value bv_or(value va, value vb, value dst)
 
     int const nw = nwa > nwb ? nwa : nwb;
 
-    for (int i = 0; i < nw; i++)
-    {
+    for (int i = 0; i < nw; i++) {
         int const base = i * 2;
         uint64_t const ap = i < nwa ? a[base] : 0;
         uint64_t const an = i < nwa ? a[base + 1] : 0;
@@ -228,8 +221,7 @@ CAMLprim value bv_merge(value va, value vb, value dst)
 
     int const nw = nwa > nwb ? nwa : nwb;
 
-    for (int i = 0; i < nw; i++)
-    {
+    for (int i = 0; i < nw; i++) {
         int const base = i * 2;
         uint64_t const ap = i < nwa ? a[base] : 0;
         uint64_t const an = i < nwa ? a[base + 1] : 0;
@@ -253,8 +245,7 @@ CAMLprim value bv_consensus(value va, value vb, value dst)
 
     int const nw = nwa > nwb ? nwa : nwb;
 
-    for (int i = 0; i < nw; i++)
-    {
+    for (int i = 0; i < nw; i++) {
         int const base = i * 2;
         uint64_t const ap = i < nwa ? a[base] : 0;
         uint64_t const an = i < nwa ? a[base + 1] : 0;
@@ -280,8 +271,7 @@ CAMLprim value bv_is_consistent(value vbv, value vwidth)
     int const nw = Bv_val(vbv)->nwords;
     int const width = Int_val(vwidth);
 
-    for (int i = 0; i < nw; i++)
-    {
+    for (int i = 0; i < nw; i++) {
         uint64_t const m = (i == nw - 1) ? tail_mask(width) : ALL_ONES;
         if ((w[i * 2] & w[i * 2 + 1] & m) != 0)
             CAMLreturn(Val_int(0));
@@ -297,8 +287,7 @@ CAMLprim value bv_is_all_determined(value vbv, value vwidth)
     int const nw = Bv_val(vbv)->nwords;
     int const width = Int_val(vwidth);
 
-    for (int i = 0; i < nw; i++)
-    {
+    for (int i = 0; i < nw; i++) {
         uint64_t const m = (i == nw - 1) ? tail_mask(width) : ALL_ONES;
         uint64_t const xorv = w[i * 2] ^ w[i * 2 + 1];
         if ((xorv & m) != m)
@@ -315,8 +304,7 @@ CAMLprim value bv_is_all_true(value vbv, value vwidth)
     int const nw = Bv_val(vbv)->nwords;
     int const width = Int_val(vwidth);
 
-    for (int i = 0; i < nw; i++)
-    {
+    for (int i = 0; i < nw; i++) {
         int const base = i * 2;
         uint64_t const m = (i == nw - 1) ? tail_mask(width) : ALL_ONES;
         if ((w[base] & m) != m)
@@ -335,8 +323,7 @@ CAMLprim value bv_is_all_false(value vbv, value vwidth)
     int const nw = Bv_val(vbv)->nwords;
     int const width = Int_val(vwidth);
 
-    for (int i = 0; i < nw; i++)
-    {
+    for (int i = 0; i < nw; i++) {
         int const base = i * 2;
         uint64_t const m = (i == nw - 1) ? tail_mask(width) : ALL_ONES;
         if ((w[base] & m) != 0)
@@ -405,15 +392,13 @@ CAMLprim value bv_init_from_list(value vbv, value vlist)
     struct belnap_vec *bv = Bv_val(vbv);
     int i = 0;
     uint64_t pos = 0, neg = 0;
-    while (vlist != Val_emptylist)
-    {
+    while (vlist != Val_emptylist) {
         int const raw = Int_val(Field(vlist, 0));
         int const bit = i & BITS_MASK;
         pos |= (uint64_t)(raw & 1) << bit;
         neg |= (uint64_t)((raw >> 1) & 1) << bit;
         vlist = Field(vlist, 1);
-        if (bit == BITS_MASK || vlist == Val_emptylist)
-        {
+        if (bit == BITS_MASK || vlist == Val_emptylist) {
             int const word = i >> BITS_LOG2;
             bv->words[word * 2] = pos;
             bv->words[word * 2 + 1] = neg;
@@ -431,14 +416,12 @@ CAMLprim value bv_init_from_array(value vbv, value varr)
     struct belnap_vec *bv = Bv_val(vbv);
     int const width = (int)Wosize_val(varr);
     uint64_t pos = 0, neg = 0;
-    for (int i = 0; i < width; i++)
-    {
+    for (int i = 0; i < width; i++) {
         int const raw = Int_val(Field(varr, i));
         int const bit = i & BITS_MASK;
         pos |= (uint64_t)(raw & 1) << bit;
         neg |= (uint64_t)((raw >> 1) & 1) << bit;
-        if (bit == BITS_MASK || i == width - 1)
-        {
+        if (bit == BITS_MASK || i == width - 1) {
             int const word = i >> BITS_LOG2;
             bv->words[word * 2] = pos;
             bv->words[word * 2 + 1] = neg;
@@ -462,14 +445,12 @@ CAMLprim value bv_to_array(value vbv, value vwidth)
     int const nwords = bv->nwords;
     uint64_t const *const w = bv->words;
     /* No allocation below; Store_field write-barrier is a no-op for immediates. */
-    for (int i = 0; i < nwords; i++)
-    {
+    for (int i = 0; i < nwords; i++) {
         uint64_t const pos = w[i * 2];
         uint64_t const neg = w[i * 2 + 1];
         int const base = i << BITS_LOG2;
         int const limit = base + 64 < width ? 64 : width - base;
-        for (int bit = 0; bit < limit; bit++)
-        {
+        for (int bit = 0; bit < limit; bit++) {
             int const raw = (int)(((pos >> bit) & 1) | (((neg >> bit) & 1) << 1));
             Store_field(arr, base + bit, Val_int(raw));
         }
@@ -487,8 +468,7 @@ CAMLprim value bv_find_first(value vbv, value vwidth, value vraw)
     uint64_t const want_pos = (uint64_t)(raw & 1);
     uint64_t const want_neg = (uint64_t)((raw >> 1) & 1);
 
-    for (int i = 0; i < nw; i++)
-    {
+    for (int i = 0; i < nw; i++) {
         uint64_t const m = (i == nw - 1) ? tail_mask(width) : ALL_ONES;
         uint64_t const pos_word = w[i * 2];
         uint64_t const neg_word = w[i * 2 + 1];
