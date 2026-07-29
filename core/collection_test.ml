@@ -14,7 +14,7 @@ let test_entity_equal () =
   let uri = Uri.of_string "https://foo.org" in
   let maybe_name = Some (Name.of_string "foo") in
   let created = Time.of_string "September 2, 2024" in
-  let labels = Label_set.of_list [ Label.of_string "foo" ] in
+  let labels = Label_set.singleton (Label.of_string "foo") in
   let a = Entity.make uri created ~maybe_name ~labels () in
   let b = Entity.make uri created ~maybe_name ~labels () in
   Alcotest.(check (module Entity)) same_entity a b
@@ -23,8 +23,9 @@ let test_entity_update () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
   let maybe_name = Some (Name.of_string "foo") in
+  let maybe_names = Option.fold ~none:Name_set.empty ~some:Name_set.singleton maybe_name in
   let created = Time.of_string "September 2, 2024" in
-  let labels = Label_set.of_list [ Label.of_string "foo" ] in
+  let labels = Label_set.singleton (Label.of_string "foo") in
   let a = Entity.make uri created ~maybe_name ~labels () in
   let updated = Time.of_string "September 4, 2024" in
   let names_update = Name_set.of_list [ Name.of_string "Foo.org"; Name.of_string "F00" ] in
@@ -36,9 +37,7 @@ let test_entity_update () =
   Alcotest.(check (list (module Time))) same_updated_at [ updated ] (Entity.updated_at a);
   Alcotest.(check (module Name_set))
     same_names
-    (Name_set.union
-       (Option.fold ~none:Name_set.empty ~some:Name_set.singleton maybe_name)
-       names_update)
+    (Name_set.union maybe_names names_update)
     (Entity.names a);
   Alcotest.(check (module Label_set))
     same_labels
@@ -49,17 +48,18 @@ let test_entity_absorb () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
   let name = Name.of_string "foo" in
+  let names = Name_set.singleton name in
   let created_a = Time.of_string "September 4, 2024" in
   let created_b = Time.of_string "September 2, 2024" in
-  let labels_foo = Label_set.of_list [ Label.of_string "foo" ] in
-  let labels_bar = Label_set.of_list [ Label.of_string "bar" ] in
+  let labels_foo = Label_set.singleton (Label.of_string "foo") in
+  let labels_bar = Label_set.singleton (Label.of_string "bar") in
   let a = Entity.make uri created_a ~labels:labels_foo () in
   let b = Entity.make uri created_b ~maybe_name:(Some name) ~labels:labels_bar () in
   let a = Entity.absorb b a in
   Alcotest.(check (module Uri)) same_uri (Uri.canonicalize uri) (Entity.uri a);
   Alcotest.(check (module Time)) same_created_at created_b (Entity.created_at a);
   Alcotest.(check (list (module Time))) same_updated_at [ created_a ] (Entity.updated_at a);
-  Alcotest.(check (module Name_set)) same_names (Name_set.of_list [ name ]) (Entity.names a);
+  Alcotest.(check (module Name_set)) same_names names (Entity.names a);
   Alcotest.(check (module Label_set))
     same_labels
     (Label_set.union labels_foo labels_bar)
@@ -85,10 +85,11 @@ let test_collection_upsert () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
   let name = Name.of_string "foo" in
+  let names = Name_set.singleton name in
   let created_a = Time.of_string "September 4, 2024" in
   let created_b = Time.of_string "September 2, 2024" in
-  let labels_foo = Label_set.of_list [ Label.of_string "foo" ] in
-  let labels_bar = Label_set.of_list [ Label.of_string "bar" ] in
+  let labels_foo = Label_set.singleton (Label.of_string "foo") in
+  let labels_bar = Label_set.singleton (Label.of_string "bar") in
   let a = Entity.make uri created_a ~labels:labels_foo () in
   let b = Entity.make uri created_b ~maybe_name:(Some name) ~labels:labels_bar () in
   let coll = Collection.create () in
@@ -101,7 +102,7 @@ let test_collection_upsert () =
   Alcotest.(check (module Uri)) same_uri (Uri.canonicalize uri) (Entity.uri e);
   Alcotest.(check (module Time)) same_created_at created_b (Entity.created_at e);
   Alcotest.(check (list (module Time))) same_updated_at [ created_a ] (Entity.updated_at e);
-  Alcotest.(check (module Name_set)) same_names (Name_set.of_list [ name ]) (Entity.names e);
+  Alcotest.(check (module Name_set)) same_names names (Entity.names e);
   Alcotest.(check (module Label_set))
     same_labels
     (Label_set.union labels_foo labels_bar)
