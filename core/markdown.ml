@@ -78,8 +78,16 @@ let block m ((c, st) : Collection.t * Fold_state.t) = function
       Folder.ret (c, st)
   | _ -> Folder.default
 
+exception Missing_date of string
+
 let save_entity c st =
-  let entity = Option.get (Fold_state.to_entity st) in
+  let entity =
+    match Fold_state.to_entity st with
+    | Some entity -> entity
+    (* to_entity needs a uri and a time. The uri was just set by the caller,
+       so what is missing is the time: the link precedes any date heading. *)
+    | None -> raise (Missing_date (Option.fold ~none:"?" ~some:Entity.Uri.to_string st.uri))
+  in
   let id = Collection.upsert c entity in
   Option.iter (fun parent -> Collection.add_edges c parent id) (List_ext.hd_opt st.parents);
   let st = { st with uri = None; name = None; maybe_parent = Some id } in
