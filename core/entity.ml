@@ -410,36 +410,64 @@ module Html = struct
     | None -> Time.empty
     | Some timestamp -> (timestamp, Unix.gmtime timestamp)
 
-  let build r e ((_, k), v) =
+  (* Split a TAGS attribute, trimming each tag and dropping empty ones. A
+     value like "x, toread" is one tag "x" and the toread marker, not a tag
+     named " toread". *)
+  let split_tags r v =
+    Str.split (Lazy.force r) v
+    |> List.filter_map (fun tag ->
+           match String.trim tag with
+           | "" -> None
+           | tag -> Some tag)
+
+  let toread_tag = "toread"
+
+  (* The accumulator carries whether a toread tag was seen alongside the
+     entity, so the decision does not depend on whether TAGS or TOREAD came
+     first in the attribute list. *)
+  let build r (e, tag_to_read) ((_, k), v) =
     match String.lowercase_ascii k with
-    | "href" -> { e with uri = Uri.canonicalize (Uri.of_string v) }
-    | "add_date" -> { e with created_at = parse_timestamp v }
+    | "href" -> ({ e with uri = Uri.canonicalize (Uri.of_string v) }, tag_to_read)
+    | "add_date" -> ({ e with created_at = parse_timestamp v }, tag_to_read)
     | "last_modified" when v <> String.empty ->
         let time = parse_timestamp v in
-        { e with updated_at = [ time ] }
+        ({ e with updated_at = [ time ] }, tag_to_read)
     | "last_visit" when v <> String.empty ->
         let time = parse_timestamp v in
-        { e with last_visited_at = Last_visited_at.of_time time }
+        ({ e with last_visited_at = Last_visited_at.of_time time }, tag_to_read)
     | "tags" when v <> String.empty ->
-        let tag_list = Str.split (Lazy.force r) v in
+        let tags = split_tags r v in
         let labels =
-          Label_set.of_seq
-            (Seq.filter_map
-               (fun tag -> if tag <> "toread" then Some (Label.of_string tag) else None)
-               (List.to_seq tag_list))
+          Label_set.of_list
+            (List.filter_map
+               (fun tag ->
+                 if String.equal tag toread_tag then
+                   None
+                 else
+                   Some (Label.of_string tag))
+               tags)
         in
-        let to_read = if List.mem "toread" tag_list then To_read.of_bool true else e.to_read in
-        { e with labels; to_read }
-    | "private" -> { e with shared = Shared.of_bool (v <> "1") }
-    | "toread" -> { e with to_read = To_read.of_bool (v = "1") }
-    | "feed" -> { e with is_feed = Is_feed.of_bool (v = "true") }
-    | _ -> e
+        (* Both decisions come from the same exact per-tag comparison, so a
+           tag like "toreading" is a label and not the toread marker. *)
+        ({ e with labels }, tag_to_read || List.exists (String.equal toread_tag) tags)
+    | "private" -> ({ e with shared = Shared.of_bool (v <> "1") }, tag_to_read)
+    | "toread" -> ({ e with to_read = To_read.of_bool (v = "1") }, tag_to_read)
+    | "feed" -> ({ e with is_feed = Is_feed.of_bool (v = "true") }, tag_to_read)
+    | _ -> (e, tag_to_read)
 
   let tag_splitter = lazy (Str.regexp "[,]+")
 
   let entity_of_attrs attributes names folder_labels extended : t =
     let f = build tag_splitter in
-    let entity = List.fold_left f { empty with names; extended } attributes in
+    let entity, tag_to_read = List.fold_left f ({ empty with names; extended }, false) attributes in
+    (* An explicit TOREAD attribute is authoritative; the tag only decides
+       when the attribute is absent. *)
+    let to_read =
+      match To_read.get entity.to_read with
+      | Some _ -> entity.to_read
+      | None when tag_to_read -> To_read.of_bool true
+      | None -> entity.to_read
+    in
     let labels = Label_set.union entity.labels folder_labels in
-    { entity with labels }
+    { entity with labels; to_read }
 end

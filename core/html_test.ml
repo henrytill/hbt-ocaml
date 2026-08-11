@@ -70,9 +70,60 @@ let test_preserves_non_http_schemes () =
   check_contains output {|HREF="ftp://ftp.example.org/pub"|};
   check_contains output {|HREF="gopher://gopher.example.org/"|}
 
+let parse_one attrs =
+  let doc =
+    Printf.sprintf
+      "<!DOCTYPE NETSCAPE-Bookmark-file-1>\n\
+       <DL><p>\n\
+       <DT><A HREF=\"https://a.org/\" ADD_DATE=\"0\" %s>title</A>\n\
+       </DL><p>\n"
+      attrs
+  in
+  let coll = Html.parse doc in
+  let id =
+    Option.get (Collection.id coll Entity.(Uri.canonicalize (Uri.of_string "https://a.org/")))
+  in
+  Collection.entity coll id
+
+let labels_of e = List.map Entity.Label.to_string (Entity.Label_set.elements (Entity.labels e))
+let to_read_of e = Entity.To_read.get (Entity.to_read e)
+
+let test_tags_are_trimmed () =
+  let e = parse_one {|TAGS="x, y ,  z"|} in
+  Alcotest.(check (list string)) "tags trimmed, no empties" [ "x"; "y"; "z" ] (labels_of e)
+
+let test_toread_tag_sets_flag () =
+  let e = parse_one {|TAGS="x, toread"|} in
+  Alcotest.(check (list string)) "toread is not a label" [ "x" ] (labels_of e);
+  Alcotest.(check (option bool)) "toread tag sets the flag" (Some true) (to_read_of e)
+
+let test_toread_matched_exactly () =
+  let e = parse_one {|TAGS="toreading"|} in
+  Alcotest.(check (list string)) "toreading is an ordinary label" [ "toreading" ] (labels_of e);
+  Alcotest.(check (option bool)) "toreading does not set the flag" None (to_read_of e)
+
+let test_explicit_toread_wins_either_order () =
+  let tag_first = parse_one {|TAGS="toread" TOREAD="0"|} in
+  let attr_first = parse_one {|TOREAD="0" TAGS="toread"|} in
+  Alcotest.(check (option bool))
+    "explicit TOREAD wins when the tag comes first"
+    (Some false)
+    (to_read_of tag_first);
+  Alcotest.(check (option bool))
+    "explicit TOREAD wins when the attribute comes first"
+    (Some false)
+    (to_read_of attr_first)
+
 let tests =
   let open Alcotest in
   [
+    ( "Parser",
+      [
+        test_case "tags are trimmed" `Quick test_tags_are_trimmed;
+        test_case "toread tag sets flag" `Quick test_toread_tag_sets_flag;
+        test_case "toread matched exactly" `Quick test_toread_matched_exactly;
+        test_case "explicit toread wins either order" `Quick test_explicit_toread_wins_either_order;
+      ] );
     ( "Formatter",
       [
         test_case "escapes attributes" `Quick test_escapes_attributes;
