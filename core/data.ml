@@ -40,12 +40,21 @@ let detect_output_format (filename : string) : output option =
   | ".yaml" -> Some Yaml
   | _ -> None
 
+exception Malformed_yaml of string
+
+(* Yaml.of_string_exn signals a parse failure with Invalid_argument, which a
+   caller cannot distinguish from a genuine programming error. *)
+let yaml_of_string s =
+  match Yaml.of_string s with
+  | Ok value -> value
+  | Error (`Msg msg) -> raise (Malformed_yaml msg)
+
 let parse : input -> string -> Collection.t = function
   | Json -> fun s -> Collection.of_posts (Pinboard.Post.from_json s)
   | Xml -> fun s -> Collection.of_posts (Pinboard.Post.from_xml s)
   | Markdown -> Markdown.parse
   | Html -> Html.parse
-  | Yaml -> fun s -> Collection.t_of_yaml (Yaml.of_string_exn s)
+  | Yaml -> fun s -> Collection.t_of_yaml (yaml_of_string s)
 
 exception Yaml_conversion_error of string
 

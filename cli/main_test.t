@@ -144,18 +144,14 @@ Test with invalid JSON mappings file:
   > programming: [foo]
   > EOF
   $ hbt --info --mappings invalid.yaml input.md
-  hbt: internal error, uncaught exception:
-       Yaml__Util.Value_error("Expected a string value")
-       
-  [125]
+  hbt: invalid.yaml: Expected a string value
+  [123]
 
 Test with missing mappings file:
 
   $ hbt --info --mappings nonexistent.json input.md
-  hbt: internal error, uncaught exception:
-       Sys_error("nonexistent.json: No such file or directory")
-       
-  [125]
+  hbt: nonexistent.json: No such file or directory
+  [123]
 
 Test output format auto-detection from file extension:
 
@@ -193,10 +189,75 @@ Test that explicit format overrides auto-detection:
 Test that unrecognized extension fails without explicit format:
 
   $ hbt input.md -o output.txt
-  hbt: internal error, uncaught exception:
-       Dune__exe__Main.Missing_output_specification
-       
-  [125]
+  hbt: no output format: pass -t FORMAT, or -o FILE with a known extension
+  [123]
+
+Test that a missing input file is reported, not raised:
+
+  $ hbt --info nonexistent.md
+  hbt: nonexistent.md: No such file or directory
+  [123]
+
+Test that a file name with no extension is reported:
+
+  $ touch noextension
+  $ hbt --info noextension
+  hbt: noextension: cannot determine the format from the file name; pass -f FORMAT
+  [123]
+
+Test that malformed YAML input is reported:
+
+  $ cat >broken.yaml <<EOF
+  > not valid yaml: [[[
+  > EOF
+  $ hbt --info broken.yaml
+  hbt: broken.yaml: error calling parser: did not find expected node content character 0 position 0 returned: 0
+  [123]
+
+Test that a structurally invalid collection is reported:
+
+  $ cat >bad-length.yaml <<EOF
+  > version: 0.1.0
+  > length: 3
+  > value:
+  > - id: 0
+  >   entity: {uri: "https://a.org/", createdAt: 0, updatedAt: [], names: [], labels: []}
+  >   edges: []
+  > EOF
+  $ hbt --info bad-length.yaml
+  hbt: bad-length.yaml: invalid collection: declared length 3 but found 1 nodes
+  [123]
+
+Test that an unsupported collection version is reported:
+
+  $ cat >future.yaml <<EOF
+  > version: 9.9.9
+  > length: 0
+  > value: []
+  > EOF
+  $ hbt --info future.yaml
+  hbt: future.yaml: collection version 9.9.9 is not supported, expected 0.1.0
+  [123]
+
+Test that a link before any date heading is reported:
+
+  $ cat >nodate.md <<EOF
+  > - [Orphan](https://orphan.example/)
+  > EOF
+  $ hbt --info nodate.md
+  hbt: nodate.md: https://orphan.example/ appears before any date heading
+  [123]
+
+Test that an unparseable date is reported:
+
+  $ cat >baddate.md <<EOF
+  > # Not A Date
+  > 
+  > - [x](https://a.org/)
+  > EOF
+  $ hbt --info baddate.md
+  hbt: baddate.md: could not parse a date: scanf: bad input at char number 4: character 'A' is not a decimal digit
+  [123]
 
 # Local Variables:
 # mode: prog

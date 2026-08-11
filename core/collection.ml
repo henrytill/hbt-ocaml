@@ -8,6 +8,7 @@ module Version = struct
   exception Malformed of string
 
   let expected : t = (0, 1, 0)
+  let to_string = Semver.to_string
 
   let check version =
     if not (Semver.equal version expected) then

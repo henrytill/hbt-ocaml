@@ -2,7 +2,7 @@
  (name main)
  (public_name hbt)
  (package hbt-cli)
- (libraries hbt-core cmdliner yaml))
+ (libraries hbt-core hbt-pinboard hbt-prelude cmdliner yaml))
 
 (cram
  (deps %{bin:hbt})

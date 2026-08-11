@@ -1,5 +1,8 @@
 type t
 
+exception Unexpected_xml_element of string
+(** Raised by {!from_xml} for an element other than [posts] or [post]. *)
+
 val href : t -> string
 val time : t -> string
 val description : t -> string option

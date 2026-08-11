@@ -15,6 +15,7 @@ module Version : sig
   (** Raised for a version that is not valid semver. *)
 
   val expected : t
+  val to_string : t -> string
 end
 
 type t

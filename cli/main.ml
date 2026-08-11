@@ -33,7 +33,7 @@ let read_file file =
 let update (coll : Collection.t) (args : Args.t) : unit =
   match args.mappings_file with
   | None -> ()
-  | Some file -> read_file file |> Yaml.of_string_exn |> Collection.update_labels coll
+  | Some file -> read_file file |> Data.yaml_of_string |> Collection.update_labels coll
 
 let write (content : string) : string option -> unit = function
   | None -> print_string content
@@ -66,17 +66,59 @@ let print (file : string) (args : Args.t) (coll : Collection.t) : unit =
   in
   write output args.output
 
-let process_file (args : Args.t) (file : string) : unit =
-  let input_format =
-    match args.input_format with
-    | None -> detect_input_format file
-    | Some format -> format
+(* Expected failures, reported as `hbt: <msg>`. Anything not listed here is a
+   bug rather than bad input, and is left to escape as an internal error. *)
+let explain (file : string) : exn -> string option =
+  let in_file fmt = Printf.ksprintf (fun msg -> Some (file ^ ": " ^ msg)) fmt in
+  function
+  | Sys_error msg -> Some msg
+  | Unsupported_file_format "" ->
+      in_file "cannot determine the format from the file name; pass -f FORMAT"
+  | Unsupported_file_format ext -> in_file "unsupported file format %S" ext
+  | Missing_output_specification ->
+      Some "no output format: pass -t FORMAT, or -o FILE with a known extension"
+  | Data.Malformed_yaml msg -> in_file "%s" msg
+  | Data.Yaml_conversion_error msg -> in_file "could not write YAML: %s" msg
+  | Collection.Invalid msg -> in_file "invalid collection: %s" msg
+  | Collection.Version.Unsupported version ->
+      in_file
+        "collection version %s is not supported, expected %s"
+        version
+        (Collection.Version.to_string Collection.Version.expected)
+  | Collection.Version.Malformed version -> in_file "malformed collection version %S" version
+  | Entity.Missing_uri -> in_file "an entity has no uri"
+  | Entity.Time.Invalid_month_name month -> in_file "unknown month name %S" month
+  | Markdown.Missing_date uri -> in_file "%s appears before any date heading" uri
+  | Pinboard.Post.Unexpected_xml_element name -> in_file "unexpected XML element %S" name
+  | Yaml.Util.Value_error msg -> in_file "%s" msg
+  | Prelude.Yaml_ext.Missing_field key -> in_file "missing field %S" key
+  | Scanf.Scan_failure msg -> in_file "could not parse a date: %s" msg
+  | _ -> None
+
+let process_file (args : Args.t) (file : string) : (unit, string) result =
+  (* Each stage names the file it is working on, so an error in the mappings
+     file is not reported against the input file. *)
+  let stage current f =
+    try Ok (f ())
+    with exn -> (
+      match explain current exn with
+      | Some msg -> Error msg
+      | None -> raise exn)
   in
-  let content = read_file file in
+  let ( let* ) = Result.bind in
+  let* input_format =
+    stage file (fun () ->
+        match args.input_format with
+        | None -> detect_input_format file
+        | Some format -> format)
+  in
+  let* content = stage file (fun () -> read_file file) in
   let updated_args = { args with input_format = Some input_format } in
-  let coll = Data.parse input_format content in
-  let () = update coll updated_args in
-  print file updated_args coll
+  let* coll = stage file (fun () -> Data.parse input_format content) in
+  let* () =
+    stage (Option.value ~default:file args.mappings_file) (fun () -> update coll updated_args)
+  in
+  stage file (fun () -> print file updated_args coll)
 
 let from_format =
   let open Data in
@@ -129,4 +171,4 @@ let cmd =
   let info = Cmd.info "hbt" ~version ~doc in
   Cmd.v info process_file_term
 
-let () = exit (Cmd.eval cmd)
+let () = exit (Cmd.eval_result cmd)
