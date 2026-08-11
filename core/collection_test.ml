@@ -242,6 +242,105 @@ let test_of_posts_roundtrips_duplicates () =
   let reparsed = Collection.t_of_yaml (Collection.yaml_of_t coll) in
   Alcotest.(check int) same_length (Collection.length coll) (Collection.length reparsed)
 
+let entity_yaml uri =
+  Printf.sprintf {|{uri: "%s", createdAt: 0, updatedAt: [], names: [], labels: []}|} uri
+
+let node_yaml ?(uri = "https://a.org/") ?(edges = "[]") id =
+  Printf.sprintf "- {id: %d, entity: %s, edges: %s}" id (entity_yaml uri) edges
+
+let collection_yaml ~length nodes =
+  Printf.sprintf "version: 0.1.0\nlength: %d\nvalue:\n%s\n" length (String.concat "\n" nodes)
+
+let of_yaml_string s = Collection.t_of_yaml (Yaml.of_string_exn s)
+
+let check_invalid name message s =
+  Alcotest.check_raises name (Collection.Invalid message) (fun () -> ignore (of_yaml_string s))
+
+let test_yaml_roundtrip () =
+  let open Entity in
+  let coll = Collection.create () in
+  let a =
+    Entity.make
+      (Uri.of_string "https://foo.org")
+      (Time.of_string "September 2, 2024")
+      ~maybe_name:(Some (Name.of_string "Foo"))
+      ~labels:(Label_set.singleton (Label.of_string "one"))
+      ~extended:[ Extended.of_string "a description" ]
+      ~shared:(Shared.of_bool true)
+      ~to_read:(To_read.of_bool false)
+      ()
+  in
+  let b = Entity.make (Uri.of_string "https://bar.org") (Time.of_string "September 4, 2024") () in
+  let id_a = Collection.upsert coll a in
+  let id_b = Collection.upsert coll b in
+  Collection.add_edges coll id_a id_b;
+  let reparsed = Collection.t_of_yaml (Collection.yaml_of_t coll) in
+  Alcotest.(check int) same_length (Collection.length coll) (Collection.length reparsed);
+  let id_a' = Option.get (Collection.id reparsed (Entity.uri a)) in
+  Alcotest.(check (module Entity))
+    same_entity
+    (Collection.entity coll id_a)
+    (Collection.entity reparsed id_a');
+  Alcotest.(check int)
+    same_edges
+    (Array.length (Collection.edges coll id_a))
+    (Array.length (Collection.edges reparsed id_a'))
+
+let test_yaml_accepts_valid () =
+  let coll = of_yaml_string (collection_yaml ~length:1 [ node_yaml 0 ~edges:"[0]" ]) in
+  Alcotest.(check int) same_length 1 (Collection.length coll)
+
+let test_yaml_rejects_length_mismatch () =
+  check_invalid
+    "length mismatch"
+    "declared length 3 but found 1 nodes"
+    (collection_yaml ~length:3 [ node_yaml 0 ])
+
+let test_yaml_rejects_negative_length () =
+  check_invalid "negative length" "negative length -1" "version: 0.1.0\nlength: -1\nvalue: []\n"
+
+let test_yaml_rejects_out_of_bounds_id () =
+  check_invalid
+    "id out of bounds"
+    "node id 5 out of bounds for length 1"
+    (collection_yaml ~length:1 [ node_yaml 5 ])
+
+let test_yaml_rejects_out_of_bounds_edge () =
+  check_invalid
+    "edge out of bounds"
+    "node 0 has an edge to 99, out of bounds for length 1"
+    (collection_yaml ~length:1 [ node_yaml 0 ~edges:"[99]" ])
+
+let test_yaml_rejects_duplicate_id () =
+  check_invalid
+    "duplicate id"
+    "duplicate node id 0"
+    (collection_yaml ~length:2 [ node_yaml 0; node_yaml 0 ~uri:"https://b.org/" ])
+
+let test_yaml_rejects_duplicate_uri () =
+  check_invalid
+    "duplicate uri"
+    "duplicate uri https://a.org/ at node 1"
+    (collection_yaml ~length:2 [ node_yaml 0; node_yaml 1 ])
+
+let test_yaml_rejects_missing_uri () =
+  check_invalid
+    "missing uri"
+    "node 0 has no uri"
+    (collection_yaml
+       ~length:1
+       [ "- {id: 0, entity: {createdAt: 0, updatedAt: [], names: [], labels: []}, edges: []}" ])
+
+let test_entity_yaml_rejects_missing_uri () =
+  Alcotest.check_raises "entity without a uri" Entity.Missing_uri (fun () ->
+      ignore (Entity.t_of_yaml (Yaml.of_string_exn "{createdAt: 0, names: [], labels: []}")))
+
+let test_yaml_rejects_bad_version () =
+  Alcotest.check_raises "malformed version" (Collection.Version.Malformed "not-semver") (fun () ->
+      ignore (of_yaml_string "version: not-semver\nlength: 0\nvalue: []\n"));
+  Alcotest.check_raises "unsupported version" (Collection.Version.Unsupported "9.9.9") (fun () ->
+      ignore (of_yaml_string "version: 9.9.9\nlength: 0\nvalue: []\n"))
+
 let tests =
   let open Alcotest in
   [
@@ -264,6 +363,20 @@ let tests =
         test_case "id protection" `Quick test_collection_id_protection;
         test_case "of_posts merges duplicates" `Quick test_of_posts_merges_duplicates;
         test_case "of_posts roundtrips duplicates" `Quick test_of_posts_roundtrips_duplicates;
+      ] );
+    ( "Collection YAML",
+      [
+        test_case "roundtrip" `Quick test_yaml_roundtrip;
+        test_case "accepts valid" `Quick test_yaml_accepts_valid;
+        test_case "rejects length mismatch" `Quick test_yaml_rejects_length_mismatch;
+        test_case "rejects negative length" `Quick test_yaml_rejects_negative_length;
+        test_case "rejects out-of-bounds id" `Quick test_yaml_rejects_out_of_bounds_id;
+        test_case "rejects out-of-bounds edge" `Quick test_yaml_rejects_out_of_bounds_edge;
+        test_case "rejects duplicate id" `Quick test_yaml_rejects_duplicate_id;
+        test_case "rejects duplicate uri" `Quick test_yaml_rejects_duplicate_uri;
+        test_case "rejects missing uri" `Quick test_yaml_rejects_missing_uri;
+        test_case "entity rejects missing uri" `Quick test_entity_yaml_rejects_missing_uri;
+        test_case "rejects bad version" `Quick test_yaml_rejects_bad_version;
       ] );
   ]
 

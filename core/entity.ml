@@ -302,13 +302,20 @@ let build e (k, v) =
   | "isFeed" -> { e with is_feed = Is_feed.of_bool (Yaml.Util.to_bool_exn v) }
   | _ -> e
 
+exception Missing_uri
+
 let t_of_yaml value =
   let assoc =
     match value with
     | `O assoc -> assoc
     | _ -> raise (Yaml.Util.Value_error "Expected an object")
   in
-  List.fold_left build empty assoc
+  let entity = List.fold_left build empty assoc in
+  (* A URI is intrinsic to an entity - it is the identity every producer
+     keys on - so enforce it here rather than in any one caller. *)
+  if Uri.equal entity.uri Uri.empty then
+    raise Missing_uri;
+  entity
 
 let yaml_of_t entity =
   let base_fields =

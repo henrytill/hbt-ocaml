@@ -129,6 +129,10 @@ val last_visited_at : t -> Last_visited_at.t
 val is_feed : t -> Is_feed.t
 val map_labels : (Label_set.t -> Label_set.t) -> t -> t
 val of_post : Pinboard.Post.t -> t
+
+exception Missing_uri
+(** Raised by {!t_of_yaml} for an entity with no [uri], or an empty one. *)
+
 val t_of_yaml : Yaml.value -> t
 val yaml_of_t : t -> Yaml.value
 

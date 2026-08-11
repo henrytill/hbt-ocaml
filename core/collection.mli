@@ -5,7 +5,23 @@ module Id : sig
   val pp : Format.formatter -> t -> unit
 end
 
+module Version : sig
+  type t = Semver.t
+
+  exception Unsupported of string
+  (** Raised for a well-formed version this build does not support. *)
+
+  exception Malformed of string
+  (** Raised for a version that is not valid semver. *)
+
+  val expected : t
+end
+
 type t
+
+exception Invalid of string
+(** Raised by {!t_of_yaml} for structurally invalid collection data: a bad length, an out-of-bounds
+    node id or edge, or a duplicate id or uri. *)
 
 val create : unit -> t
 val make : int -> t

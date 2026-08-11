@@ -4,15 +4,21 @@ module Yaml_ext = Prelude.Yaml_ext
 module Version = struct
   type t = Semver.t
 
-  exception Unsupported
+  exception Unsupported of string
+  exception Malformed of string
 
   let expected : t = (0, 1, 0)
 
   let check version =
     if not (Semver.equal version expected) then
-      raise Unsupported
+      raise (Unsupported (Semver.to_string version))
 
-  let t_of_yaml value = Option.get (Semver.of_string (Yaml.Util.to_string_exn value))
+  let t_of_yaml value =
+    let s = Yaml.Util.to_string_exn value in
+    match Semver.of_string s with
+    | Some version -> version
+    | None -> raise (Malformed s)
+
   let yaml_of_t version = Yaml.Util.string (Semver.to_string version)
 end
 
@@ -110,6 +116,10 @@ let edges c id =
 
 let entities c = Dynarray.to_array c.nodes
 
+exception Invalid of string
+
+let invalid fmt = Printf.ksprintf (fun msg -> raise (Invalid msg)) fmt
+
 let t_of_yaml value =
   let open Yaml_ext in
   begin
@@ -117,19 +127,41 @@ let t_of_yaml value =
     Version.check version
   end;
   let length = get_field ~key:"length" value |> int_of_float_exn in
+  if length < 0 then
+    invalid "negative length %d" length;
   let coll = make length in
+  let seen = Array.make length false in
+  let count = ref 0 in
   let process_item pairs =
     let i = get_field ~key:"id" pairs |> int_of_float_exn in
-    let entity = get_field ~key:"entity" pairs |> Entity.t_of_yaml in
-    let edges =
-      get_field ~key:"edges" pairs |> map_array_exn int_of_float_exn |> Dynarray.of_list
+    if i < 0 || i >= length then
+      invalid "node id %d out of bounds for length %d" i length;
+    if seen.(i) then
+      invalid "duplicate node id %d" i;
+    let entity =
+      try get_field ~key:"entity" pairs |> Entity.t_of_yaml
+      with Entity.Missing_uri -> invalid "node %d has no uri" i
     in
+    let edges = get_field ~key:"edges" pairs |> map_array_exn int_of_float_exn in
+    List.iter
+      (fun target ->
+        if target < 0 || target >= length then
+          invalid "node %d has an edge to %d, out of bounds for length %d" i target length)
+      edges;
     let uri = Entity.uri entity in
+    if Uri_hashtbl.mem coll.uris uri then
+      invalid "duplicate uri %s at node %d" (Entity.Uri.to_string uri) i;
     Dynarray.set coll.nodes i entity;
-    Dynarray.set coll.edges i edges;
-    Uri_hashtbl.add coll.uris uri i
+    Dynarray.set coll.edges i (Dynarray.of_list edges);
+    Uri_hashtbl.add coll.uris uri i;
+    seen.(i) <- true;
+    incr count
   in
   get_field ~key:"value" value |> iter_array_exn process_item;
+  (* Ids are in bounds and distinct, so matching the count means every slot
+     was filled - no node is left as the Entity.empty that make installed. *)
+  if !count <> length then
+    invalid "declared length %d but found %d nodes" length !count;
   coll
 
 let yaml_of_t c =

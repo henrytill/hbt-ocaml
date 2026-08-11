@@ -38,7 +38,7 @@
  (name collection_test)
  (modules collection_test)
  (package hbt-core)
- (libraries alcotest hbt-core hbt-pinboard uri))
+ (libraries alcotest hbt-core hbt-pinboard uri yaml))
 
 (test
  (name data_test)
