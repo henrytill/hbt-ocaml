@@ -165,6 +165,6 @@ let update_labels (c : t) (yaml : Yaml.value) : unit =
 
 let of_posts (ps : Post.t list) : t =
   let coll = create () in
-  let sorted = List.sort (fun a b -> String.compare (Post.time a) (Post.time b)) ps in
-  List.iter (fun post -> ignore (insert coll (Entity.of_post post))) sorted;
+  let sorted = List.stable_sort (fun a b -> String.compare (Post.time a) (Post.time b)) ps in
+  List.iter (fun post -> ignore (upsert coll (Entity.of_post post))) sorted;
   coll

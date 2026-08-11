@@ -157,6 +157,59 @@ let test_collection_id_protection () =
   Alcotest.check_raises "add_edge rejects foreign target" foreign_id_err (fun () ->
       Collection.add_edge coll_b id_b id_a)
 
+let post_json href description time tags =
+  Printf.sprintf
+    {|{"href":%S,"description":%S,"time":%S,"extended":"","tags":%S,"shared":"yes","toread":"no"}|}
+    href
+    description
+    time
+    tags
+
+let test_of_posts_merges_duplicates () =
+  let open Entity in
+  let posts =
+    Pinboard.Post.from_json
+      (Printf.sprintf
+         "[%s,%s]"
+         (post_json "https://foo.org" "First" "2024-09-02T00:00:00Z" "one")
+         (post_json "https://foo.org" "Second" "2024-09-04T00:00:00Z" "two"))
+  in
+  let coll = Collection.of_posts posts in
+  Alcotest.(check int) "duplicate hrefs collapse to one entity" 1 (Collection.length coll);
+  let uri = Uri.of_string "https://foo.org" in
+  let id = Option.get (Collection.id coll (Uri.canonicalize uri)) in
+  let e = Collection.entity coll id in
+  Alcotest.(check (module Time))
+    "earliest post wins created_at"
+    (Time.of_string "2024-09-02T00:00:00Z")
+    (Entity.created_at e);
+  Alcotest.(check (list (module Time)))
+    same_updated_at
+    [ Time.of_string "2024-09-04T00:00:00Z" ]
+    (Entity.updated_at e);
+  Alcotest.(check (module Name_set))
+    same_names
+    (Name_set.of_list [ Name.of_string "First"; Name.of_string "Second" ])
+    (Entity.names e);
+  Alcotest.(check (module Label_set))
+    same_labels
+    (Label_set.of_list [ Label.of_string "one"; Label.of_string "two" ])
+    (Entity.labels e)
+
+let test_of_posts_roundtrips_duplicates () =
+  let posts =
+    Pinboard.Post.from_json
+      (Printf.sprintf
+         "[%s,%s]"
+         (post_json "https://foo.org" "First" "2024-09-02T00:00:00Z" "one")
+         (post_json "https://foo.org" "Second" "2024-09-04T00:00:00Z" "two"))
+  in
+  let coll = Collection.of_posts posts in
+  (* Before duplicates were merged this raised, leaving the collection
+     unserializable: the second node shadowed the first in the uri index. *)
+  let reparsed = Collection.t_of_yaml (Collection.yaml_of_t coll) in
+  Alcotest.(check int) same_length (Collection.length coll) (Collection.length reparsed)
+
 let tests =
   let open Alcotest in
   [
@@ -172,6 +225,8 @@ let tests =
         test_case "insert" `Quick test_collection_upsert;
         test_case "add_edge" `Quick test_collection_add_edge;
         test_case "id protection" `Quick test_collection_id_protection;
+        test_case "of_posts merges duplicates" `Quick test_of_posts_merges_duplicates;
+        test_case "of_posts roundtrips duplicates" `Quick test_of_posts_roundtrips_duplicates;
       ] );
   ]
 
