@@ -111,6 +111,30 @@ let parse content =
 
   coll
 
+(* Escape a value for HTML output. Attribute values also escape the double
+   quote that delimits them; text content leaves quotes alone, where they are
+   safe. Single quotes pass through in both contexts: attributes here are
+   always double-quoted, and &apos; is not HTML4.
+
+   The template interpolates with triple mustache throughout, so escaping
+   happens here, once, with the context known - rather than relying on the
+   library's uniform escaping, which would also rewrite apostrophes. *)
+let escape ~quotes s =
+  let buf = Buffer.create (String.length s) in
+  String.iter
+    (fun c ->
+      match c with
+      | '&' -> Buffer.add_string buf "&amp;"
+      | '<' -> Buffer.add_string buf "&lt;"
+      | '>' -> Buffer.add_string buf "&gt;"
+      | '"' when quotes -> Buffer.add_string buf "&quot;"
+      | c -> Buffer.add_char buf c)
+    s;
+  Buffer.contents buf
+
+let escape_attribute = escape ~quotes:true
+let escape_text = escape ~quotes:false
+
 module Template_entity = struct
   open Prelude
 
@@ -177,9 +201,9 @@ module Template_entity = struct
   let yaml_of_t (template_entity : t) : Yaml.value =
     let base_fields =
       [
-        ("uri", `String template_entity.href);
-        ("addDate", `String template_entity.add_date);
-        ("text", `String template_entity.text);
+        ("uri", `String (escape_attribute template_entity.href));
+        ("addDate", `String (escape_attribute template_entity.add_date));
+        ("text", `String (escape_text template_entity.text));
       ]
     in
     let optional_fields =
@@ -188,10 +212,14 @@ module Template_entity = struct
           Option.map (fun v -> ("private", `String (string_of_bool v))) template_entity.private_;
           Option.map (fun v -> ("toRead", `String (string_of_bool v))) template_entity.to_read;
           Option.map (fun v -> ("feed", `String (Bool.to_string v))) template_entity.feed;
-          Option.map (fun v -> ("lastModified", `String v)) template_entity.last_modified;
-          Option.map (fun v -> ("tags", `String v)) template_entity.tags;
-          Option.map (fun v -> ("description", `String v)) template_entity.description;
-          Option.map (fun v -> ("lastVisit", `String v)) template_entity.last_visit;
+          Option.map
+            (fun v -> ("lastModified", `String (escape_attribute v)))
+            template_entity.last_modified;
+          Option.map (fun v -> ("tags", `String (escape_attribute v))) template_entity.tags;
+          Option.map (fun v -> ("description", `String (escape_text v))) template_entity.description;
+          Option.map
+            (fun v -> ("lastVisit", `String (escape_attribute v)))
+            template_entity.last_visit;
         ]
     in
     `O (base_fields @ optional_fields)

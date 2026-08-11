@@ -41,6 +41,12 @@
  (libraries alcotest hbt-core hbt-pinboard uri yaml))
 
 (test
+ (name html_test)
+ (modules html_test)
+ (package hbt-core)
+ (libraries alcotest hbt-core))
+
+(test
  (name data_test)
  (modules data_test)
  (package hbt-core)
