@@ -58,6 +58,8 @@ module Label_map : Map.S with type key = Label.t
 module Time : sig
   type t
 
+  exception Invalid_month_name of string
+
   val of_string : string -> t
   val to_string : t -> string
   val equal : t -> t -> bool

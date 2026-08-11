@@ -1,7 +1,3 @@
-Set TZ:
-
-  $ export TZ=UTC
-
 Create a test input file:
 
   $ cat >input.md <<EOF

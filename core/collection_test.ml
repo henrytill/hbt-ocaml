@@ -157,6 +157,38 @@ let test_collection_id_protection () =
   Alcotest.check_raises "add_edge rejects foreign target" foreign_id_err (fun () ->
       Collection.add_edge coll_b id_b id_a)
 
+let test_time_of_string () =
+  let open Entity in
+  (* Expected values are UTC epoch seconds. They must not depend on the TZ
+     this test runs under. *)
+  let cases =
+    [
+      ("2023-11-15T00:00:00Z", 1700006400.);
+      ("2023-11-15", 1700006400.);
+      ("November 15, 2023", 1700006400.);
+      ("1970-01-01T00:00:00Z", 0.);
+      ("1969-12-31T00:00:00Z", -86400.);
+      ("2024-02-29T12:34:56Z", 1709210096.);
+      ("2000-03-01", 951868800.);
+      ("1999-12-31", 946598400.);
+      (* Midsummer: under the old local-time parse this shifted by the
+         DST offset wherever the tests happened to run. *)
+      ("2023-07-01", 1688169600.);
+    ]
+  in
+  List.iter
+    (fun (input, expected) ->
+      Alcotest.(check (float 0.))
+        (Printf.sprintf "%S parses to %.0f" input expected)
+        expected
+        (float_of_string (Time.to_string (Time.of_string input))))
+    cases
+
+let test_time_of_string_rejects_garbage () =
+  let open Entity in
+  Alcotest.check_raises "unknown month name" (Time.Invalid_month_name "Smarch") (fun () ->
+      ignore (Time.of_string "Smarch 3, 2023"))
+
 let post_json href description time tags =
   Printf.sprintf
     {|{"href":%S,"description":%S,"time":%S,"extended":"","tags":%S,"shared":"yes","toread":"no"}|}
@@ -219,6 +251,11 @@ let tests =
         test_case "update" `Quick test_entity_update;
         test_case "absorb" `Quick test_entity_absorb;
         test_case "absorb extended" `Quick test_entity_absorb_extended;
+      ] );
+    ( "Time",
+      [
+        test_case "of_string" `Quick test_time_of_string;
+        test_case "of_string rejects garbage" `Quick test_time_of_string_rejects_garbage;
       ] );
     ( "Collection",
       [

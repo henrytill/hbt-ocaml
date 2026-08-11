@@ -49,9 +49,4 @@
   (glob_files data/html/*)
   (glob_files data/markdown/*)
   (glob_files data/pinboard/xml/*)
-  (glob_files data/pinboard/json/*))
- (action
-  (setenv
-   TZ
-   UTC
-   (run %{test}))))
+  (glob_files data/pinboard/json/*)))

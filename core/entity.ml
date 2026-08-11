@@ -88,6 +88,11 @@ module Time = struct
     | "December" -> 11
     | month -> raise (Invalid_month_name month)
 
+  (* Scanf signals a failed parse with any of these. *)
+  let is_scan_failure = function
+    | Scanf.Scan_failure _ | Failure _ | End_of_file -> true
+    | _ -> false
+
   let parse_date s =
     Scanf.sscanf s "%s %d, %d" (fun month day year -> (int_of_month month, day, year))
 
@@ -95,46 +100,49 @@ module Time = struct
     try
       let f year month day hour min sec = (year, month - 1, day, hour, min, sec) in
       Scanf.sscanf s "%d-%d-%dT%d:%d:%dZ" f
-    with _ ->
+    with e when is_scan_failure e ->
       let f year month day = (year, month - 1, day, 0, 0, 0) in
       Scanf.sscanf s "%d-%d-%d" f
 
+  (* Days from the Unix epoch to a proleptic Gregorian date, after Howard
+     Hinnant's days_from_civil. [month] is 0-based, as in Unix.tm.tm_mon. *)
+  let days_from_civil year month day =
+    let m = month + 1 in
+    let y =
+      if m <= 2 then
+        year - 1
+      else
+        year
+    in
+    let era =
+      (if y >= 0 then
+         y
+       else
+         y - 399)
+      / 400
+    in
+    let yoe = y - (era * 400) in
+    let mp = (m + 9) mod 12 in
+    let doy = (((153 * mp) + 2) / 5) + day - 1 in
+    let doe = (yoe * 365) + (yoe / 4) - (yoe / 100) + doy in
+    (era * 146097) + doe - 719468
+
+  (* The UTC counterpart of Unix.mktime. Unix offers no timegm, and mktime
+     interprets its argument as local time, which made parsed timestamps -
+     and therefore all output - depend on the caller's TZ. *)
+  let timegm ~year ~month ~day ~hour ~min ~sec =
+    let days = days_from_civil year month day in
+    float_of_int ((days * 86400) + (hour * 3600) + (min * 60) + sec)
+
   let of_string (s : string) : t =
-    let open Unix in
-    try
-      let year, tm_mon, tm_mday, tm_hour, tm_min, tm_sec = parse_iso8601 s in
-      let tm_year = year - 1900 in
-      let tm =
-        {
-          tm_sec;
-          tm_min;
-          tm_hour;
-          tm_mday;
-          tm_mon;
-          tm_year;
-          tm_wday = 0;
-          tm_yday = 0;
-          tm_isdst = false;
-        }
-      in
-      mktime tm
-    with _ ->
-      let tm_mon, tm_mday, year = parse_date s in
-      let tm_year = year - 1900 in
-      let tm =
-        {
-          tm_sec = 0;
-          tm_min = 0;
-          tm_hour = 0;
-          tm_mday;
-          tm_mon;
-          tm_year;
-          tm_wday = 0;
-          tm_yday = 0;
-          tm_isdst = false;
-        }
-      in
-      mktime tm
+    let year, month, day, hour, min, sec =
+      try parse_iso8601 s
+      with e when is_scan_failure e ->
+        let month, day, year = parse_date s in
+        (year, month, day, 0, 0, 0)
+    in
+    let t = timegm ~year ~month ~day ~hour ~min ~sec in
+    (t, Unix.gmtime t)
 
   let to_string t = fst t |> int_of_float |> string_of_int
   let equal x y = Float.equal (fst x) (fst y)
