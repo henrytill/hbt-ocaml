@@ -21,10 +21,6 @@ module List_ext = struct
     | [] -> []
     | _ :: tl -> tl
 
-  let uncons = function
-    | [] -> (None, [])
-    | x :: xs -> (Some x, xs)
-
   let[@tail_mod_cons] rec filter_some = function
     | [] -> []
     | x :: l -> begin

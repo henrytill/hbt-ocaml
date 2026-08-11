@@ -18,7 +18,7 @@ module Elt = struct
     | "a" -> A
     | _ -> Other
 
-  let equals a b =
+  let equal a b =
     match (a, b) with
     | Dl, Dl | Dt, Dt | Dd, Dd | H3, H3 | A, A | Other, Other -> true
     | _, _ -> false
@@ -69,17 +69,17 @@ let parse content =
     | None ->
         assert (Attrs.is_empty !attributes);
         continue := false
-    | Some (`Start_element ((_, name), _)) when Elt.(equals (of_string name) H3) ->
+    | Some (`Start_element ((_, name), _)) when Elt.(equal (of_string name) H3) ->
         Stack.push Elt.H3 elt_stack;
         waiting_for := Folder_name
-    | Some (`Start_element ((_, name), _)) when Elt.(equals (of_string name) Dt) ->
+    | Some (`Start_element ((_, name), _)) when Elt.(equal (of_string name) Dt) ->
         Stack.push Elt.Dt elt_stack;
         unless (Attrs.is_empty !attributes) add_pending
-    | Some (`Start_element ((_, name), attrs)) when Elt.(equals (of_string name) A) ->
+    | Some (`Start_element ((_, name), attrs)) when Elt.(equal (of_string name) A) ->
         Stack.push Elt.A elt_stack;
         attributes := attrs;
         waiting_for := Bookmark_description
-    | Some (`Start_element ((_, name), _)) when Elt.(equals (of_string name) Dd) ->
+    | Some (`Start_element ((_, name), _)) when Elt.(equal (of_string name) Dd) ->
         Stack.push Elt.Dd elt_stack;
         unless (Attrs.is_empty !attributes) (fun () -> waiting_for := Extended_description)
     | Some (`Start_element ((_, name), _)) -> Stack.push (Elt.of_string name) elt_stack
@@ -102,7 +102,7 @@ let parse content =
       end
     | Some `End_element ->
         let maybe_head = Stack.pop_opt elt_stack in
-        if maybe_head = Some Elt.Dl then begin
+        if Option.equal Elt.equal maybe_head (Some Elt.Dl) then begin
           unless (Attrs.is_empty !attributes) add_pending;
           ignore (Stack.pop_opt folder_stack)
         end

@@ -14,6 +14,12 @@ module Uri = struct
   let compare x y = String.compare (to_string x) (to_string y)
   let pp = Uri.pp
 
+  (* Uri.t memoizes its query in a lazy field, and Hashtbl.hash traverses it,
+     so an unforced and a forced value of the same URI hash differently.
+     Forcing it first makes the hash stable for the value's whole lifetime -
+     which Collection's uri index depends on, since a hash that drifted after
+     insertion would silently stop finding the entry. Do not remove this as
+     dead code: it is called for its effect on uri, not for its result. *)
   let hash uri =
     let _ = Uri.query uri in
     Hashtbl.hash uri
@@ -405,6 +411,9 @@ let of_post (p : Pinboard.Post.t) : t =
 module Html = struct
   module Attrs = Prelude.Markup_ext.Attrs
 
+  (* Deliberately lenient, unlike Time.of_string: exported bookmark files in
+     the wild carry missing or malformed ADD_DATE values, and falling back to
+     the epoch imports the bookmark rather than rejecting the whole file. *)
   let parse_timestamp (value : string) : Time.t =
     match Float.of_string_opt value with
     | None -> Time.empty
