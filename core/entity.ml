@@ -364,23 +364,21 @@ let update updated_at names labels extended e =
   let names = Name_set.union e.names names in
   let labels = Label_set.union e.labels labels in
   let extended = e.extended @ extended in
-  if Time.compare updated_at e.created_at < 0 then
+  let base = { e with names; labels; extended } in
+  let c = Time.compare updated_at base.created_at in
+  if c < 0 then
+    (* An earlier timestamp becomes created_at, and the one it displaces becomes an update. *)
     {
-      e with
-      updated_at = List.sort Time.compare (e.created_at :: e.updated_at);
+      base with
+      updated_at = List.sort Time.compare (base.created_at :: base.updated_at);
       created_at = updated_at;
-      names;
-      labels;
-      extended;
     }
+  else if c > 0 then
+    { base with updated_at = List.sort Time.compare (updated_at :: base.updated_at) }
   else
-    {
-      e with
-      updated_at = List.sort Time.compare (updated_at :: e.updated_at);
-      names;
-      labels;
-      extended;
-    }
+    (* A timestamp equal to created_at is deliberately not recorded: an "update" whose timestamp
+       merely repeats created_at carries no information. Settled as henrytill/hbt-go#57. *)
+    base
 
 let absorb other existing =
   if not (equal other existing) then

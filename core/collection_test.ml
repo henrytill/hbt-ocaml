@@ -44,6 +44,23 @@ let test_entity_update () =
     (Label_set.union labels labels_update)
     (Entity.labels a)
 
+(* An incoming timestamp equal to created_at records no update: such an entry would only repeat
+   created_at. Settled as henrytill/hbt-go#57, where this implementation was one of the two that
+   appended. The absorb guard does not cover this, since the entities differ. *)
+let test_entity_update_equal_timestamp () =
+  let open Entity in
+  let uri = Uri.of_string "https://foo.org" in
+  let created = Time.of_string "September 2, 2024" in
+  let a = Entity.make uri created ~maybe_name:(Some (Name.of_string "foo")) () in
+  let names_update = Name_set.singleton (Name.of_string "bar") in
+  let a = Entity.update created names_update Label_set.empty [] a in
+  Alcotest.(check (module Time)) same_created_at created (Entity.created_at a);
+  Alcotest.(check (list (module Time))) same_updated_at [] (Entity.updated_at a);
+  Alcotest.(check (module Name_set))
+    same_names
+    (Name_set.of_list [ Name.of_string "foo"; Name.of_string "bar" ])
+    (Entity.names a)
+
 let test_entity_absorb () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
@@ -348,6 +365,7 @@ let tests =
       [
         test_case "equal" `Quick test_entity_equal;
         test_case "update" `Quick test_entity_update;
+        test_case "update with an equal timestamp" `Quick test_entity_update_equal_timestamp;
         test_case "absorb" `Quick test_entity_absorb;
         test_case "absorb extended" `Quick test_entity_absorb_extended;
       ] );
