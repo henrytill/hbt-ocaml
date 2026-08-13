@@ -421,11 +421,12 @@ module Html = struct
      value like "x, toread" is one tag "x" and the toread marker, not a tag
      named " toread". *)
   let split_tags r v =
-    Str.split (Lazy.force r) v
-    |> List.filter_map (fun tag ->
-           match String.trim tag with
-           | "" -> None
-           | tag -> Some tag)
+    let f tag =
+      match String.trim tag with
+      | "" -> None
+      | tag -> Some tag
+    in
+    List.filter_map f (Str.split (Lazy.force r) v)
 
   let toread_tag = "toread"
 
