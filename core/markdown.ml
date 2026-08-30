@@ -68,12 +68,8 @@ let block m ((c, st) : Collection.t * Fold_state.t) = function
         | None -> st
         | Some parent -> { st with parents = parent :: st.parents }
       in
-      let c, st =
-        List.fold_left
-          (fun acc (item, _) -> Folder.fold_block m acc (Block.List_item.block item))
-          (c, st)
-          (Block.List'.items list)
-      in
+      let fold_item acc (item, _) = Folder.fold_block m acc (Block.List_item.block item) in
+      let c, st = List.fold_left fold_item (c, st) (Block.List'.items list) in
       let st = { st with maybe_parent = None; parents = List_ext.drop1 st.parents } in
       Folder.ret (c, st)
   | _ -> Folder.default
