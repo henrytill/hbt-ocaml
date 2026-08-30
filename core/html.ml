@@ -121,15 +121,14 @@ let parse content =
    library's uniform escaping, which would also rewrite apostrophes. *)
 let escape ~quotes s =
   let buf = Buffer.create (String.length s) in
-  String.iter
-    (fun c ->
-      match c with
-      | '&' -> Buffer.add_string buf "&amp;"
-      | '<' -> Buffer.add_string buf "&lt;"
-      | '>' -> Buffer.add_string buf "&gt;"
-      | '"' when quotes -> Buffer.add_string buf "&quot;"
-      | c -> Buffer.add_char buf c)
-    s;
+  let add_escaped = function
+    | '&' -> Buffer.add_string buf "&amp;"
+    | '<' -> Buffer.add_string buf "&lt;"
+    | '>' -> Buffer.add_string buf "&gt;"
+    | '"' when quotes -> Buffer.add_string buf "&quot;"
+    | c -> Buffer.add_char buf c
+  in
+  String.iter add_escaped s;
   Buffer.contents buf
 
 let escape_attribute = escape ~quotes:true
