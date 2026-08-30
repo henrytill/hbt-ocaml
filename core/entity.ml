@@ -455,16 +455,10 @@ module Html = struct
         ({ e with last_visited_at = Last_visited_at.of_time time }, tag_to_read)
     | "tags" when v <> String.empty ->
         let tags = split_tags r v in
-        let labels =
-          Label_set.of_list
-            (List.filter_map
-               (fun tag ->
-                 if String.equal tag toread_tag then
-                   None
-                 else
-                   Some (Label.of_string tag))
-               tags)
+        let label_of_tag tag =
+          if String.equal tag toread_tag then None else Some (Label.of_string tag)
         in
+        let labels = Label_set.of_list (List.filter_map label_of_tag tags) in
         (* Both decisions come from the same exact per-tag comparison, so a
            tag like "toreading" is a label and not the toread marker. *)
         ({ e with labels }, tag_to_read || List.exists (String.equal toread_tag) tags)
