@@ -30,7 +30,7 @@ let test_entity_update () =
   let updated = Time.of_string "September 4, 2024" in
   let names_update = Name_set.of_list [ Name.of_string "Foo.org"; Name.of_string "F00" ] in
   let labels_update = Label_set.of_list [ Label.of_string "foozer"; Label.of_string "bar" ] in
-  let extended_update = [] in
+  let extended_update = Extended_set.empty in
   let a = Entity.update updated names_update labels_update extended_update a in
   Alcotest.(check (module Uri)) same_uri (Uri.canonicalize uri) (Entity.uri a);
   Alcotest.(check (module Time)) same_created_at created (Entity.created_at a);
@@ -53,7 +53,7 @@ let test_entity_update_equal_timestamp () =
   let created = Time.of_string "September 2, 2024" in
   let a = Entity.make uri created ~maybe_name:(Some (Name.of_string "foo")) () in
   let names_update = Name_set.singleton (Name.of_string "bar") in
-  let a = Entity.update created names_update Label_set.empty [] a in
+  let a = Entity.update created names_update Label_set.empty Extended_set.empty a in
   Alcotest.(check (module Time)) same_created_at created (Entity.created_at a);
   Alcotest.(check (list (module Time))) same_updated_at [] (Entity.updated_at a);
   Alcotest.(check (module Name_set))
@@ -87,15 +87,32 @@ let test_entity_absorb_extended () =
   let uri = Uri.of_string "https://foo.org" in
   let created_a = Time.of_string "September 4, 2024" in
   let created_b = Time.of_string "September 2, 2024" in
-  let extended_a = [ Extended.of_string "description from source A" ] in
-  let extended_b = [ Extended.of_string "description from source B" ] in
+  let extended_a = Extended_set.singleton (Extended.of_string "description from source A") in
+  let extended_b = Extended_set.singleton (Extended.of_string "description from source B") in
   let a = Entity.make uri created_a ~extended:extended_a () in
   let b = Entity.make uri created_b ~extended:extended_b () in
   let merged = Entity.absorb b a in
-  let expected_extended = extended_a @ extended_b in
-  Alcotest.(check (list (module Extended)))
-    "extended lists concatenated"
+  let expected_extended = Extended_set.union extended_a extended_b in
+  Alcotest.(check (module Extended_set))
+    "extended sets unioned"
     expected_extended
+    (Entity.extended merged)
+
+(* Two entities that share a description but differ elsewhere are not equal, so
+   absorb's equality guard does not fire and the merge runs. The description
+   must still appear once. *)
+let test_entity_absorb_extended_shared () =
+  let open Entity in
+  let uri = Uri.of_string "https://foo.org" in
+  let created = Time.of_string "September 2, 2024" in
+  let extended = Extended_set.singleton (Extended.of_string "a shared description") in
+  let described label =
+    Entity.make uri created ~labels:(Label_set.singleton (Label.of_string label)) ~extended ()
+  in
+  let merged = Entity.absorb (described "b") (described "a") in
+  Alcotest.(check (module Extended_set))
+    "a shared description is not duplicated"
+    extended
     (Entity.extended merged)
 
 let test_collection_upsert () =
@@ -282,7 +299,7 @@ let test_yaml_roundtrip () =
       (Time.of_string "September 2, 2024")
       ~maybe_name:(Some (Name.of_string "Foo"))
       ~labels:(Label_set.singleton (Label.of_string "one"))
-      ~extended:[ Extended.of_string "a description" ]
+      ~extended:(Extended_set.singleton (Extended.of_string "a description"))
       ~shared:(Shared.of_bool true)
       ~to_read:(To_read.of_bool false)
       ()
@@ -368,6 +385,7 @@ let tests =
         test_case "update with an equal timestamp" `Quick test_entity_update_equal_timestamp;
         test_case "absorb" `Quick test_entity_absorb;
         test_case "absorb extended" `Quick test_entity_absorb_extended;
+        test_case "absorb shared extended" `Quick test_entity_absorb_extended_shared;
       ] );
     ( "Time",
       [

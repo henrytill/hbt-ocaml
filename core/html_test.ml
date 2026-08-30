@@ -13,7 +13,7 @@ let collection_with ~name ~label ~description =
       (Time.of_string "2023-11-15T00:00:00Z")
       ~maybe_name:(Some (Name.of_string name))
       ~labels:(Label_set.singleton (Label.of_string label))
-      ~extended:[ Extended.of_string description ]
+      ~extended:(Extended_set.singleton (Extended.of_string description))
       ()
   in
   ignore (Collection.upsert coll e);
@@ -57,7 +57,7 @@ let test_roundtrip_preserves_markup_characters () =
   Alcotest.(check (list string))
     "extended survives the round trip"
     [ hostile ]
-    (List.map Extended.to_string (extended e))
+    (List.map Extended.to_string (Extended_set.elements (extended e)))
 
 let test_preserves_non_http_schemes () =
   let coll = Collection.create () in
