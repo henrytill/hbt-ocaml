@@ -54,10 +54,10 @@ let test_roundtrip_preserves_markup_characters () =
     "label survives the round trip"
     [ "a&b" ]
     (List.map Label.to_string (Label_set.elements (labels e)));
-  Alcotest.(check (list string))
+  Alcotest.(check (module Extended_set))
     "extended survives the round trip"
-    [ hostile ]
-    (List.map Extended.to_string (Extended_set.elements (extended e)))
+    (Extended_set.singleton (Extended.of_string hostile))
+    (extended e)
 
 let test_preserves_non_http_schemes () =
   let coll = Collection.create () in
