@@ -81,6 +81,14 @@ module Extended : sig
   val yaml_of_t : t -> Yaml.value
 end
 
+module Extended_set : sig
+  include Set.S with type elt = Extended.t
+
+  val pp : Format.formatter -> t -> unit
+  val t_of_yaml : Yaml.value -> t
+  val yaml_of_t : t -> Yaml.value
+end
+
 module Shared : Flag_intf.S
 module To_read : Flag_intf.S
 module Is_feed : Flag_intf.S
@@ -104,7 +112,7 @@ val make :
   ?updated_at:Time.t list ->
   ?maybe_name:Name.t option ->
   ?labels:Label_set.t ->
-  ?extended:Extended.t list ->
+  ?extended:Extended_set.t ->
   ?shared:Shared.t ->
   ?to_read:To_read.t ->
   ?last_visited_at:Last_visited_at.t ->
@@ -115,14 +123,14 @@ val make :
 val empty : t
 val equal : t -> t -> bool
 val pp : Format.formatter -> t -> unit
-val update : Time.t -> Name_set.t -> Label_set.t -> Extended.t list -> t -> t
+val update : Time.t -> Name_set.t -> Label_set.t -> Extended_set.t -> t -> t
 val absorb : t -> t -> t
 val uri : t -> Uri.t
 val created_at : t -> Time.t
 val updated_at : t -> Time.t list
 val names : t -> Name_set.t
 val labels : t -> Label_set.t
-val extended : t -> Extended.t list
+val extended : t -> Extended_set.t
 val shared : t -> Shared.t
 val to_read : t -> To_read.t
 val last_visited_at : t -> Last_visited_at.t
@@ -139,5 +147,5 @@ val yaml_of_t : t -> Yaml.value
 module Html : sig
   module Attrs = Prelude.Markup_ext.Attrs
 
-  val entity_of_attrs : Attrs.t -> Name_set.t -> Label_set.t -> Extended.t list -> t
+  val entity_of_attrs : Attrs.t -> Name_set.t -> Label_set.t -> Extended_set.t -> t
 end

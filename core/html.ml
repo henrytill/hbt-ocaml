@@ -48,7 +48,12 @@ let parse content =
       let some s = Name_set.singleton (Name.of_string s) in
       let names = Option.fold ~none:Name_set.empty ~some !maybe_description in
       let folder_labels = Stack.fold mk_labels Entity.Label_set.empty folder_stack in
-      let extended = Option.to_list (Option.map Extended.of_string !maybe_extended) in
+      let extended =
+        Option.fold
+          ~none:Extended_set.empty
+          ~some:(fun s -> Extended_set.singleton (Extended.of_string s))
+          !maybe_extended
+      in
       Html.entity_of_attrs !attributes names folder_labels extended
     in
     ignore (Collection.upsert coll entity);
@@ -174,9 +179,8 @@ module Template_entity = struct
       | labels -> Some (String.concat "," (List.map Entity.Label.to_string labels))
     in
     let description =
-      match Entity.extended entity with
-      | [] -> None
-      | hd :: _ -> Some (Entity.Extended.to_string hd)
+      let extended = Entity.extended entity in
+      Option.map Entity.Extended.to_string (Entity.Extended_set.min_elt_opt extended)
     in
     {
       href;

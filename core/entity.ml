@@ -174,6 +174,14 @@ module Extended = struct
   let yaml_of_t = Yaml.Util.string
 end
 
+module Extended_set = struct
+  include Set.Make (Extended)
+
+  let pp fmt s = pp_print_set Extended.pp fmt (elements s)
+  let t_of_yaml value = of_list (Yaml_ext.map_array_exn Extended.t_of_yaml value)
+  let yaml_of_t set = Yaml.Util.list Extended.yaml_of_t (to_list set)
+end
+
 module Flag = struct
   type t = bool option
 
@@ -216,7 +224,7 @@ type t = {
   updated_at : Time.t list;
   names : Name_set.t;
   labels : Label_set.t;
-  extended : Extended.t list;
+  extended : Extended_set.t;
   shared : Shared.t;
   to_read : To_read.t;
   last_visited_at : Last_visited_at.t;
@@ -224,7 +232,7 @@ type t = {
 }
 
 let make uri created_at ?(updated_at = []) ?(maybe_name = None) ?(labels = Label_set.empty)
-    ?(extended = []) ?(shared = Shared.empty) ?(to_read = To_read.empty)
+    ?(extended = Extended_set.empty) ?(shared = Shared.empty) ?(to_read = To_read.empty)
     ?(last_visited_at = Last_visited_at.empty) ?(is_feed = Is_feed.empty) () =
   let uri = Uri.canonicalize uri in
   let names = Option.fold ~none:Name_set.empty ~some:Name_set.singleton maybe_name in
@@ -248,7 +256,7 @@ let empty =
     updated_at = [];
     names = Name_set.empty;
     labels = Label_set.empty;
-    extended = [];
+    extended = Extended_set.empty;
     shared = Shared.empty;
     to_read = To_read.empty;
     last_visited_at = Last_visited_at.empty;
@@ -272,7 +280,7 @@ let equal x y =
   && List.equal Time.equal x.updated_at y.updated_at
   && Name_set.equal x.names y.names
   && Label_set.equal x.labels y.labels
-  && List.equal Extended.equal x.extended y.extended
+  && Extended_set.equal x.extended y.extended
   && Shared.equal x.shared y.shared
   && To_read.equal x.to_read y.to_read
   && Last_visited_at.equal x.last_visited_at y.last_visited_at
@@ -287,7 +295,7 @@ let pp =
       field "updated_at" updated_at (list ~sep:semi Time.pp);
       field "names" names Name_set.pp;
       field "labels" labels Label_set.pp;
-      field "extended" extended (list ~sep:semi Extended.pp);
+      field "extended" extended Extended_set.pp;
       field "shared" shared Shared.pp;
       field "to_read" to_read To_read.pp;
       field "last_visited_at" last_visited_at Last_visited_at.pp;
@@ -301,7 +309,7 @@ let build e (k, v) =
   | "updatedAt" -> { e with updated_at = Yaml_ext.map_array_exn Time.t_of_yaml v }
   | "names" -> { e with names = Name_set.t_of_yaml v }
   | "labels" -> { e with labels = Label_set.t_of_yaml v }
-  | "extended" -> { e with extended = Yaml_ext.map_array_exn Extended.t_of_yaml v }
+  | "extended" -> { e with extended = Extended_set.t_of_yaml v }
   | "shared" -> { e with shared = Shared.of_bool (Yaml.Util.to_bool_exn v) }
   | "toRead" -> { e with to_read = To_read.of_bool (Yaml.Util.to_bool_exn v) }
   | "lastVisitedAt" -> { e with last_visited_at = Last_visited_at.of_time (Time.t_of_yaml v) }
@@ -349,9 +357,10 @@ let yaml_of_t entity =
     | Some b -> [ ("isFeed", `Bool b) ]
   in
   let extended =
-    match entity.extended with
-    | [] -> []
-    | exts -> [ ("extended", `A (List.map Extended.yaml_of_t exts)) ]
+    if Extended_set.is_empty entity.extended then
+      []
+    else
+      [ ("extended", Extended_set.yaml_of_t entity.extended) ]
   in
   let last_visited =
     match Last_visited_at.get entity.last_visited_at with
@@ -363,7 +372,7 @@ let yaml_of_t entity =
 let update updated_at names labels extended e =
   let names = Name_set.union e.names names in
   let labels = Label_set.union e.labels labels in
-  let extended = e.extended @ extended in
+  let extended = Extended_set.union e.extended extended in
   let base = { e with names; labels; extended } in
   let c = Time.compare updated_at base.created_at in
   if c < 0 then
@@ -400,7 +409,12 @@ let of_post (p : Pinboard.Post.t) : t =
   let created_at = Time.of_string (Post.time p) in
   let maybe_name = Option.map Name.of_string (Post.description p) in
   let labels = Label_set.of_list (List.map Label.of_string (Post.tag p)) in
-  let extended = Option.fold ~none:[] ~some:(fun s -> [ Extended.of_string s ]) (Post.extended p) in
+  let extended =
+    Option.fold
+      ~none:Extended_set.empty
+      ~some:(fun s -> Extended_set.singleton (Extended.of_string s))
+      (Post.extended p)
+  in
   let shared = Shared.of_bool (Post.shared p) in
   let to_read = To_read.of_bool (Post.toread p) in
   let is_feed = Is_feed.of_bool false in
