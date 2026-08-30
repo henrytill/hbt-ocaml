@@ -58,11 +58,11 @@ let parse : input -> string -> Collection.t = function
 
 exception Yaml_conversion_error of string
 
+let format_yaml coll =
+  match Yaml.to_string ~len:(1024 * 1024) (Collection.yaml_of_t coll) with
+  | Ok s -> s
+  | Error (`Msg e) -> raise (Yaml_conversion_error e)
+
 let format : output -> Collection.t -> string = function
   | Html -> Html.format
-  | Yaml -> begin
-      fun coll ->
-        match Yaml.to_string ~len:(1024 * 1024) (Collection.yaml_of_t coll) with
-        | Ok s -> s
-        | Error (`Msg e) -> raise (Yaml_conversion_error e)
-    end
+  | Yaml -> format_yaml
