@@ -180,6 +180,7 @@ module Extended_set = struct
   let pp fmt s = pp_print_set Extended.pp fmt (elements s)
   let t_of_yaml value = of_list (Yaml_ext.map_array_exn Extended.t_of_yaml value)
   let yaml_of_t set = Yaml.Util.list Extended.yaml_of_t (to_list set)
+  let of_option = Option.fold ~none:empty ~some:singleton
 end
 
 module Flag = struct
@@ -409,12 +410,7 @@ let of_post (p : Pinboard.Post.t) : t =
   let created_at = Time.of_string (Post.time p) in
   let maybe_name = Option.map Name.of_string (Post.description p) in
   let labels = Label_set.of_list (List.map Label.of_string (Post.tag p)) in
-  let extended =
-    Option.fold
-      ~none:Extended_set.empty
-      ~some:(fun s -> Extended_set.singleton (Extended.of_string s))
-      (Post.extended p)
-  in
+  let extended = Extended_set.of_option (Option.map Extended.of_string (Post.extended p)) in
   let shared = Shared.of_bool (Post.shared p) in
   let to_read = To_read.of_bool (Post.toread p) in
   let is_feed = Is_feed.of_bool false in
