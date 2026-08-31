@@ -162,6 +162,14 @@ module Time = struct
   let yaml_of_t time = Yaml.Util.float (fst time)
 end
 
+module Time_set = struct
+  include Set.Make (Time)
+
+  let pp fmt s = pp_print_set Time.pp fmt (elements s)
+  let t_of_yaml value = of_list (Yaml_ext.map_array_exn Time.t_of_yaml value)
+  let yaml_of_t set = Yaml.Util.list Time.yaml_of_t (to_list set)
+end
+
 module Extended = struct
   type t = string
 
@@ -222,7 +230,7 @@ end
 type t = {
   uri : Uri.t;
   created_at : Time.t;
-  updated_at : Time.t list;
+  updated_at : Time_set.t;
   names : Name_set.t;
   labels : Label_set.t;
   extended : Extended_set.t;
@@ -232,9 +240,10 @@ type t = {
   is_feed : Is_feed.t;
 }
 
-let make uri created_at ?(updated_at = []) ?(maybe_name = None) ?(labels = Label_set.empty)
-    ?(extended = Extended_set.empty) ?(shared = Shared.empty) ?(to_read = To_read.empty)
-    ?(last_visited_at = Last_visited_at.empty) ?(is_feed = Is_feed.empty) () =
+let make uri created_at ?(updated_at = Time_set.empty) ?(maybe_name = None)
+    ?(labels = Label_set.empty) ?(extended = Extended_set.empty) ?(shared = Shared.empty)
+    ?(to_read = To_read.empty) ?(last_visited_at = Last_visited_at.empty) ?(is_feed = Is_feed.empty)
+    () =
   let uri = Uri.canonicalize uri in
   let names = Option.fold ~none:Name_set.empty ~some:Name_set.singleton maybe_name in
   {
@@ -254,7 +263,7 @@ let empty =
   {
     uri = Uri.empty;
     created_at = Time.empty;
-    updated_at = [];
+    updated_at = Time_set.empty;
     names = Name_set.empty;
     labels = Label_set.empty;
     extended = Extended_set.empty;
@@ -278,7 +287,7 @@ let is_feed e = e.is_feed
 let equal x y =
   Uri.equal x.uri y.uri
   && Time.equal x.created_at y.created_at
-  && List.equal Time.equal x.updated_at y.updated_at
+  && Time_set.equal x.updated_at y.updated_at
   && Name_set.equal x.names y.names
   && Label_set.equal x.labels y.labels
   && Extended_set.equal x.extended y.extended
@@ -293,7 +302,7 @@ let pp =
     [
       field "uri" uri Uri.pp;
       field "created_at" created_at Time.pp;
-      field "updated_at" updated_at (list ~sep:semi Time.pp);
+      field "updated_at" updated_at Time_set.pp;
       field "names" names Name_set.pp;
       field "labels" labels Label_set.pp;
       field "extended" extended Extended_set.pp;
@@ -307,7 +316,7 @@ let build e (k, v) =
   match k with
   | "uri" -> { e with uri = Uri.t_of_yaml v }
   | "createdAt" -> { e with created_at = Time.t_of_yaml v }
-  | "updatedAt" -> { e with updated_at = Yaml_ext.map_array_exn Time.t_of_yaml v }
+  | "updatedAt" -> { e with updated_at = Time_set.t_of_yaml v }
   | "names" -> { e with names = Name_set.t_of_yaml v }
   | "labels" -> { e with labels = Label_set.t_of_yaml v }
   | "extended" -> { e with extended = Extended_set.t_of_yaml v }
@@ -337,7 +346,7 @@ let yaml_of_t entity =
     [
       ("uri", Uri.yaml_of_t entity.uri);
       ("createdAt", Time.yaml_of_t entity.created_at);
-      ("updatedAt", `A (List.map Time.yaml_of_t entity.updated_at));
+      ("updatedAt", Time_set.yaml_of_t entity.updated_at);
       ("names", Name_set.yaml_of_t entity.names);
       ("labels", Label_set.yaml_of_t entity.labels);
     ]
@@ -378,13 +387,9 @@ let update updated_at names labels extended e =
   let c = Time.compare updated_at base.created_at in
   if c < 0 then
     (* An earlier timestamp becomes created_at, and the one it displaces becomes an update. *)
-    {
-      base with
-      updated_at = List.sort Time.compare (base.created_at :: base.updated_at);
-      created_at = updated_at;
-    }
+    { base with updated_at = Time_set.add base.created_at base.updated_at; created_at = updated_at }
   else if c > 0 then
-    { base with updated_at = List.sort Time.compare (updated_at :: base.updated_at) }
+    { base with updated_at = Time_set.add updated_at base.updated_at }
   else
     (* A timestamp equal to created_at is deliberately not recorded: an "update" whose timestamp
        merely repeats created_at carries no information. Settled as henrytill/hbt-go#57. *)
@@ -449,7 +454,7 @@ module Html = struct
     | "add_date" -> ({ e with created_at = parse_timestamp v }, tag_to_read)
     | "last_modified" when v <> String.empty ->
         let time = parse_timestamp v in
-        ({ e with updated_at = [ time ] }, tag_to_read)
+        ({ e with updated_at = Time_set.singleton time }, tag_to_read)
     | "last_visit" when v <> String.empty ->
         let time = parse_timestamp v in
         ({ e with last_visited_at = Last_visited_at.of_time time }, tag_to_read)

@@ -157,12 +157,8 @@ module Template_entity = struct
       Option.fold ~none:href ~some:Entity.Name.to_string (Entity.Name_set.min_elt_opt names)
     in
     let last_modified =
-      match Entity.updated_at entity with
-      | [] -> None
-      | times ->
-          let compare = Fun.flip Entity.Time.compare in
-          let latest = List.hd (List.sort compare times) in
-          Some (Entity.Time.to_string latest)
+      let updated_at = Entity.updated_at entity in
+      Option.map Entity.Time.to_string (Entity.Time_set.max_elt_opt updated_at)
     in
     let tags =
       match Entity.Label_set.elements (Entity.labels entity) with

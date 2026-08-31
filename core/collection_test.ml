@@ -34,7 +34,10 @@ let test_entity_update () =
   let a = Entity.update updated names_update labels_update extended_update a in
   Alcotest.(check (module Uri)) same_uri (Uri.canonicalize uri) (Entity.uri a);
   Alcotest.(check (module Time)) same_created_at created (Entity.created_at a);
-  Alcotest.(check (list (module Time))) same_updated_at [ updated ] (Entity.updated_at a);
+  Alcotest.(check (module Time_set))
+    same_updated_at
+    (Time_set.singleton updated)
+    (Entity.updated_at a);
   Alcotest.(check (module Name_set))
     same_names
     (Name_set.union maybe_names names_update)
@@ -55,7 +58,7 @@ let test_entity_update_equal_timestamp () =
   let names_update = Name_set.singleton (Name.of_string "bar") in
   let a = Entity.update created names_update Label_set.empty Extended_set.empty a in
   Alcotest.(check (module Time)) same_created_at created (Entity.created_at a);
-  Alcotest.(check (list (module Time))) same_updated_at [] (Entity.updated_at a);
+  Alcotest.(check (module Time_set)) same_updated_at Time_set.empty (Entity.updated_at a);
   Alcotest.(check (module Name_set))
     same_names
     (Name_set.of_list [ Name.of_string "foo"; Name.of_string "bar" ])
@@ -75,7 +78,10 @@ let test_entity_absorb () =
   let a = Entity.absorb b a in
   Alcotest.(check (module Uri)) same_uri (Uri.canonicalize uri) (Entity.uri a);
   Alcotest.(check (module Time)) same_created_at created_b (Entity.created_at a);
-  Alcotest.(check (list (module Time))) same_updated_at [ created_a ] (Entity.updated_at a);
+  Alcotest.(check (module Time_set))
+    same_updated_at
+    (Time_set.singleton created_a)
+    (Entity.updated_at a);
   Alcotest.(check (module Name_set)) same_names names (Entity.names a);
   Alcotest.(check (module Label_set))
     same_labels
@@ -115,6 +121,30 @@ let test_entity_absorb_extended_shared () =
     extended
     (Entity.extended merged)
 
+(* Three mentions at the same later instant, each differing in its labels so
+   absorb's equality guard never fires. The instant must be recorded once
+   however many times it arrives. Three rather than two, because two cannot
+   distinguish "deduplicated" from "recorded once by accident". *)
+let test_entity_absorb_shared_timestamp () =
+  let open Entity in
+  let uri = Uri.of_string "https://foo.org" in
+  let created = Time.of_string "September 2, 2024" in
+  let updated = Time.of_string "September 4, 2024" in
+  let labelled time label =
+    Entity.make uri time ~labels:(Label_set.singleton (Label.of_string label)) ()
+  in
+  let base = labelled created "a" in
+  let merged =
+    List.fold_left
+      (fun acc label -> Entity.absorb (labelled updated label) acc)
+      base
+      [ "b"; "c"; "d" ]
+  in
+  Alcotest.(check (module Time_set))
+    "a shared update timestamp is not duplicated"
+    (Time_set.singleton updated)
+    (Entity.updated_at merged)
+
 let test_collection_upsert () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
@@ -135,7 +165,10 @@ let test_collection_upsert () =
   let e = Collection.entity coll id_a in
   Alcotest.(check (module Uri)) same_uri (Uri.canonicalize uri) (Entity.uri e);
   Alcotest.(check (module Time)) same_created_at created_b (Entity.created_at e);
-  Alcotest.(check (list (module Time))) same_updated_at [ created_a ] (Entity.updated_at e);
+  Alcotest.(check (module Time_set))
+    same_updated_at
+    (Time_set.singleton created_a)
+    (Entity.updated_at e);
   Alcotest.(check (module Name_set)) same_names names (Entity.names e);
   Alcotest.(check (module Label_set))
     same_labels
@@ -249,9 +282,9 @@ let test_of_posts_merges_duplicates () =
     "earliest post wins created_at"
     (Time.of_string "2024-09-02T00:00:00Z")
     (Entity.created_at e);
-  Alcotest.(check (list (module Time)))
+  Alcotest.(check (module Time_set))
     same_updated_at
-    [ Time.of_string "2024-09-04T00:00:00Z" ]
+    (Time_set.singleton (Time.of_string "2024-09-04T00:00:00Z"))
     (Entity.updated_at e);
   Alcotest.(check (module Name_set))
     same_names
@@ -386,6 +419,7 @@ let tests =
         test_case "absorb" `Quick test_entity_absorb;
         test_case "absorb extended" `Quick test_entity_absorb_extended;
         test_case "absorb shared extended" `Quick test_entity_absorb_extended_shared;
+        test_case "absorb shared timestamp" `Quick test_entity_absorb_shared_timestamp;
       ] );
     ( "Time",
       [
