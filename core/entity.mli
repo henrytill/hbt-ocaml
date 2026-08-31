@@ -71,7 +71,9 @@ end
 
 (** Update timestamps are a set so that an instant recorded by two entities with the same URI
     appears once however many times the input carried it, as with {!Extended_set}. A set is also
-    sorted by construction, which is the ordering the wire format has always had. *)
+    sorted by construction, which is what the merge path used to maintain by hand; note that this
+    normalizes an input whose [updatedAt] was written out of order, rather than round-tripping it as
+    given. *)
 module Time_set : sig
   include Set.S with type elt = Time.t
 
