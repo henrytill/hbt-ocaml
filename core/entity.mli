@@ -69,6 +69,17 @@ module Time : sig
   val yaml_of_t : t -> Yaml.value
 end
 
+(** Update timestamps are a set so that an instant recorded by two entities with the same URI
+    appears once however many times the input carried it, as with {!Extended_set}. A set is also
+    sorted by construction, which is the ordering the wire format has always had. *)
+module Time_set : sig
+  include Set.S with type elt = Time.t
+
+  val pp : Format.formatter -> t -> unit
+  val t_of_yaml : Yaml.value -> t
+  val yaml_of_t : t -> Yaml.value
+end
+
 module Extended : sig
   type t
 
@@ -113,7 +124,7 @@ type t
 val make :
   Uri.t ->
   Time.t ->
-  ?updated_at:Time.t list ->
+  ?updated_at:Time_set.t ->
   ?maybe_name:Name.t option ->
   ?labels:Label_set.t ->
   ?extended:Extended_set.t ->
@@ -131,7 +142,7 @@ val update : Time.t -> Name_set.t -> Label_set.t -> Extended_set.t -> t -> t
 val absorb : t -> t -> t
 val uri : t -> Uri.t
 val created_at : t -> Time.t
-val updated_at : t -> Time.t list
+val updated_at : t -> Time_set.t
 val names : t -> Name_set.t
 val labels : t -> Label_set.t
 val extended : t -> Extended_set.t
