@@ -94,6 +94,8 @@ Three layers: unit tests beside the code in `core/`, golden tests generated from
 
 **Cram test.** `cli/main_test.t` drives the installed binary end to end, covering the flags and the error messages from `explain`. `(deps %{bin:hbt})` in `cli/dune` is what puts `hbt` on its `PATH`. Review the diff and then `dune promote`.
 
+**Read the test output, don't grep it.** `dune runtest | grep -iE 'FAIL|error'` looks like a check and is not one: a cram failure is a unified diff, so a wrong expectation shows up as `-  [1]` / `+  [123]` and matches neither word. The same goes for a promotion diff on any expect test. Run `dune build @runtest --force` and read it, or trust the exit status - both were clean while a filtered `dune runtest` had already hidden a broken cram case that CI then caught.
+
 **Attic tests** (`belnap_test`, `belnap_vec_test`) build in both `exe` and `js` modes, so the js_of_ocaml stubs stay in step with the C ones. They need `conf-npm` and a js_of_ocaml compiler.
 
 ## Development Commands
