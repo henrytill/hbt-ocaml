@@ -2,7 +2,7 @@
 
 ## REMEMBER
 
-**Use GitHub MCP for all GitHub queries** (instead of fetching webpages)
+**Use GitHub MCP for all GitHub queries** (instead of fetching webpages) - falling back to `gh` where the token cannot reach (see [The MCP token's limits](#the-mcp-tokens-limits))
 
 **Never work directly on `master`** - branch first, land via PR (see [Git Workflow](#git-workflow))
 
@@ -172,6 +172,14 @@ gh pr merge --rebase      # after CI is green, and only with permission
 If changes have already been made on `master` by mistake, move them to a branch before committing. `git branch -f` on the branch you are *not* on is the clean way to rewind one without disturbing the working tree or the submodule.
 
 `develop` no longer exists on `origin`; `master` is the only long-lived branch there.
+
+### The MCP token's limits
+
+The GitHub MCP server's token is read-mostly, and it fails by returning `403 Resource not accessible by personal access token` rather than by saying it lacks a scope. Creating an issue works; editing one afterwards does not, and neither does commenting on one. Reaching for `gh` at that point is correct, not a workaround to apologize for - `gh issue edit N --body-file <path>` and `gh issue comment N --body-file <path>` do what the MCP call was going to do. Write the body to a file rather than passing it inline, so a body containing backticks does not have to survive shell quoting.
+
+None of that changes the default: read through MCP, which is cheaper and structured. `gh` is the fallback for the writes the token refuses.
+
+`gh` has its own gaps, and they are quieter. `gh pr edit N --title` has silently done nothing here while printing only a Projects-classic GraphQL deprecation warning, where `gh api -X PATCH repos/henrytill/hbt-ocaml/pulls/N -f title=...` worked. `gh pr checks --json` is not supported by the installed build and will spin printing usage; use `gh run list --branch <b> --json status,conclusion`. Check that a `gh` write actually landed instead of trusting its exit status.
 
 ### Branch protection on `origin/master`
 
