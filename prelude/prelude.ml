@@ -61,6 +61,10 @@ module Yaml_ext = struct
     | `A items -> List.map f items
     | _ -> raise (Yaml.Util.Value_error "Expected a value array")
 
+  let filter_map_array_exn f = function
+    | `A items -> List.filter_map f items
+    | _ -> raise (Yaml.Util.Value_error "Expected a value array")
+
   let iter_array_exn f = function
     | `A items -> List.iter f items
     | _ -> raise (Yaml.Util.Value_error "Expected a value array")

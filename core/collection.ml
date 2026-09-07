@@ -183,18 +183,25 @@ let yaml_of_t c =
 let iter_labels (f : Entity.Label_set.t -> Entity.Label_set.t) (c : t) : unit =
   Dynarray.iteri (fun i e -> Dynarray.set c.nodes i (Entity.map_labels f e)) c.nodes
 
-let yaml_to_map (yaml : Yaml.value) : Entity.Label.t Entity.Label_map.t =
+(* A label mapped to the empty string maps to nothing, so the entry is a
+   [Label.t option] rather than a [Label.t]: "map this label to nothing" reads
+   as a deletion, which is the only reading that leaves update_labels as
+   unable to produce an empty label as every other producer (#50). hbt-go
+   settled on the same semantics in henrytill/hbt-go#73. *)
+let yaml_to_map (yaml : Yaml.value) : Entity.Label.t option Entity.Label_map.t =
   let f acc (k, v) =
-    let k = Entity.Label.of_string k in
-    let v = Entity.Label.t_of_yaml v in
+    let k = Entity.Label.of_string_exn k in
+    let v = Entity.Label.of_string (Yaml.Util.to_string_exn v) in
     Entity.Label_map.add k v acc
   in
   Yaml_ext.fold_object_exn f Entity.Label_map.empty yaml
 
 let update_labels (c : t) (yaml : Yaml.value) : unit =
   let mapping = yaml_to_map yaml in
-  let f label = Option.value ~default:label (Entity.Label_map.find_opt label mapping) in
-  iter_labels (Entity.Label_set.map f) c
+  (* filter_map rather than map: a total substitution has nowhere to put a
+     label the mapping drops. An unmapped label keeps itself. *)
+  let f label = Option.value ~default:(Some label) (Entity.Label_map.find_opt label mapping) in
+  iter_labels (Entity.Label_set.filter_map f) c
 
 let of_posts (ps : Post.t list) : t =
   let coll = create () in

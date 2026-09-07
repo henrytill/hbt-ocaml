@@ -40,5 +40,11 @@ val entities : t -> Entity.t array
 val t_of_yaml : Yaml.value -> t
 val yaml_of_t : t -> Yaml.value
 val iter_labels : (Entity.Label_set.t -> Entity.Label_set.t) -> t -> unit
+
 val update_labels : t -> Yaml.value -> unit
+(** Rewrite every entity's labels through a mapping read from YAML, whose keys and values are
+    labels. An unmapped label is kept; a label mapped to the empty string is dropped, since "map
+    this label to nothing" is the only reading that does not produce an empty label. Raises
+    {!Entity.Empty} for an empty key, which maps nothing. *)
+
 val of_posts : Pinboard.Post.t list -> t

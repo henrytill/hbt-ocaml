@@ -3,6 +3,17 @@ open Prelude
 
 let pp_print_set pp_item = Fmt.(braces (list ~sep:semi pp_item))
 
+(* Names, labels and descriptions are nonempty by construction. An empty one
+   is a value the formatters write and readers drop, so a collection carrying
+   one does not round-trip, and every producer used to have to remember to
+   guard: Collection.update_labels did not, and put an empty label into the
+   collection whenever a mappings file mapped one to "" (#50, and
+   henrytill/hbt-go#66 where it was found). [of_string] returns an option, for
+   producers with untrusted text in hand; [of_string_exn] is for the
+   deserialization path, where an empty value is bad input with nothing to
+   recover to. *)
+exception Empty of string
+
 module Uri = struct
   type t = Uri.t
 
@@ -31,12 +42,18 @@ end
 module Name = struct
   type t = string
 
-  let of_string (s : string) : t = s
+  let of_string : string -> t option = option_of_string
+
+  let of_string_exn (s : string) : t =
+    match of_string s with
+    | None -> raise (Empty "name")
+    | Some t -> t
+
   let to_string = Fun.id
   let equal = String.equal
   let compare = String.compare
   let pp = Fmt.(quote string)
-  let t_of_yaml = Yaml.Util.to_string_exn
+  let t_of_yaml value = of_string_exn (Yaml.Util.to_string_exn value)
   let yaml_of_t = Yaml.Util.string
 end
 
@@ -44,19 +61,32 @@ module Name_set = struct
   include Set.Make (Name)
 
   let pp fmt s = pp_print_set Name.pp fmt (elements s)
-  let t_of_yaml value = of_list (Yaml_ext.map_array_exn Name.t_of_yaml value)
+
+  (* Empty entries are dropped rather than refused: nothing this project
+     writes produces one, but hand-written YAML can, and hbt-go's reader
+     drops them too (henrytill/hbt-go#73). *)
+  let t_of_yaml value =
+    of_list
+      (Yaml_ext.filter_map_array_exn (fun v -> Name.of_string (Yaml.Util.to_string_exn v)) value)
+
   let yaml_of_t set = Yaml.Util.list Name.yaml_of_t (to_list set)
 end
 
 module Label = struct
   type t = string
 
-  let of_string (s : string) : t = s
+  let of_string : string -> t option = option_of_string
+
+  let of_string_exn (s : string) : t =
+    match of_string s with
+    | None -> raise (Empty "label")
+    | Some t -> t
+
   let to_string = Fun.id
   let equal = String.equal
   let compare = String.compare
   let pp = Fmt.(quote string)
-  let t_of_yaml = Yaml.Util.to_string_exn
+  let t_of_yaml value = of_string_exn (Yaml.Util.to_string_exn value)
   let yaml_of_t = Yaml.Util.string
 end
 
@@ -64,7 +94,14 @@ module Label_set = struct
   include Set.Make (Label)
 
   let pp fmt s = pp_print_set Label.pp fmt (elements s)
-  let t_of_yaml value = of_list (Yaml_ext.map_array_exn Label.t_of_yaml value)
+
+  (* Empty entries are dropped rather than refused: nothing this project
+     writes produces one, but hand-written YAML can, and hbt-go's reader
+     drops them too (henrytill/hbt-go#73). *)
+  let t_of_yaml value =
+    of_list
+      (Yaml_ext.filter_map_array_exn (fun v -> Label.of_string (Yaml.Util.to_string_exn v)) value)
+
   let yaml_of_t set = Yaml.Util.list Label.yaml_of_t (to_list set)
 end
 
@@ -173,12 +210,18 @@ end
 module Extended = struct
   type t = string
 
-  let of_string (s : string) : t = s
+  let of_string : string -> t option = option_of_string
+
+  let of_string_exn (s : string) : t =
+    match of_string s with
+    | None -> raise (Empty "extended")
+    | Some t -> t
+
   let to_string = Fun.id
   let equal = String.equal
   let compare = String.compare
   let pp = Fmt.(quote string)
-  let t_of_yaml = Yaml.Util.to_string_exn
+  let t_of_yaml value = of_string_exn (Yaml.Util.to_string_exn value)
   let yaml_of_t = Yaml.Util.string
 end
 
@@ -186,7 +229,16 @@ module Extended_set = struct
   include Set.Make (Extended)
 
   let pp fmt s = pp_print_set Extended.pp fmt (elements s)
-  let t_of_yaml value = of_list (Yaml_ext.map_array_exn Extended.t_of_yaml value)
+
+  (* Empty entries are dropped rather than refused: nothing this project
+     writes produces one, but hand-written YAML can, and hbt-go's reader
+     drops them too (henrytill/hbt-go#73). *)
+  let t_of_yaml value =
+    of_list
+      (Yaml_ext.filter_map_array_exn
+         (fun v -> Extended.of_string (Yaml.Util.to_string_exn v))
+         value)
+
   let yaml_of_t set = Yaml.Util.list Extended.yaml_of_t (to_list set)
   let of_option = Option.fold ~none:empty ~some:singleton
 end
@@ -413,9 +465,9 @@ let map_labels f e = { e with labels = f e.labels }
 let of_post (p : Pinboard.Post.t) : t =
   let uri = Uri.of_string (Post.href p) in
   let created_at = Time.of_string (Post.time p) in
-  let maybe_name = Option.map Name.of_string (Post.description p) in
-  let labels = Label_set.of_list (List.map Label.of_string (Post.tag p)) in
-  let extended = Extended_set.of_option (Option.map Extended.of_string (Post.extended p)) in
+  let maybe_name = Option.bind (Post.description p) Name.of_string in
+  let labels = Label_set.of_list (List.filter_map Label.of_string (Post.tag p)) in
+  let extended = Extended_set.of_option (Option.bind (Post.extended p) Extended.of_string) in
   let shared = Shared.of_bool (Post.shared p) in
   let to_read = To_read.of_bool (Post.toread p) in
   let is_feed = Is_feed.of_bool false in
@@ -461,7 +513,10 @@ module Html = struct
     | "tags" when v <> String.empty ->
         let tags = split_tags r v in
         let label_of_tag tag =
-          if String.equal tag toread_tag then None else Some (Label.of_string tag)
+          if String.equal tag toread_tag then
+            None
+          else
+            Label.of_string tag
         in
         let labels = Label_set.of_list (List.filter_map label_of_tag tags) in
         (* Both decisions come from the same exact per-tag comparison, so a

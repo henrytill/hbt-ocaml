@@ -12,9 +12,9 @@ let same_edges = "same edges"
 let test_entity_equal () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
-  let maybe_name = Some (Name.of_string "foo") in
+  let maybe_name = Some (Name.of_string_exn "foo") in
   let created = Time.of_string "September 2, 2024" in
-  let labels = Label_set.singleton (Label.of_string "foo") in
+  let labels = Label_set.singleton (Label.of_string_exn "foo") in
   let a = Entity.make uri created ~maybe_name ~labels () in
   let b = Entity.make uri created ~maybe_name ~labels () in
   Alcotest.(check (module Entity)) same_entity a b
@@ -22,14 +22,16 @@ let test_entity_equal () =
 let test_entity_update () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
-  let maybe_name = Some (Name.of_string "foo") in
+  let maybe_name = Some (Name.of_string_exn "foo") in
   let maybe_names = Option.fold ~none:Name_set.empty ~some:Name_set.singleton maybe_name in
   let created = Time.of_string "September 2, 2024" in
-  let labels = Label_set.singleton (Label.of_string "foo") in
+  let labels = Label_set.singleton (Label.of_string_exn "foo") in
   let a = Entity.make uri created ~maybe_name ~labels () in
   let updated = Time.of_string "September 4, 2024" in
-  let names_update = Name_set.of_list [ Name.of_string "Foo.org"; Name.of_string "F00" ] in
-  let labels_update = Label_set.of_list [ Label.of_string "foozer"; Label.of_string "bar" ] in
+  let names_update = Name_set.of_list [ Name.of_string_exn "Foo.org"; Name.of_string_exn "F00" ] in
+  let labels_update =
+    Label_set.of_list [ Label.of_string_exn "foozer"; Label.of_string_exn "bar" ]
+  in
   let extended_update = Extended_set.empty in
   let a = Entity.update updated names_update labels_update extended_update a in
   Alcotest.(check (module Uri)) same_uri (Uri.canonicalize uri) (Entity.uri a);
@@ -54,25 +56,25 @@ let test_entity_update_equal_timestamp () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
   let created = Time.of_string "September 2, 2024" in
-  let a = Entity.make uri created ~maybe_name:(Some (Name.of_string "foo")) () in
-  let names_update = Name_set.singleton (Name.of_string "bar") in
+  let a = Entity.make uri created ~maybe_name:(Some (Name.of_string_exn "foo")) () in
+  let names_update = Name_set.singleton (Name.of_string_exn "bar") in
   let a = Entity.update created names_update Label_set.empty Extended_set.empty a in
   Alcotest.(check (module Time)) same_created_at created (Entity.created_at a);
   Alcotest.(check (module Time_set)) same_updated_at Time_set.empty (Entity.updated_at a);
   Alcotest.(check (module Name_set))
     same_names
-    (Name_set.of_list [ Name.of_string "foo"; Name.of_string "bar" ])
+    (Name_set.of_list [ Name.of_string_exn "foo"; Name.of_string_exn "bar" ])
     (Entity.names a)
 
 let test_entity_absorb () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
-  let name = Name.of_string "foo" in
+  let name = Name.of_string_exn "foo" in
   let names = Name_set.singleton name in
   let created_a = Time.of_string "September 4, 2024" in
   let created_b = Time.of_string "September 2, 2024" in
-  let labels_foo = Label_set.singleton (Label.of_string "foo") in
-  let labels_bar = Label_set.singleton (Label.of_string "bar") in
+  let labels_foo = Label_set.singleton (Label.of_string_exn "foo") in
+  let labels_bar = Label_set.singleton (Label.of_string_exn "bar") in
   let a = Entity.make uri created_a ~labels:labels_foo () in
   let b = Entity.make uri created_b ~maybe_name:(Some name) ~labels:labels_bar () in
   let a = Entity.absorb b a in
@@ -93,8 +95,8 @@ let test_entity_absorb_extended () =
   let uri = Uri.of_string "https://foo.org" in
   let created_a = Time.of_string "September 4, 2024" in
   let created_b = Time.of_string "September 2, 2024" in
-  let extended_a = Extended_set.singleton (Extended.of_string "description from source A") in
-  let extended_b = Extended_set.singleton (Extended.of_string "description from source B") in
+  let extended_a = Extended_set.singleton (Extended.of_string_exn "description from source A") in
+  let extended_b = Extended_set.singleton (Extended.of_string_exn "description from source B") in
   let a = Entity.make uri created_a ~extended:extended_a () in
   let b = Entity.make uri created_b ~extended:extended_b () in
   let merged = Entity.absorb b a in
@@ -111,9 +113,9 @@ let test_entity_absorb_extended_shared () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
   let created = Time.of_string "September 2, 2024" in
-  let extended = Extended_set.singleton (Extended.of_string "a shared description") in
+  let extended = Extended_set.singleton (Extended.of_string_exn "a shared description") in
   let described label =
-    Entity.make uri created ~labels:(Label_set.singleton (Label.of_string label)) ~extended ()
+    Entity.make uri created ~labels:(Label_set.singleton (Label.of_string_exn label)) ~extended ()
   in
   let merged = Entity.absorb (described "b") (described "a") in
   Alcotest.(check (module Extended_set))
@@ -131,7 +133,7 @@ let test_entity_absorb_shared_timestamp () =
   let created = Time.of_string "September 2, 2024" in
   let updated = Time.of_string "September 4, 2024" in
   let labelled time label =
-    Entity.make uri time ~labels:(Label_set.singleton (Label.of_string label)) ()
+    Entity.make uri time ~labels:(Label_set.singleton (Label.of_string_exn label)) ()
   in
   let base = labelled created "a" in
   let merged =
@@ -148,12 +150,12 @@ let test_entity_absorb_shared_timestamp () =
 let test_collection_upsert () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
-  let name = Name.of_string "foo" in
+  let name = Name.of_string_exn "foo" in
   let names = Name_set.singleton name in
   let created_a = Time.of_string "September 4, 2024" in
   let created_b = Time.of_string "September 2, 2024" in
-  let labels_foo = Label_set.singleton (Label.of_string "foo") in
-  let labels_bar = Label_set.singleton (Label.of_string "bar") in
+  let labels_foo = Label_set.singleton (Label.of_string_exn "foo") in
+  let labels_bar = Label_set.singleton (Label.of_string_exn "bar") in
   let a = Entity.make uri created_a ~labels:labels_foo () in
   let b = Entity.make uri created_b ~maybe_name:(Some name) ~labels:labels_bar () in
   let coll = Collection.create () in
@@ -288,11 +290,11 @@ let test_of_posts_merges_duplicates () =
     (Entity.updated_at e);
   Alcotest.(check (module Name_set))
     same_names
-    (Name_set.of_list [ Name.of_string "First"; Name.of_string "Second" ])
+    (Name_set.of_list [ Name.of_string_exn "First"; Name.of_string_exn "Second" ])
     (Entity.names e);
   Alcotest.(check (module Label_set))
     same_labels
-    (Label_set.of_list [ Label.of_string "one"; Label.of_string "two" ])
+    (Label_set.of_list [ Label.of_string_exn "one"; Label.of_string_exn "two" ])
     (Entity.labels e)
 
 let test_of_posts_roundtrips_duplicates () =
@@ -330,9 +332,9 @@ let test_yaml_roundtrip () =
     Entity.make
       (Uri.of_string "https://foo.org")
       (Time.of_string "September 2, 2024")
-      ~maybe_name:(Some (Name.of_string "Foo"))
-      ~labels:(Label_set.singleton (Label.of_string "one"))
-      ~extended:(Extended_set.singleton (Extended.of_string "a description"))
+      ~maybe_name:(Some (Name.of_string_exn "Foo"))
+      ~labels:(Label_set.singleton (Label.of_string_exn "one"))
+      ~extended:(Extended_set.singleton (Extended.of_string_exn "a description"))
       ~shared:(Shared.of_bool true)
       ~to_read:(To_read.of_bool false)
       ()
@@ -408,6 +410,60 @@ let test_yaml_rejects_bad_version () =
   Alcotest.check_raises "unsupported version" (Collection.Version.Unsupported "9.9.9") (fun () ->
       ignore (of_yaml_string "version: 9.9.9\nlength: 0\nvalue: []\n"))
 
+let test_nonempty_strings () =
+  let open Entity in
+  Alcotest.(check (option string))
+    "Label.of_string refuses the empty string"
+    None
+    (Option.map Label.to_string (Label.of_string String.empty));
+  Alcotest.check_raises "name" (Entity.Empty "name") (fun () ->
+      ignore (Name.of_string_exn String.empty));
+  Alcotest.check_raises "label" (Entity.Empty "label") (fun () ->
+      ignore (Label.of_string_exn String.empty));
+  Alcotest.check_raises "extended" (Entity.Empty "extended") (fun () ->
+      ignore (Extended.of_string_exn String.empty))
+
+let test_label_set_yaml_drops_empty () =
+  let open Entity in
+  (* Nothing here writes an empty label, but hand-written YAML can carry one. *)
+  Alcotest.(check (module Label_set))
+    same_labels
+    (Label_set.singleton (Label.of_string_exn "one"))
+    (Label_set.t_of_yaml (Yaml.of_string_exn {|["", one]|}))
+
+let labelled_collection strings =
+  let open Entity in
+  let coll = Collection.create () in
+  let uri = Uri.of_string "https://foo.org" in
+  let labels = Label_set.of_list (List.map Label.of_string_exn strings) in
+  ignore (Collection.upsert coll (Entity.make uri (Time.of_string "September 2, 2024") ~labels ()));
+  coll
+
+let labels_of coll =
+  let open Entity in
+  let uri = Uri.canonicalize (Uri.of_string "https://foo.org") in
+  Entity.labels (Collection.entity coll (Option.get (Collection.id coll uri)))
+
+let test_update_labels_renames () =
+  let open Entity in
+  let coll = labelled_collection [ "news"; "ocaml" ] in
+  Collection.update_labels coll (Yaml.of_string_exn "{news: press}");
+  Alcotest.(check (module Label_set))
+    same_labels
+    (Label_set.of_list [ Label.of_string_exn "press"; Label.of_string_exn "ocaml" ])
+    (labels_of coll)
+
+let test_update_labels_drops_empty_target () =
+  let open Entity in
+  (* A label mapped to "" used to be substituted verbatim, putting an empty
+     label into the collection; it now reads as a deletion (#50). *)
+  let coll = labelled_collection [ "news"; "ocaml" ] in
+  Collection.update_labels coll (Yaml.of_string_exn {|{news: ""}|});
+  Alcotest.(check (module Label_set))
+    same_labels
+    (Label_set.singleton (Label.of_string_exn "ocaml"))
+    (labels_of coll)
+
 let tests =
   let open Alcotest in
   [
@@ -420,6 +476,8 @@ let tests =
         test_case "absorb extended" `Quick test_entity_absorb_extended;
         test_case "absorb shared extended" `Quick test_entity_absorb_extended_shared;
         test_case "absorb shared timestamp" `Quick test_entity_absorb_shared_timestamp;
+        test_case "of_string refuses the empty string" `Quick test_nonempty_strings;
+        test_case "labels yaml drops empty" `Quick test_label_set_yaml_drops_empty;
       ] );
     ( "Time",
       [
@@ -433,6 +491,8 @@ let tests =
         test_case "id protection" `Quick test_collection_id_protection;
         test_case "of_posts merges duplicates" `Quick test_of_posts_merges_duplicates;
         test_case "of_posts roundtrips duplicates" `Quick test_of_posts_roundtrips_duplicates;
+        test_case "update_labels renames" `Quick test_update_labels_renames;
+        test_case "update_labels drops an empty target" `Quick test_update_labels_drops_empty_target;
       ] );
     ( "Collection YAML",
       [

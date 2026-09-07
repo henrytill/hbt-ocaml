@@ -11,9 +11,9 @@ let collection_with ~name ~label ~description =
     Entity.make
       (Uri.of_string uri_string)
       (Time.of_string "2023-11-15T00:00:00Z")
-      ~maybe_name:(Some (Name.of_string name))
-      ~labels:(Label_set.singleton (Label.of_string label))
-      ~extended:(Extended_set.singleton (Extended.of_string description))
+      ~maybe_name:(Some (Name.of_string_exn name))
+      ~labels:(Label_set.singleton (Label.of_string_exn label))
+      ~extended:(Extended_set.singleton (Extended.of_string_exn description))
       ()
   in
   ignore (Collection.upsert coll e);
@@ -56,7 +56,7 @@ let test_roundtrip_preserves_markup_characters () =
     (List.map Label.to_string (Label_set.elements (labels e)));
   Alcotest.(check (module Extended_set))
     "extended survives the round trip"
-    (Extended_set.singleton (Extended.of_string hostile))
+    (Extended_set.singleton (Extended.of_string_exn hostile))
     (extended e)
 
 let test_preserves_non_http_schemes () =
@@ -114,6 +114,29 @@ let test_explicit_toread_wins_either_order () =
     (Some false)
     (to_read_of attr_first)
 
+let names_of e = List.map Entity.Name.to_string (Entity.Name_set.elements (Entity.names e))
+
+(* An anchor with no text, which real browser exports produce for an untitled
+   bookmark, used to give the entity a name of "" - and the formatter wrote
+   that back out as an empty <A></A>. Name.of_string drops it, so the entity
+   has no name at all and the formatter falls back to the uri. Whitespace-only
+   text goes the same way, since the parser trims first. *)
+let test_empty_anchor_text_is_no_name () =
+  let doc =
+    "<!DOCTYPE NETSCAPE-Bookmark-file-1>\n\
+     <DL><p>\n\
+     <DT><A HREF=\"https://a.org/\" ADD_DATE=\"0\"></A>\n\
+     <DT><A HREF=\"https://b.org/\" ADD_DATE=\"0\">   </A>\n\
+     </DL><p>\n"
+  in
+  let coll = Html.parse doc in
+  Array.iter
+    (fun e -> Alcotest.(check (list string)) "an empty title is no name" [] (names_of e))
+    (Collection.entities coll);
+  let output = Html.format coll in
+  check_contains output {|ADD_DATE="0">https://a.org/</A>|};
+  check_contains output {|ADD_DATE="0">https://b.org/</A>|}
+
 let tests =
   let open Alcotest in
   [
@@ -123,6 +146,7 @@ let tests =
         test_case "toread tag sets flag" `Quick test_toread_tag_sets_flag;
         test_case "toread matched exactly" `Quick test_toread_matched_exactly;
         test_case "explicit toread wins either order" `Quick test_explicit_toread_wins_either_order;
+        test_case "empty anchor text is no name" `Quick test_empty_anchor_text_is_no_name;
       ] );
     ( "Formatter",
       [

@@ -24,7 +24,12 @@ module Elt = struct
     | _, _ -> false
 end
 
-let mk_labels acc s = Entity.(Label_set.add (Label.of_string s) acc)
+(* Folder names are pushed onto the stack whether or not they are empty, so
+   that pushes stay paired with the DL that pops them; an empty one carries no
+   label. *)
+let mk_labels acc s =
+  let open Entity in
+  Option.fold ~none:acc ~some:(fun label -> Label_set.add label acc) (Label.of_string s)
 
 let parse content =
   let coll = Collection.create () in
@@ -45,10 +50,10 @@ let parse content =
   let add_pending () =
     let entity =
       let open Entity in
-      let some s = Name_set.singleton (Name.of_string s) in
-      let names = Option.fold ~none:Name_set.empty ~some !maybe_description in
+      let name = Option.bind !maybe_description Name.of_string in
+      let names = Option.fold ~none:Name_set.empty ~some:Name_set.singleton name in
       let folder_labels = Stack.fold mk_labels Entity.Label_set.empty folder_stack in
-      let extended = Extended_set.of_option (Option.map Extended.of_string !maybe_extended) in
+      let extended = Extended_set.of_option (Option.bind !maybe_extended Extended.of_string) in
       Html.entity_of_attrs !attributes names folder_labels extended
     in
     ignore (Collection.upsert coll entity);
