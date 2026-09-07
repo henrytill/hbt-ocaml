@@ -126,6 +126,25 @@ Verify that entities are preserved while tags are transformed:
       - tools
     edges: []
 
+A label mapped to the empty string is dropped, not replaced by an empty one:
+
+  $ cat >drop-mappings.yaml <<EOF
+  > programming: ""
+  > EOF
+  $ hbt --list-tags --mappings drop-mappings.yaml input.md
+  editor
+  ocaml
+  tools
+
+An empty key has nothing to map, and is refused:
+
+  $ cat >empty-key.yaml <<EOF
+  > "": x
+  > EOF
+  $ hbt --list-tags --mappings empty-key.yaml input.md
+  hbt: empty-key.yaml: a label cannot be empty
+  [123]
+
 Test with an empty mappings file:
 
   $ cat >empty-mappings.yaml <<EOF

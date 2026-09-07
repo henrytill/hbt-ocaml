@@ -87,6 +87,7 @@ let explain (file : string) : exn -> string option =
         (Collection.Version.to_string Collection.Version.expected)
   | Collection.Version.Malformed version -> in_file "malformed collection version %S" version
   | Entity.Missing_uri -> in_file "an entity has no uri"
+  | Entity.Empty field -> in_file "a %s cannot be empty" field
   | Entity.Time.Invalid_month_name month -> in_file "unknown month name %S" month
   | Markdown.Missing_date uri -> in_file "%s appears before any date heading" uri
   | Pinboard.Post.Unexpected_xml_element name -> in_file "unexpected XML element %S" name

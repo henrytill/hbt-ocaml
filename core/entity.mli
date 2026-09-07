@@ -1,3 +1,12 @@
+exception Empty of string
+(** Raised by {!Name.of_string_exn}, {!Label.of_string_exn} and {!Extended.of_string_exn}, which
+    refuse the empty string: an empty name, label or description is a value the formatters write and
+    readers drop, so a collection carrying one does not round-trip. The payload names the field.
+
+    The set decoders differ from the scalar ones here: {!Name_set.t_of_yaml}, {!Label_set.t_of_yaml}
+    and {!Extended_set.t_of_yaml} drop an empty entry rather than raising, matching hbt-go's reader.
+*)
+
 module Uri : sig
   type t
 
@@ -16,7 +25,8 @@ end
 module Name : sig
   type t
 
-  val of_string : string -> t
+  val of_string : string -> t option
+  val of_string_exn : string -> t
   val to_string : t -> string
   val equal : t -> t -> bool
   val compare : t -> t -> int
@@ -36,7 +46,8 @@ end
 module Label : sig
   type t
 
-  val of_string : string -> t
+  val of_string : string -> t option
+  val of_string_exn : string -> t
   val to_string : t -> string
   val equal : t -> t -> bool
   val compare : t -> t -> int
@@ -85,7 +96,8 @@ end
 module Extended : sig
   type t
 
-  val of_string : string -> t
+  val of_string : string -> t option
+  val of_string_exn : string -> t
   val to_string : t -> string
   val equal : t -> t -> bool
   val compare : t -> t -> int

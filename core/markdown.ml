@@ -38,9 +38,10 @@ module Fold_state = struct
     | _ -> None
 end
 
+(* An empty heading is no heading: it carries neither a date nor a label. *)
 let get_heading_text (h : Block.Heading.t) : string option =
   match Block.Heading.inline h with
-  | Inline.Text (t, _) -> Some t
+  | Inline.Text (t, _) -> option_of_string t
   | _ -> None
 
 let block m ((c, st) : Collection.t * Fold_state.t) = function
@@ -53,13 +54,12 @@ let block m ((c, st) : Collection.t * Fold_state.t) = function
           Folder.ret (c, st)
     end
   | Block.Heading (heading, _) -> begin
-      match get_heading_text heading with
+      match Option.bind (get_heading_text heading) Entity.Label.of_string with
       | None -> Folder.default
-      | Some heading_text ->
+      | Some label ->
           let heading_level = Block.Heading.level heading in
           let labels = List_ext.take (heading_level - 2) st.labels in
-          let labels = Entity.Label.of_string heading_text :: labels in
-          let st = { st with labels } in
+          let st = { st with labels = label :: labels } in
           Folder.ret (c, st)
     end
   | Block.List (list, _) ->
@@ -119,21 +119,15 @@ let rec extract_string (inlines : Inline.t list) : string =
   in
   go [] inlines
 
-let get_text (link : Inline.Link.t) : string option =
-  Inline.Link.text link
-  |> Inline.normalize
-  |> List_ext.singleton
-  |> extract_string
-  |> String.trim
-  |> option_of_string
+let get_text (link : Inline.Link.t) : string =
+  Inline.Link.text link |> Inline.normalize |> List_ext.singleton |> extract_string |> String.trim
 
 let handle_link (link : Inline.Link.t) ((c, st) : Collection.t * Fold_state.t) =
   match Option.bind (get_def link) get_dest with
   | None -> Folder.default
   | Some link_dest ->
-      let link_text = get_text link in
       let uri = Some (Entity.Uri.of_string link_dest) in
-      let name = Option.map Entity.Name.of_string link_text in
+      let name = Entity.Name.of_string (get_text link) in
       let st = { st with uri; name } in
       save_entity c st
 
