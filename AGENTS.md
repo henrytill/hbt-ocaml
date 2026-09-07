@@ -201,7 +201,7 @@ Rebase merges always create new commit SHAs, so a local branch kept after mergin
 
 ### Commit messages
 
-`<scope>: <terse description>`, where the scope is the module or file being changed - `entity:`, `collection:`, `ci:`, `AGENTS.md:`. Use the module as the scope and don't requalify its members (`entity: make extended a set`, not `entity: Entity.extended ...`).
+`<scope>: <terse description>`, where the scope is the module or file being changed - `Entity:`, `Collection:`, `Collection_test:`, `ci:`, `AGENTS.md:`. A module scope is written in the capitalized form the compiler gives it, not the file name: `Entity:`, not `entity:`; `Collection_test:`, not `collection_test:`. Scopes that are not modules - `ci:`, `AGENTS.md:`, `flake.lock:` - keep their own spelling. Use the module as the scope and don't requalify its members (`Entity: make extended a set`, not `Entity: Entity.extended ...`). History before 2026-09-07 uses the lowercase form; leave it alone.
 
 Wrap the body at the usual width and explain *why*, particularly which invariant was wrong and what now makes it unrepresentable. Reference the companion issues in the other repos by full `henrytill/hbt-go#65` form, since bare `#65` resolves to this repo.
 
