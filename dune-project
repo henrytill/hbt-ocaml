@@ -81,18 +81,10 @@
    (and
     :with-test
     (>= 1.7.0)))
-  (bos
-   (and
-    :with-test
-    (>= 0.2.1)))
   (cmarkit
    (>= 0.3.0))
   (fmt
    (>= 0.11.0))
-  (fpath
-   (and
-    :with-test
-    (>= 0.7.3)))
   (markup
    (>= 1.0.3))
   (mustache
