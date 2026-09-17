@@ -440,10 +440,8 @@ let update updated_at names labels extended e =
   if c < 0 then
     (* An earlier timestamp becomes created_at, and the one it displaces becomes an update. HTML
        reads ADD_DATE and LAST_MODIFIED independently, so an earlier mention may already have
-       recorded the new created_at as an update; by the rule below, it goes. See
-       henrytill/hbt-ocaml#57. An update strictly below the new created_at stays: a parse states
-       that shape from a single anchor, and whether a merge may leave it behind is a corpus
-       question, henrytill/hbt-data#34. *)
+       recorded the incoming timestamp as an update; by the rule below, it goes. One strictly
+       below it stays, which is henrytill/hbt-data#34. See henrytill/hbt-ocaml#57. *)
     {
       base with
       updated_at = Time_set.remove updated_at (Time_set.add base.created_at base.updated_at);
