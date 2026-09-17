@@ -10,8 +10,6 @@
 
 **Fixtures live in a submodule shared with three other implementations** - changing one is a cross-language decision (see [Testing](#testing))
 
-**A local `dune runtest` is unsandboxed and will pass on stale `_build` fixtures** - fixture-dependency mistakes surface only in Nix/CI (see [Testing](#testing))
-
 ## Overview
 
 An OCaml implementation of hbt, a bookmark and document collection tool, developed differentially alongside:
@@ -60,7 +58,7 @@ The dependency flow is a chain: `hbt-prelude` → `hbt-pinboard` → `hbt-core` 
 - `markdown.ml` - `Cmarkit.Folder` over the AST, carrying a state record where heading depth builds the label hierarchy. A bookmark appearing before any date heading raises `Missing_date`.
 - `templates.ml` and `version.ml` are **generated** by rules in `core/dune` and exist only under `_build/` - don't go looking for them in the tree. `templates.ml` embeds the mustache template, so editing `core/templates/netscape_bookmarks.mustache` and rebuilding is the whole workflow. `version.ml` is `version.ml.in` through `cpp` with `core/project.h`, which defines `VERSION` behind an `#ifndef` so release and Nix builds can override it.
 
-`(data_only_dirs data templates)` is what stops Dune from trying to build the fixture submodule and the template directory; a new data directory has to be added there.
+`(data_only_dirs templates)` is what stops Dune from trying to build the template directory; a new data directory under `core/` has to be added there. `test/dune` does the same for the corpus submodule.
 
 ## Merge Semantics
 
@@ -80,15 +78,21 @@ When touching this, add a unit test in `core/collection_test.ml` *and* consider 
 
 ## Testing
 
-Three layers: unit tests beside the code in `core/`, golden tests generated from shared fixtures, and a cram test over the built binary.
+Three layers: unit tests beside the code in `core/`, the conformance harness run against the built binary, and a cram test over the built binary.
 
-**Shared fixtures.** `core/data/` is a git submodule of [hbt-data](https://github.com/henrytill/hbt-data), consumed by all four implementations. Clone with `--recurse-submodules`, or run `git submodule update --init`. Changing a fixture is a cross-language decision: it will go red in the other three until their fixes land, so a fix and its submodule bump belong in the same commit.
+**Shared fixtures.** `test/data/` is a git submodule of [hbt-data](https://github.com/henrytill/hbt-data), consumed by all four implementations. Clone with `--recurse-submodules`, or run `git submodule update --init`. Changing a fixture is a cross-language decision: it will go red in the other three until their fixes land, so a fix and its submodule bump belong in the same commit.
 
-**Golden tests.** `core/data_test.ml` walks the fixture directories at runtime with `bos`, pairing `<stem>.input.<ext>` with `<stem>.expected.<ext>` under `html/`, `markdown/`, `pinboard/json/`, and `pinboard/xml/`. Parser tests compare parsed YAML documents rather than text - emitters disagree about when a scalar needs quoting, and those spellings mean the same thing. Because discovery is at runtime, Dune cannot infer the inputs: the `(glob_files data/...)` deps in the `data_test` stanza are what makes a fixture directory visible to the sandbox, and a directory missing from them is a hard `Failure "directory contents ...: No such file or directory"`, not a silent skip.
+**Conformance.** `test/data/` also carries hbt-data's conformance harness (henrytill/hbt-data#14), which runs every fixture through the built `hbt` and compares what the CLI writes - the serialized form all four implementations share, not decoded values. For `-t yaml` it compares YAML documents rather than text, so scalar quoting is not a difference; `-t html` is byte for byte. It is the `conformance` flake check: `test/data/` is also the `hbt-data` flake input (`path:./test/data`), whose `lib.check` runs the harness, so nothing about it is wired up here, and adding a fixture needs no change beyond the submodule bump. A relative path input locks relative to this flake rather than by hash, so bumping the submodule needs no relock. In the dev shell, which provides the harness's Python from the same input:
 
-**The trap is that a plain `dune runtest` will not show you that.** It is unsandboxed, so a warm `_build` still has the old copies and the suite passes; the same tree under `--sandbox copy` (which is what the Nix build and CI do) fails immediately. Removing the `data/markdown` glob passes locally with 43 tests and dies in the sandbox. Check dependency changes with `dune build @core/runtest --force --sandbox copy`.
+```sh
+dune build ./cli/main.exe
+(cd test/data && python3 -m hbt.conformance --binary ../../_build/default/cli/main.exe)                 # every fixture
+(cd test/data && python3 -m hbt.conformance --binary ../../_build/default/cli/main.exe markdown/basic)  # a name, substring or glob
+```
 
-**When a golden test fails, the default assumption is that the OCaml side is wrong.** The fixtures encode decisions already settled across four implementations, so changing one is the expensive answer and needs the cross-repo case made first - in hbt-data, with companion issues, and with the other three going red until they catch up. Change the fixture only when the settled behaviour is itself what's being revised.
+The harness's flags, what counts as a match, and its timezone policy are documented in `test/data/README.md`.
+
+**When a conformance fixture fails, the default assumption is that the OCaml side is wrong.** The fixtures encode decisions already settled across four implementations, so changing one is the expensive answer and needs the cross-repo case made first - in hbt-data, with companion issues, and with the other three going red until they catch up. Change the fixture only when the settled behaviour is itself what's being revised.
 
 **Unit tests.** `core/collection_test.ml` covers the entity and collection model, including merge semantics; `core/html_test.ml` covers escaping, the round trip through the formatter, and the `TAGS`/`TOREAD` attribute handling. Alcotest testables are the set modules themselves - `(module Extended_set)` works because each provides `t`, `pp`, and `equal`.
 
@@ -102,10 +106,10 @@ Three layers: unit tests beside the code in `core/`, golden tests generated from
 
 ```sh
 dune build                 # everything
-dune runtest               # cram + unit + golden tests
+dune runtest               # cram + unit tests
 dune fmt                   # ocamlformat, pinned; run before every commit
 dune promote               # accept reviewed cram/expect diffs
-dune exec -- hbt -t yaml core/data/html/bookmarks_simple.input.html
+dune exec -- hbt -t yaml test/data/html/bookmarks_simple.input.html
 dune build --watch
 ```
 
@@ -132,26 +136,26 @@ Two build profiles beyond the default, defined in the root `dune`: `--profile st
 
 Extension detection recognizes `.json`, `.xml`, `.md`, `.html`, `.yaml` on input and `.html`, `.yaml` on output. `.yml` is not recognized and errors. The analysis flags short-circuit: `--info` wins over `--list-tags`, which wins over `-t`/`-o`. But `-o` still applies to whatever they produce - `hbt --info -t yaml -o out.yaml f.md` writes `f.md: 3 entities` *into* `out.yaml` and prints nothing, overwriting whatever was there. hbt-rs ignores `-o` for the analysis flags; this implementation does not. `--mappings` is applied before any of them. With no output format and no analysis flag, the CLI errors rather than guessing.
 
-There is no `--schema` flag here; `core/data/collection.schema.json` is maintained in hbt-data, generated from the Rust types.
+There is no `--schema` flag here; `test/data/collection.schema.json` is maintained in hbt-data, generated from the Rust types.
 
 ### Nix
 
 ```sh
-nix flake check -L         # builds hbt-cli and hbt-attic, tests included
+nix flake check -L         # builds hbt-cli and hbt-attic, tests included, and runs conformance
 nix build -L .#hbt-cli
 nix build -L .#hbt-cli-static   # musl static build, Linux only
 nix develop                # dev shell with the pinned toolchain
 ```
 
-The flake sets `self.submodules = true`, so flake builds see `core/data/`. It builds through opam-nix against `ocaml-base-compiler` 5.3.0, which is narrower than `dune-project`'s `>= 5.2.0` - a green Nix build does not prove the stated minimum still holds. `CPP_FLAGS` is where the flake overrides `VERSION`, using the flake's own rev.
+The flake sets `self.submodules = true`, so flake builds see `test/data/`. It builds through opam-nix against `ocaml-base-compiler` 5.3.0, which is narrower than `dune-project`'s `>= 5.2.0` - a green Nix build does not prove the stated minimum still holds. `CPP_FLAGS` is where the flake overrides `VERSION`, using the flake's own rev.
 
 ## CI
 
 `.github/workflows/ci.yml` runs on pushes and PRs to `master`, with no path filter:
 
-- **Linux (Nix flake)** - `nix flake check -L`, then both package builds; uploads the static binary as an artifact.
+- **Linux (Nix flake)** - `nix flake check -L`, which includes conformance, then both package builds; uploads the static binary as an artifact.
 
-It is the only required status check. The flake's `checks` are the `hbt-attic` and `hbt-cli` derivations, built with `with-test = true`, so the test suite runs inside the build. **Nothing in CI checks formatting** - ocamlformat is a dev-shell tool only, so `dune fmt` is on you.
+It is the only required status check. The flake's `checks` are the `hbt-attic` and `hbt-cli` derivations, built with `with-test = true`, so the test suite runs inside the build, plus `conformance`. **Nothing in CI checks formatting** - ocamlformat is a dev-shell tool only, so `dune fmt` is on you.
 
 Two other workflows: `zizmor.yml` (Actions security scan, path-filtered to `.github/**` plus a weekly cron) and `update.yml` (monthly flake lock bump). Because zizmor is path-filtered, GitHub reports nothing at all for a PR that does not touch `.github/**` - which is why it is not a required check, and must not become one.
 
@@ -232,7 +236,7 @@ Do **not** hard-wrap prose in GitHub issue bodies, PR bodies, or comments - one 
 1. Add the constructor to `Data._ t`, indexed `[ `Input ]`, `[ `Output ]`, or both, and to `all_input_formats` / `all_output_formats`.
 2. Extend `to_string` and the relevant `detect_*_format`.
 3. Write the module implementing `parse : string -> Collection.t` and/or `format : Collection.t -> string`, and wire it into `Data.parse` / `Data.format`.
-4. Add fixtures to hbt-data, map the directory in `data_test.ml`'s `input_to_dir` / `output_to_dir`, and add the `(glob_files ...)` dep in `core/dune`.
+4. Add fixtures to hbt-data and bump `test/data/`; the conformance harness picks them up from their names.
 5. Extend `explain` in `cli/main.ml` with whatever the new parser raises.
 
 ## Adding a Field to `Entity`
