@@ -431,34 +431,51 @@ let yaml_of_t entity =
   in
   `O (base_fields @ shared @ to_read @ is_feed @ extended @ last_visited)
 
+(* The merged timestamps: both histories and both creation times, minus the one that wins.
+
+   Adding both creation times before removing the winner is what makes merging associative. Each
+   merge puts its operands' creation times back into the history, so however a sequence of
+   mentions is bracketed the result is every history and every creation time in it, minus the
+   smallest. Removing the winner only when the two creation times differ is not associative, and
+   neither is removing every update at or below created_at; henrytill/hbt-data#36 has both
+   counterexamples and pins this rule.
+
+   So an update equal to the winning creation time goes -- it merely repeats created_at and
+   carries no information, settled as henrytill/hbt-go#57 -- and one strictly below it stays,
+   which HTML can state by reading ADD_DATE and LAST_MODIFIED independently. *)
+let merged_timestamps (created_a, updated_a) (created_b, updated_b) =
+  let winner = if Time.compare created_a created_b <= 0 then created_a else created_b in
+  let updated =
+    Time_set.union updated_a updated_b
+    |> Time_set.add created_a
+    |> Time_set.add created_b
+    |> Time_set.remove winner
+  in
+  (winner, updated)
+
 let update updated_at names labels extended e =
   let names = Name_set.union e.names names in
   let labels = Label_set.union e.labels labels in
   let extended = Extended_set.union e.extended extended in
-  let base = { e with names; labels; extended } in
-  let c = Time.compare updated_at base.created_at in
-  if c < 0 then
-    (* An earlier timestamp becomes created_at, and the one it displaces becomes an update. HTML
-       reads ADD_DATE and LAST_MODIFIED independently, so an earlier mention may already have
-       recorded the incoming timestamp as an update; by the rule below, it goes. One strictly
-       below it stays, which is henrytill/hbt-data#34. See henrytill/hbt-ocaml#57. *)
-    {
-      base with
-      updated_at = Time_set.remove updated_at (Time_set.add base.created_at base.updated_at);
-      created_at = updated_at;
-    }
-  else if c > 0 then
-    { base with updated_at = Time_set.add updated_at base.updated_at }
-  else
-    (* A timestamp equal to created_at is deliberately not recorded: an "update" whose timestamp
-       merely repeats created_at carries no information. Settled as henrytill/hbt-go#57. *)
-    base
+  let created_at, updated_at =
+    merged_timestamps (e.created_at, e.updated_at) (updated_at, Time_set.empty)
+  in
+  { e with names; labels; extended; created_at; updated_at }
 
 let absorb other existing =
   if not (equal other existing) then
-    let base = update other.created_at other.names other.labels other.extended existing in
+    let created_at, updated_at =
+      merged_timestamps
+        (existing.created_at, existing.updated_at)
+        (other.created_at, other.updated_at)
+    in
     {
-      base with
+      existing with
+      created_at;
+      updated_at;
+      names = Name_set.union existing.names other.names;
+      labels = Label_set.union existing.labels other.labels;
+      extended = Extended_set.union existing.extended other.extended;
       shared = Shared.concat existing.shared other.shared;
       to_read = To_read.concat existing.to_read other.to_read;
       is_feed = Is_feed.concat existing.is_feed other.is_feed;
