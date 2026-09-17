@@ -148,7 +148,7 @@ nix build -L .#hbt-cli-static   # musl static build, Linux only
 nix develop                # dev shell with the pinned toolchain
 ```
 
-The flake sets `self.submodules = true`, so flake builds see `test/data/`. It builds through opam-nix against `ocaml-base-compiler` 5.3.0, which is narrower than `dune-project`'s `>= 5.2.0` - a green Nix build does not prove the stated minimum still holds. `CPP_FLAGS` is where the flake overrides `VERSION`, using the flake's own rev.
+The flake sets `self.submodules = true`, which the `path:./test/data` input needs to find the corpus inside this flake's source. It builds through opam-nix against `ocaml-base-compiler` 5.3.0, which is narrower than `dune-project`'s `>= 5.2.0` - a green Nix build does not prove the stated minimum still holds. `CPP_FLAGS` is where the flake overrides `VERSION`, using the flake's own rev.
 
 ## CI
 
