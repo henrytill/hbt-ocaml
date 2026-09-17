@@ -93,6 +93,8 @@ The `conformance` alias in `test/dune` runs against dune's copy of the corpus, w
 
 The harness's flags, what counts as a match, and its timezone policy are documented in `test/data/README.md`.
 
+A `github:` flake reference carries no submodules, so it lacks the `hbt-data` input: `nix build github:henrytill/hbt-ocaml` still works, but `nix develop` and `nix flake check` fail on it and need a reference that includes submodules, such as `git+https://github.com/henrytill/hbt-ocaml?submodules=1`, or a checkout.
+
 **When a conformance fixture fails, the default assumption is that the OCaml side is wrong.** The fixtures encode decisions already settled across four implementations, so changing one is the expensive answer and needs the cross-repo case made first - in hbt-data, with companion issues, and with the other three going red until they catch up. Change the fixture only when the settled behaviour is itself what's being revised.
 
 **Unit tests.** `core/collection_test.ml` covers the entity and collection model, including merge semantics; `core/html_test.ml` covers escaping, the round trip through the formatter, and the `TAGS`/`TOREAD` attribute handling. Alcotest testables are the set modules themselves - `(module Extended_set)` works because each provides `t`, `pp`, and `equal`.
