@@ -85,10 +85,11 @@ Three layers: unit tests beside the code in `core/`, the conformance harness run
 **Conformance.** `test/data/` also carries hbt-data's conformance harness (henrytill/hbt-data#14), which runs every fixture through the built `hbt` and compares what the CLI writes - the serialized form all four implementations share, not decoded values. For `-t yaml` it compares YAML documents rather than text, so scalar quoting is not a difference; `-t html` is byte for byte. It is the `conformance` flake check: `test/data/` is also the `hbt-data` flake input (`path:./test/data`), whose `lib.check` runs the harness, so nothing about it is wired up here, and adding a fixture needs no change beyond the submodule bump. A relative path input locks relative to this flake rather than by hash, so bumping the submodule needs no relock. In the dev shell, which provides the harness's Python from the same input:
 
 ```sh
-dune build ./cli/main.exe
-(cd test/data && python3 -m hbt.conformance --binary ../../_build/default/cli/main.exe)                 # every fixture
-(cd test/data && python3 -m hbt.conformance --binary ../../_build/default/cli/main.exe markdown/basic)  # a name, substring or glob
+dune build @conformance                                                                    # every fixture, against a freshly built hbt
+(cd test/data && python3 -m hbt.conformance --binary ../../_build/install/default/bin/hbt markdown/basic)  # after dune build; a name, substring or glob
 ```
+
+The `conformance` alias in `test/dune` runs against dune's copy of the corpus, which has no `.git`, so its header reports the revision as `unknown`; the direct form reads it.
 
 The harness's flags, what counts as a match, and its timezone policy are documented in `test/data/README.md`.
 

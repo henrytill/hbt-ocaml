@@ -1,1 +1,11 @@
 (data_only_dirs data)
+
+(rule
+ (alias conformance)
+ (deps
+  %{bin:hbt}
+  (source_tree data))
+ (action
+  (chdir
+   data
+   (run python3 -m hbt.conformance --binary %{bin:hbt}))))
