@@ -438,8 +438,17 @@ let update updated_at names labels extended e =
   let base = { e with names; labels; extended } in
   let c = Time.compare updated_at base.created_at in
   if c < 0 then
-    (* An earlier timestamp becomes created_at, and the one it displaces becomes an update. *)
-    { base with updated_at = Time_set.add base.created_at base.updated_at; created_at = updated_at }
+    (* An earlier timestamp becomes created_at, and the one it displaces becomes an update. HTML
+       reads ADD_DATE and LAST_MODIFIED independently, so an earlier mention may already have
+       recorded the new created_at as an update; by the rule below, it goes. See
+       henrytill/hbt-ocaml#57. An update strictly below the new created_at stays: a parse states
+       that shape from a single anchor, and whether a merge may leave it behind is a corpus
+       question, henrytill/hbt-data#34. *)
+    {
+      base with
+      updated_at = Time_set.remove updated_at (Time_set.add base.created_at base.updated_at);
+      created_at = updated_at;
+    }
   else if c > 0 then
     { base with updated_at = Time_set.add updated_at base.updated_at }
   else
