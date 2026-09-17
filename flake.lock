@@ -34,6 +34,25 @@
         "type": "github"
       }
     },
+    "hbt-data": {
+      "inputs": {
+        "flake-utils": [
+          "flake-utils"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "path": "./test/data",
+        "type": "path"
+      },
+      "original": {
+        "path": "./test/data",
+        "type": "path"
+      },
+      "parent": []
+    },
     "mirage-opam-overlays": {
       "flake": false,
       "locked": {
@@ -205,6 +224,7 @@
           "opam-nix",
           "flake-utils"
         ],
+        "hbt-data": "hbt-data",
         "nixpkgs": "nixpkgs",
         "opam-nix": "opam-nix",
         "opam-repository": "opam-repository"

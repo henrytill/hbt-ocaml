@@ -14,6 +14,14 @@
     flake-utils = {
       follows = "opam-nix/flake-utils";
     };
+    # hbt-data's own flake, read from the corpus submodule: a relative path
+    # input locks relative to this flake, not by hash, so the submodule stays
+    # the one pin on the harness and the corpus it checks; see AGENTS.md.
+    hbt-data = {
+      url = "path:./test/data";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.follows = "flake-utils";
+    };
   };
 
   outputs =
@@ -23,6 +31,7 @@
       opam-nix,
       nixpkgs,
       opam-repository,
+      hbt-data,
       ...
     }@inputs:
     flake-utils.lib.eachDefaultSystem (
@@ -144,6 +153,7 @@
               ocp-index-wrapped
               pkgs.bear
               pkgs.clang-tools
+              hbt-data.packages.${system}.python
               pkgs.importNpmLock.hooks.linkNodeModulesHook
               pkgs.nodejs
               pkgs.yaml-language-server
@@ -165,6 +175,9 @@
         checks = {
           hbt-attic = legacyPackages.hbt-attic;
           hbt-cli = legacyPackages.hbt-cli;
+          conformance = hbt-data.lib.${system}.check {
+            binary = "${legacyPackages.hbt-cli}/bin/hbt";
+          };
         };
 
         packages = rec {
