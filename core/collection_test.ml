@@ -105,6 +105,39 @@ let test_entity_absorb_superseded_creation () =
     (Time_set.singleton created_a)
     (Entity.updated_at a)
 
+(* The incoming entity's own history is kept, not discarded: a second mention can state a
+   LAST_MODIFIED of its own. Fixture: html/bookmarks_incoming_update. See henrytill/hbt-ocaml#56. *)
+let test_entity_absorb_keeps_incoming_history () =
+  let open Entity in
+  let uri = Uri.of_string "https://foo.org" in
+  let created_a = Time.of_string "September 2, 2024" in
+  let created_b = Time.of_string "September 4, 2024" in
+  let updated_b = Time.of_string "September 6, 2024" in
+  let a = Entity.make uri created_a () in
+  let b = Entity.make uri created_b ~updated_at:(Time_set.singleton updated_b) () in
+  let a = Entity.absorb b a in
+  Alcotest.(check (module Time)) same_created_at created_a (Entity.created_at a);
+  Alcotest.(check (module Time_set))
+    same_updated_at
+    (Time_set.of_list [ created_b; updated_b ])
+    (Entity.updated_at a)
+
+(* An update repeating a created_at the merge did not move goes too, which is what makes absorbing
+   associative. Fixture: html/bookmarks_merged_repeat. See henrytill/hbt-data#36. *)
+let test_entity_absorb_repeat_of_unmoved_creation () =
+  let open Entity in
+  let uri = Uri.of_string "https://foo.org" in
+  let created = Time.of_string "September 2, 2024" in
+  let later = Time.of_string "September 4, 2024" in
+  let a = Entity.make uri created ~updated_at:(Time_set.singleton created) () in
+  let b = Entity.make uri later () in
+  let a = Entity.absorb b a in
+  Alcotest.(check (module Time)) same_created_at created (Entity.created_at a);
+  Alcotest.(check (module Time_set))
+    same_updated_at
+    (Time_set.singleton later)
+    (Entity.updated_at a)
+
 let test_entity_absorb_extended () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
@@ -489,6 +522,14 @@ let tests =
         test_case "update with an equal timestamp" `Quick test_entity_update_equal_timestamp;
         test_case "absorb" `Quick test_entity_absorb;
         test_case "absorb drops superseded creation" `Quick test_entity_absorb_superseded_creation;
+        test_case
+          "absorb keeps the incoming history"
+          `Quick
+          test_entity_absorb_keeps_incoming_history;
+        test_case
+          "absorb drops a repeated creation"
+          `Quick
+          test_entity_absorb_repeat_of_unmoved_creation;
         test_case "absorb extended" `Quick test_entity_absorb_extended;
         test_case "absorb shared extended" `Quick test_entity_absorb_extended_shared;
         test_case "absorb shared timestamp" `Quick test_entity_absorb_shared_timestamp;
