@@ -21,7 +21,7 @@ type 'a t = {
   expected : string;
 }
 
-let base_dir = Fpath.(normalize (v "data"))
+let base_dir = Fpath.(normalize (v "../test/data"))
 
 let input_to_dir : Data.input -> Fpath.t option =
   let open Fpath in

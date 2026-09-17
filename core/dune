@@ -1,4 +1,4 @@
-(data_only_dirs data templates)
+(data_only_dirs templates)
 
 (rule
  (target templates.ml)
@@ -52,7 +52,7 @@
  (package hbt-core)
  (libraries alcotest bos fpath hbt-core yaml)
  (deps
-  (glob_files data/html/*)
-  (glob_files data/markdown/*)
-  (glob_files data/pinboard/xml/*)
-  (glob_files data/pinboard/json/*)))
+  (glob_files %{project_root}/test/data/html/*)
+  (glob_files %{project_root}/test/data/markdown/*)
+  (glob_files %{project_root}/test/data/pinboard/xml/*)
+  (glob_files %{project_root}/test/data/pinboard/json/*)))
