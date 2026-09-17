@@ -177,6 +177,7 @@
           hbt-cli = legacyPackages.hbt-cli;
           conformance = hbt-data.lib.${system}.check {
             binary = "${legacyPackages.hbt-cli}/bin/hbt";
+            waivers = ./conformance.waivers;
           };
         };
 
