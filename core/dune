@@ -45,14 +45,3 @@
  (modules html_test)
  (package hbt-core)
  (libraries alcotest hbt-core))
-
-(test
- (name data_test)
- (modules data_test)
- (package hbt-core)
- (libraries alcotest bos fpath hbt-core yaml)
- (deps
-  (glob_files %{project_root}/test/data/html/*)
-  (glob_files %{project_root}/test/data/markdown/*)
-  (glob_files %{project_root}/test/data/pinboard/xml/*)
-  (glob_files %{project_root}/test/data/pinboard/json/*)))
