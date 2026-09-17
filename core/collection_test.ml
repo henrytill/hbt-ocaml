@@ -90,9 +90,7 @@ let test_entity_absorb () =
     (Label_set.union labels_foo labels_bar)
     (Entity.labels a)
 
-(* A merge that lowers created_at onto an instant an earlier mention stated as its LAST_MODIFIED
-   used to leave that instant behind, repeating created_at. Fixture:
-   html/bookmarks_superseded_creation. See henrytill/hbt-ocaml#57. *)
+(* Fixture: html/bookmarks_superseded_creation. See henrytill/hbt-ocaml#57. *)
 let test_entity_absorb_superseded_creation () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
@@ -490,10 +488,7 @@ let tests =
         test_case "update" `Quick test_entity_update;
         test_case "update with an equal timestamp" `Quick test_entity_update_equal_timestamp;
         test_case "absorb" `Quick test_entity_absorb;
-        test_case
-          "absorb drops the superseded creation"
-          `Quick
-          test_entity_absorb_superseded_creation;
+        test_case "absorb drops superseded creation" `Quick test_entity_absorb_superseded_creation;
         test_case "absorb extended" `Quick test_entity_absorb_extended;
         test_case "absorb shared extended" `Quick test_entity_absorb_extended_shared;
         test_case "absorb shared timestamp" `Quick test_entity_absorb_shared_timestamp;
