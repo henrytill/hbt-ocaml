@@ -4,8 +4,18 @@
  (alias conformance)
  (deps
   %{bin:hbt}
+  ../conformance.waivers
   (source_tree data))
  (action
   (chdir
    data
-   (run python3 -m hbt.conformance --binary %{bin:hbt}))))
+   ; The waivers file is a dep above, so it sits at the build root; the two
+   ; extra components climb back out of test/data, which chdir just entered.
+   (run
+    python3
+    -m
+    hbt.conformance
+    --binary
+    %{bin:hbt}
+    --waivers
+    ../../conformance.waivers))))
