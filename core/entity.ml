@@ -431,18 +431,12 @@ let yaml_of_t entity =
   in
   `O (base_fields @ shared @ to_read @ is_feed @ extended @ last_visited)
 
-(* The merged timestamps: both histories and both creation times, minus the one that wins.
-
-   Adding both creation times before removing the winner is what makes merging associative. Each
-   merge puts its operands' creation times back into the history, so however a sequence of
-   mentions is bracketed the result is every history and every creation time in it, minus the
-   smallest. Removing the winner only when the two creation times differ is not associative, and
-   neither is removing every update at or below created_at; henrytill/hbt-data#36 has both
-   counterexamples and pins this rule.
-
-   So an update equal to the winning creation time goes -- it merely repeats created_at and
-   carries no information, settled as henrytill/hbt-go#57 -- and one strictly below it stays,
-   which HTML can state by reading ADD_DATE and LAST_MODIFIED independently. *)
+(* Both histories and both creation times, minus the one that wins. Putting both creation times
+   back into the history before removing the winner is what makes merging associative: however a
+   sequence of mentions is bracketed, the result is every history and every creation time in it
+   minus the smallest. Removing the winner only when the two differ is not associative, and
+   neither is removing every update at or below created_at; henrytill/hbt-data#36 pins both, and
+   henrytill/hbt-go#57 is the case where the winner was merely repeated. *)
 let merged_timestamps a b =
   let winner = if Time.compare a.created_at b.created_at <= 0 then a.created_at else b.created_at in
   let updated =
