@@ -160,6 +160,25 @@ let test_entity_absorb_identical () =
   let merged = Entity.absorb a a in
   Alcotest.(check (module Entity)) same_entity a merged
 
+(* Absorbing is associative, which is the whole point of the rule: henrytill/hbt-data#36. The
+   first mention repeats its own creation time as an update -- what LAST_MODIFIED == ADD_DATE
+   parses to -- which is the only shape the two bracketings can disagree on. This triple catches
+   both the narrow rule that #36 rejects and the predecessor of this one, which discarded the
+   incoming history (#56); "drop every update at or below created_at" is associative here and is
+   caught by html/bookmarks_update_before_creation instead. *)
+let test_entity_absorb_associative () =
+  let open Entity in
+  let uri = Uri.of_string "https://foo.org" in
+  let early = Time.of_string "September 2, 2024" in
+  let late = Time.of_string "September 6, 2024" in
+  let a = Entity.make uri early ~updated_at:(Time_set.singleton early) () in
+  let b = Entity.make uri early () in
+  let c = Entity.make uri late () in
+  Alcotest.(check (module Entity))
+    "absorb is associative"
+    (Entity.absorb c (Entity.absorb b a))
+    (Entity.absorb (Entity.absorb c b) a)
+
 let test_entity_absorb_extended () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
@@ -547,6 +566,7 @@ let tests =
         test_case "absorb keeps incoming history" `Quick test_entity_absorb_keeps_incoming_history;
         test_case "absorb drops repeated creation" `Quick test_entity_absorb_repeated_creation;
         test_case "absorb an identical entity" `Quick test_entity_absorb_identical;
+        test_case "absorb is associative" `Quick test_entity_absorb_associative;
         test_case "absorb extended" `Quick test_entity_absorb_extended;
         test_case "absorb shared extended" `Quick test_entity_absorb_extended_shared;
         test_case "absorb shared timestamp" `Quick test_entity_absorb_shared_timestamp;
