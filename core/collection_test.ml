@@ -19,21 +19,30 @@ let test_entity_equal () =
   let b = Entity.make uri created ~maybe_name ~labels () in
   Alcotest.(check (module Entity)) same_entity a b
 
-let test_entity_update () =
+(* A mention at a later time records it as an update, and its names and labels join the entity's.
+   The equivalent of the old Entity.update, which absorb subsumed. *)
+let test_entity_absorb_later_mention () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
-  let maybe_name = Some (Name.of_string_exn "foo") in
-  let maybe_names = Option.fold ~none:Name_set.empty ~some:Name_set.singleton maybe_name in
   let created = Time.of_string "September 2, 2024" in
-  let labels = Label_set.singleton (Label.of_string_exn "foo") in
-  let a = Entity.make uri created ~maybe_name ~labels () in
   let updated = Time.of_string "September 4, 2024" in
-  let names_update = Name_set.of_list [ Name.of_string_exn "Foo.org"; Name.of_string_exn "F00" ] in
-  let labels_update =
-    Label_set.of_list [ Label.of_string_exn "foozer"; Label.of_string_exn "bar" ]
+  let a =
+    Entity.make
+      uri
+      created
+      ~maybe_name:(Some (Name.of_string_exn "foo"))
+      ~labels:(Label_set.singleton (Label.of_string_exn "foo"))
+      ()
   in
-  let extended_update = Extended_set.empty in
-  let a = Entity.update updated names_update labels_update extended_update a in
+  let b =
+    Entity.make
+      uri
+      updated
+      ~maybe_name:(Some (Name.of_string_exn "Foo.org"))
+      ~labels:(Label_set.singleton (Label.of_string_exn "bar"))
+      ()
+  in
+  let a = Entity.absorb b a in
   Alcotest.(check (module Uri)) same_uri (Uri.canonicalize uri) (Entity.uri a);
   Alcotest.(check (module Time)) same_created_at created (Entity.created_at a);
   Alcotest.(check (module Time_set))
@@ -42,23 +51,23 @@ let test_entity_update () =
     (Entity.updated_at a);
   Alcotest.(check (module Name_set))
     same_names
-    (Name_set.union maybe_names names_update)
+    (Name_set.of_list [ Name.of_string_exn "foo"; Name.of_string_exn "Foo.org" ])
     (Entity.names a);
   Alcotest.(check (module Label_set))
     same_labels
-    (Label_set.union labels labels_update)
+    (Label_set.of_list [ Label.of_string_exn "foo"; Label.of_string_exn "bar" ])
     (Entity.labels a)
 
-(* An incoming timestamp equal to created_at records no update: such an entry would only repeat
+(* A mention whose timestamp equals created_at records no update: such an entry would only repeat
    created_at. Settled as henrytill/hbt-go#57, where this implementation was one of the two that
    appended. The absorb guard does not cover this, since the entities differ. *)
-let test_entity_update_equal_timestamp () =
+let test_entity_absorb_equal_timestamp () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
   let created = Time.of_string "September 2, 2024" in
   let a = Entity.make uri created ~maybe_name:(Some (Name.of_string_exn "foo")) () in
-  let names_update = Name_set.singleton (Name.of_string_exn "bar") in
-  let a = Entity.update created names_update Label_set.empty Extended_set.empty a in
+  let b = Entity.make uri created ~maybe_name:(Some (Name.of_string_exn "bar")) () in
+  let a = Entity.absorb b a in
   Alcotest.(check (module Time)) same_created_at created (Entity.created_at a);
   Alcotest.(check (module Time_set)) same_updated_at Time_set.empty (Entity.updated_at a);
   Alcotest.(check (module Name_set))
@@ -518,8 +527,8 @@ let tests =
     ( "Entity",
       [
         test_case "equal" `Quick test_entity_equal;
-        test_case "update" `Quick test_entity_update;
-        test_case "update with an equal timestamp" `Quick test_entity_update_equal_timestamp;
+        test_case "absorb a later mention" `Quick test_entity_absorb_later_mention;
+        test_case "absorb an equal timestamp" `Quick test_entity_absorb_equal_timestamp;
         test_case "absorb" `Quick test_entity_absorb;
         test_case "absorb drops superseded creation" `Quick test_entity_absorb_superseded_creation;
         test_case
