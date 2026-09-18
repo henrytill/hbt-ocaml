@@ -443,32 +443,19 @@ let yaml_of_t entity =
    So an update equal to the winning creation time goes -- it merely repeats created_at and
    carries no information, settled as henrytill/hbt-go#57 -- and one strictly below it stays,
    which HTML can state by reading ADD_DATE and LAST_MODIFIED independently. *)
-let merged_timestamps (created_a, updated_a) (created_b, updated_b) =
-  let winner = if Time.compare created_a created_b <= 0 then created_a else created_b in
+let merged_timestamps a b =
+  let winner = if Time.compare a.created_at b.created_at <= 0 then a.created_at else b.created_at in
   let updated =
-    Time_set.union updated_a updated_b
-    |> Time_set.add created_a
-    |> Time_set.add created_b
+    Time_set.union a.updated_at b.updated_at
+    |> Time_set.add a.created_at
+    |> Time_set.add b.created_at
     |> Time_set.remove winner
   in
   (winner, updated)
 
-let update updated_at names labels extended e =
-  let names = Name_set.union e.names names in
-  let labels = Label_set.union e.labels labels in
-  let extended = Extended_set.union e.extended extended in
-  let created_at, updated_at =
-    merged_timestamps (e.created_at, e.updated_at) (updated_at, Time_set.empty)
-  in
-  { e with names; labels; extended; created_at; updated_at }
-
 let absorb other existing =
   if not (equal other existing) then
-    let created_at, updated_at =
-      merged_timestamps
-        (existing.created_at, existing.updated_at)
-        (other.created_at, other.updated_at)
-    in
+    let created_at, updated_at = merged_timestamps existing other in
     {
       existing with
       created_at;

@@ -152,7 +152,6 @@ val make :
 val empty : t
 val equal : t -> t -> bool
 val pp : Format.formatter -> t -> unit
-val update : Time.t -> Name_set.t -> Label_set.t -> Extended_set.t -> t -> t
 val absorb : t -> t -> t
 val uri : t -> Uri.t
 val created_at : t -> Time.t
