@@ -147,6 +147,19 @@ let test_entity_absorb_repeated_creation () =
     (Time_set.singleton later)
     (Entity.updated_at a)
 
+(* Absorbing an identical entity is a no-op, which the guard in absorb states directly. Under the
+   merge rule that is not redundant: the rule would drop an update equal to created_at, so without
+   the guard the same anchor twice would not read like the same anchor once. The update equal to
+   created_at is what makes this test load-bearing -- html/bookmarks_simple parses that shape, and
+   no fixture duplicates such an anchor. hbt-go and hbt-rs pin it the same way. *)
+let test_entity_absorb_identical () =
+  let open Entity in
+  let uri = Uri.of_string "https://foo.org" in
+  let created = Time.of_string "September 2, 2024" in
+  let a = Entity.make uri created ~updated_at:(Time_set.singleton created) () in
+  let merged = Entity.absorb a a in
+  Alcotest.(check (module Entity)) same_entity a merged
+
 let test_entity_absorb_extended () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
@@ -533,6 +546,7 @@ let tests =
         test_case "absorb drops superseded creation" `Quick test_entity_absorb_superseded_creation;
         test_case "absorb keeps incoming history" `Quick test_entity_absorb_keeps_incoming_history;
         test_case "absorb drops repeated creation" `Quick test_entity_absorb_repeated_creation;
+        test_case "absorb an identical entity" `Quick test_entity_absorb_identical;
         test_case "absorb extended" `Quick test_entity_absorb_extended;
         test_case "absorb shared extended" `Quick test_entity_absorb_extended_shared;
         test_case "absorb shared timestamp" `Quick test_entity_absorb_shared_timestamp;
