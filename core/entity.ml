@@ -309,8 +309,9 @@ type t = {
 
    [empty] and [of_post] are normal for a weaker reason: they record no updates at all. [make]
    deliberately does *not* normalize, even though its ?updated_at could carry a repeat. No
-   production caller passes it - the parsers and the decoder fold the record directly - so
-   nothing the program builds is non-normal. What it buys is that the tests, which live outside
+   production caller passes that argument: [of_post] and the Markdown parser call [make] without
+   it, and the HTML parser and the decoder fold the record directly. So nothing the program
+   builds is non-normal. What it buys is that the tests, which live outside
    this module and so have no other way in, can still construct the un-normalized values the
    merge properties have to range over: associativity and the identical-entity guard are claims
    about every value of the type, not only the reachable ones. Normalizing here would leave both
