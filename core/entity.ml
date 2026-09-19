@@ -281,7 +281,10 @@ end
 
 type t = {
   uri : Uri.t;
-  created_at : Time.t;
+  created_at : Time.t option;
+      (** [None] when the input gave no creation time -- HTML makes ADD_DATE optional. Absent is not
+          the epoch: it contributes nothing to a merge and is omitted on the wire rather than
+          written as 0. henrytill/hbt-data#37. *)
   updated_at : Time_set.t;
   names : Name_set.t;
   labels : Label_set.t;
@@ -316,7 +319,10 @@ type t = {
    merge properties have to range over: associativity and the identical-entity guard are claims
    about every value of the type, not only the reachable ones. Normalizing here would leave both
    tests passing while testing nothing. *)
-let normalize e = { e with updated_at = Time_set.remove e.created_at e.updated_at }
+let normalize e =
+  match e.created_at with
+  | None -> e
+  | Some created_at -> { e with updated_at = Time_set.remove created_at e.updated_at }
 
 let make uri created_at ?(updated_at = Time_set.empty) ?(maybe_name = None)
     ?(labels = Label_set.empty) ?(extended = Extended_set.empty) ?(shared = Shared.empty)
@@ -326,7 +332,7 @@ let make uri created_at ?(updated_at = Time_set.empty) ?(maybe_name = None)
   let names = Option.fold ~none:Name_set.empty ~some:Name_set.singleton maybe_name in
   {
     uri;
-    created_at;
+    created_at = Some created_at;
     updated_at;
     names;
     labels;
@@ -340,7 +346,7 @@ let make uri created_at ?(updated_at = Time_set.empty) ?(maybe_name = None)
 let empty =
   {
     uri = Uri.empty;
-    created_at = Time.empty;
+    created_at = None;
     updated_at = Time_set.empty;
     names = Name_set.empty;
     labels = Label_set.empty;
@@ -364,7 +370,7 @@ let is_feed e = e.is_feed
 
 let equal x y =
   Uri.equal x.uri y.uri
-  && Time.equal x.created_at y.created_at
+  && Option.equal Time.equal x.created_at y.created_at
   && Time_set.equal x.updated_at y.updated_at
   && Name_set.equal x.names y.names
   && Label_set.equal x.labels y.labels
@@ -379,7 +385,7 @@ let pp =
   record
     [
       field "uri" uri Uri.pp;
-      field "created_at" created_at Time.pp;
+      field "created_at" created_at Fmt.(option Time.pp);
       field "updated_at" updated_at Time_set.pp;
       field "names" names Name_set.pp;
       field "labels" labels Label_set.pp;
@@ -393,7 +399,14 @@ let pp =
 let build e (k, v) =
   match k with
   | "uri" -> { e with uri = Uri.t_of_yaml v }
-  | "createdAt" -> { e with created_at = Time.t_of_yaml v }
+  | "createdAt" ->
+      {
+        e with
+        created_at =
+          (match v with
+          | `Null -> None
+          | v -> Some (Time.t_of_yaml v));
+      }
   | "updatedAt" -> { e with updated_at = Time_set.t_of_yaml v }
   | "names" -> { e with names = Name_set.t_of_yaml v }
   | "labels" -> { e with labels = Label_set.t_of_yaml v }
@@ -428,14 +441,24 @@ let t_of_yaml value =
   normalize entity
 
 let yaml_of_t entity =
+  (* Omitted when absent rather than written as 0, which is what lets an undated entity decode
+     back undated instead of as one created on 1970-01-01. henrytill/hbt-data#37.
+
+     Emitted in place rather than appended with the other optional fields, so key order matches
+     the other three implementations and the cram tests that show example output. *)
+  let created =
+    match entity.created_at with
+    | None -> []
+    | Some t -> [ ("createdAt", Time.yaml_of_t t) ]
+  in
   let base_fields =
-    [
-      ("uri", Uri.yaml_of_t entity.uri);
-      ("createdAt", Time.yaml_of_t entity.created_at);
-      ("updatedAt", Time_set.yaml_of_t entity.updated_at);
-      ("names", Name_set.yaml_of_t entity.names);
-      ("labels", Label_set.yaml_of_t entity.labels);
-    ]
+    [ ("uri", Uri.yaml_of_t entity.uri) ]
+    @ created
+    @ [
+        ("updatedAt", Time_set.yaml_of_t entity.updated_at);
+        ("names", Name_set.yaml_of_t entity.names);
+        ("labels", Label_set.yaml_of_t entity.labels);
+      ]
   in
   let shared =
     match Shared.get entity.shared with
@@ -476,11 +499,22 @@ let yaml_of_t entity =
    The removal is deliberately not spelled here: [absorb] is field-wise, then normalized, and two
    spellings of one rule is what a later change would have to keep in step. *)
 let merged_timestamps a b =
-  let winner = if Time.compare a.created_at b.created_at <= 0 then a.created_at else b.created_at in
+  let winner =
+    match (a.created_at, b.created_at) with
+    | None, None -> None
+    | Some t, None | None, Some t -> Some t
+    | Some x, Some y ->
+        Some
+          (if Time.compare x y <= 0 then
+             x
+           else
+             y)
+  in
+  (* Only a creation time that exists goes back into the history: an absent one has nothing to
+     contribute and must not arrive as an epoch update. henrytill/hbt-data#37. *)
   let updated =
-    Time_set.union a.updated_at b.updated_at
-    |> Time_set.add a.created_at
-    |> Time_set.add b.created_at
+    List.filter_map Fun.id [ a.created_at; b.created_at ]
+    |> List.fold_left (Fun.flip Time_set.add) (Time_set.union a.updated_at b.updated_at)
   in
   (winner, updated)
 
@@ -557,7 +591,7 @@ module Html = struct
   let build r (e, tag_to_read) ((_, k), v) =
     match String.lowercase_ascii k with
     | "href" -> ({ e with uri = Uri.canonicalize (Uri.of_string v) }, tag_to_read)
-    | "add_date" -> ({ e with created_at = parse_timestamp v }, tag_to_read)
+    | "add_date" -> ({ e with created_at = Some (parse_timestamp v) }, tag_to_read)
     | "last_modified" when v <> String.empty ->
         let time = parse_timestamp v in
         ({ e with updated_at = Time_set.singleton time }, tag_to_read)
