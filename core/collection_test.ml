@@ -149,9 +149,14 @@ let test_entity_absorb_repeated_creation () =
 
 (* Absorbing an identical entity is a no-op, which the guard in absorb states directly. Under the
    merge rule that is not redundant: the rule would drop an update equal to created_at, so without
-   the guard the same anchor twice would not read like the same anchor once. The update equal to
-   created_at is what makes this test load-bearing -- html/bookmarks_simple parses that shape, and
-   no fixture duplicates such an anchor. hbt-go and hbt-rs pin it the same way. *)
+   the guard the same mention twice would not read like it once. Removing the guard fails this
+   test and nothing else, which is the measure of what it buys.
+
+   The update equal to created_at is what makes this test load-bearing, and since the parse path
+   normalizes it no longer comes from a fixture -- html/bookmarks_simple used to parse to this
+   shape and no longer does (henrytill/hbt-data#38). The only way left to build one is make with
+   an ?updated_at carrying the repeat, which is exactly why make does not normalize. hbt-go and
+   hbt-rs pin the guard the same way. *)
 let test_entity_absorb_identical () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
@@ -161,8 +166,10 @@ let test_entity_absorb_identical () =
   Alcotest.(check (module Entity)) same_entity a merged
 
 (* Absorbing is associative, which is the whole point of the rule: henrytill/hbt-data#36. The
-   first mention repeats its own creation time as an update -- what LAST_MODIFIED == ADD_DATE
-   parses to -- which is the only shape the two bracketings can disagree on. This triple catches
+   first mention repeats its own creation time as an update -- which is the only shape the two
+   bracketings can disagree on, and, since the parse path normalizes, one only make can now
+   build. That is why this test constructs it through make rather than from a fixture, and why
+   make does not normalize. This triple catches
    both the narrow rule that #36 rejects and the predecessor of this one, which discarded the
    incoming history (#56); "drop every update at or below created_at" is associative here and is
    caught by html/bookmarks_update_before_creation instead. *)
