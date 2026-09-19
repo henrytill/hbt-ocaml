@@ -521,7 +521,8 @@ let test_entity_yaml_normalizes_updates () =
     (Entity.created_at entity);
   Alcotest.(check (module Time_set))
     same_updated_at
-    (Time_set.t_of_yaml (Yaml.of_string_exn "[50, 300]"))
+    (Time_set.of_list
+       [ Time.t_of_yaml (Yaml.Util.float 50.); Time.t_of_yaml (Yaml.Util.float 300.) ])
     (Entity.updated_at entity)
 
 let test_yaml_rejects_bad_version () =
