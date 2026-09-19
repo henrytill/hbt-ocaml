@@ -145,7 +145,7 @@ module Template_entity = struct
   type t = {
     href : string;
     text : string;
-    add_date : string;
+    add_date : string option;
     last_modified : string option;
     tags : string option;
     description : string option;
@@ -177,7 +177,7 @@ module Template_entity = struct
     {
       href;
       text;
-      add_date = Entity.Time.to_string (Entity.created_at entity);
+      add_date = Option.map Entity.Time.to_string (Entity.created_at entity);
       last_modified;
       tags;
       description;
@@ -198,13 +198,16 @@ module Template_entity = struct
     let base_fields =
       [
         ("uri", `String (escape_attribute template_entity.href));
-        ("addDate", `String (escape_attribute template_entity.add_date));
         ("text", `String (escape_text template_entity.text));
       ]
     in
     let optional_fields =
       List_ext.filter_some
         [
+          (* Omitted when the bookmark has no creation time, so an anchor with no ADD_DATE
+             round-trips unchanged. A creation time of 0 is a real instant and still renders:
+             this keys on the option, not on the string being non-empty. henrytill/hbt-data#37. *)
+          Option.map (fun v -> ("addDate", `String (escape_attribute v))) template_entity.add_date;
           Option.map (fun v -> ("private", `String (string_of_bool v))) template_entity.private_;
           Option.map (fun v -> ("toRead", `String (string_of_bool v))) template_entity.to_read;
           Option.map (fun v -> ("feed", `String (Bool.to_string v))) template_entity.feed;

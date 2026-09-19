@@ -44,7 +44,7 @@ let test_entity_absorb_later_mention () =
   in
   let a = Entity.absorb b a in
   Alcotest.(check (module Uri)) same_uri (Uri.canonicalize uri) (Entity.uri a);
-  Alcotest.(check (module Time)) same_created_at created (Entity.created_at a);
+  Alcotest.(check (option (module Time))) same_created_at (Some created) (Entity.created_at a);
   Alcotest.(check (module Time_set))
     same_updated_at
     (Time_set.singleton updated)
@@ -68,7 +68,7 @@ let test_entity_absorb_equal_timestamp () =
   let a = Entity.make uri created ~maybe_name:(Some (Name.of_string_exn "foo")) () in
   let b = Entity.make uri created ~maybe_name:(Some (Name.of_string_exn "bar")) () in
   let a = Entity.absorb b a in
-  Alcotest.(check (module Time)) same_created_at created (Entity.created_at a);
+  Alcotest.(check (option (module Time))) same_created_at (Some created) (Entity.created_at a);
   Alcotest.(check (module Time_set)) same_updated_at Time_set.empty (Entity.updated_at a);
   Alcotest.(check (module Name_set))
     same_names
@@ -88,7 +88,7 @@ let test_entity_absorb () =
   let b = Entity.make uri created_b ~maybe_name:(Some name) ~labels:labels_bar () in
   let a = Entity.absorb b a in
   Alcotest.(check (module Uri)) same_uri (Uri.canonicalize uri) (Entity.uri a);
-  Alcotest.(check (module Time)) same_created_at created_b (Entity.created_at a);
+  Alcotest.(check (option (module Time))) same_created_at (Some created_b) (Entity.created_at a);
   Alcotest.(check (module Time_set))
     same_updated_at
     (Time_set.singleton created_a)
@@ -108,7 +108,7 @@ let test_entity_absorb_superseded_creation () =
   let a = Entity.make uri created_a ~updated_at:(Time_set.singleton created_b) () in
   let b = Entity.make uri created_b () in
   let a = Entity.absorb b a in
-  Alcotest.(check (module Time)) same_created_at created_b (Entity.created_at a);
+  Alcotest.(check (option (module Time))) same_created_at (Some created_b) (Entity.created_at a);
   Alcotest.(check (module Time_set))
     same_updated_at
     (Time_set.singleton created_a)
@@ -125,7 +125,7 @@ let test_entity_absorb_keeps_incoming_history () =
   let a = Entity.make uri created_a () in
   let b = Entity.make uri created_b ~updated_at:(Time_set.singleton updated_b) () in
   let a = Entity.absorb b a in
-  Alcotest.(check (module Time)) same_created_at created_a (Entity.created_at a);
+  Alcotest.(check (option (module Time))) same_created_at (Some created_a) (Entity.created_at a);
   Alcotest.(check (module Time_set))
     same_updated_at
     (Time_set.of_list [ created_b; updated_b ])
@@ -141,7 +141,7 @@ let test_entity_absorb_repeated_creation () =
   let a = Entity.make uri created ~updated_at:(Time_set.singleton created) () in
   let b = Entity.make uri later () in
   let a = Entity.absorb b a in
-  Alcotest.(check (module Time)) same_created_at created (Entity.created_at a);
+  Alcotest.(check (option (module Time))) same_created_at (Some created) (Entity.created_at a);
   Alcotest.(check (module Time_set))
     same_updated_at
     (Time_set.singleton later)
@@ -262,7 +262,7 @@ let test_collection_upsert () =
   Alcotest.(check (module Collection.Id)) "same id" id_a id_b;
   let e = Collection.entity coll id_a in
   Alcotest.(check (module Uri)) same_uri (Uri.canonicalize uri) (Entity.uri e);
-  Alcotest.(check (module Time)) same_created_at created_b (Entity.created_at e);
+  Alcotest.(check (option (module Time))) same_created_at (Some created_b) (Entity.created_at e);
   Alcotest.(check (module Time_set))
     same_updated_at
     (Time_set.singleton created_a)
@@ -376,9 +376,9 @@ let test_of_posts_merges_duplicates () =
   let uri = Uri.of_string "https://foo.org" in
   let id = Option.get (Collection.id coll (Uri.canonicalize uri)) in
   let e = Collection.entity coll id in
-  Alcotest.(check (module Time))
+  Alcotest.(check (option (module Time)))
     "earliest post wins created_at"
-    (Time.of_string "2024-09-02T00:00:00Z")
+    (Some (Time.of_string "2024-09-02T00:00:00Z"))
     (Entity.created_at e);
   Alcotest.(check (module Time_set))
     same_updated_at
@@ -516,15 +516,65 @@ let test_entity_yaml_normalizes_updates () =
          "{uri: 'https://foo.org', createdAt: 100, updatedAt: [50, 100, 300], names: [], labels: \
           []}")
   in
-  Alcotest.(check (module Time))
+  Alcotest.(check (option (module Time)))
     same_created_at
-    (Time.t_of_yaml (Yaml.Util.float 100.))
+    (Some (Time.t_of_yaml (Yaml.Util.float 100.)))
     (Entity.created_at entity);
   Alcotest.(check (module Time_set))
     same_updated_at
     (Time_set.of_list
        [ Time.t_of_yaml (Yaml.Util.float 50.); Time.t_of_yaml (Yaml.Util.float 300.) ])
     (Entity.updated_at entity)
+
+(* An absent creation time has a wire form of its own: the key is omitted, not written as 0.
+   That is what lets an undated entity decode back undated rather than as one created on
+   1970-01-01, which would then merge differently -- henrytill/hbt-data#37.
+
+   No shared fixture can pin the decode half. This implementation does accept -f yaml, unlike the
+   other three, so it is reachable from the CLI here, but a corpus fixture has to be readable by
+   all four. *)
+let has_key key value =
+  match value with
+  | `O assoc -> List.mem_assoc key assoc
+  | _ -> Alcotest.fail "expected a YAML mapping"
+
+let test_entity_yaml_round_trips_an_absent_created_at () =
+  let open Entity in
+  let undated =
+    Entity.t_of_yaml
+      (Yaml.of_string_exn "{uri: 'https://foo.org', updatedAt: [], names: [], labels: []}")
+  in
+  Alcotest.(check (option (module Time))) "decoded as absent" None (Entity.created_at undated);
+  let encoded = Entity.yaml_of_t undated in
+  Alcotest.(check bool) "createdAt is omitted, not written as 0" false (has_key "createdAt" encoded);
+  Alcotest.(check (option (module Time)))
+    "and decodes back absent"
+    None
+    (Entity.created_at (Entity.t_of_yaml encoded))
+
+(* An explicit null is the schema's other spelling of absent, and is read the same way. *)
+let test_entity_yaml_reads_null_created_at_as_absent () =
+  let entity =
+    Entity.t_of_yaml
+      (Yaml.of_string_exn
+         "{uri: 'https://foo.org', createdAt: null, updatedAt: [], names: [], labels: []}")
+  in
+  Alcotest.(check (option (module Entity.Time))) "null is absent" None (Entity.created_at entity)
+
+(* A creation time of 0 is a real instant, not absence -- the distinction the wire form buys.
+   An implementation testing truthiness rather than presence collapses the two. *)
+let test_entity_yaml_keeps_an_epoch_created_at () =
+  let open Entity in
+  let entity =
+    Entity.t_of_yaml
+      (Yaml.of_string_exn
+         "{uri: 'https://foo.org', createdAt: 0, updatedAt: [], names: [], labels: []}")
+  in
+  Alcotest.(check (option (module Time)))
+    "0 is kept"
+    (Some (Time.t_of_yaml (Yaml.Util.float 0.)))
+    (Entity.created_at entity);
+  Alcotest.(check bool) "and is written back" true (has_key "createdAt" (Entity.yaml_of_t entity))
 
 let test_yaml_rejects_bad_version () =
   Alcotest.check_raises "malformed version" (Collection.Version.Malformed "not-semver") (fun () ->
@@ -634,6 +684,18 @@ let tests =
         test_case "rejects missing uri" `Quick test_yaml_rejects_missing_uri;
         test_case "entity rejects missing uri" `Quick test_entity_yaml_rejects_missing_uri;
         test_case "entity normalizes updates" `Quick test_entity_yaml_normalizes_updates;
+        test_case
+          "entity round-trips an absent createdAt"
+          `Quick
+          test_entity_yaml_round_trips_an_absent_created_at;
+        test_case
+          "entity reads a null createdAt as absent"
+          `Quick
+          test_entity_yaml_reads_null_created_at_as_absent;
+        test_case
+          "entity keeps an epoch createdAt"
+          `Quick
+          test_entity_yaml_keeps_an_epoch_created_at;
         test_case "rejects bad version" `Quick test_yaml_rejects_bad_version;
       ] );
   ]

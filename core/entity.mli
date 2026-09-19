@@ -154,7 +154,10 @@ val equal : t -> t -> bool
 val pp : Format.formatter -> t -> unit
 val absorb : t -> t -> t
 val uri : t -> Uri.t
-val created_at : t -> Time.t
+
+val created_at : t -> Time.t option
+(** [None] when the input gave no creation time; see henrytill/hbt-data#37. *)
+
 val updated_at : t -> Time_set.t
 val names : t -> Name_set.t
 val labels : t -> Label_set.t
