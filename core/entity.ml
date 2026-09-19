@@ -299,8 +299,10 @@ type t = {
    untouched: henrytill/hbt-data#34.
 
    This is the whole of the normal form (henrytill/hbt-data#38), and three places maintain it -
-   the three that take a history from input. [absorb] ends here, so a merge that demotes the later
-   creation time to an update does not then record the earlier one twice. [t_of_yaml] ends here
+   the three that take a history from input. [absorb]'s merging branch ends here, so a merge that
+   demotes the later creation time to an update does not then record the earlier one twice. Its
+   other branch, the equality guard, returns [existing] untouched and so deliberately does not:
+   see [absorb]. [t_of_yaml] ends here
    because a serialized history is input like any other. [Html.entity_of_attrs] ends here because
    HTML reads ADD_DATE and LAST_MODIFIED independently, so one anchor may state the same instant
    in both - html/bookmarks_simple.
@@ -476,22 +478,6 @@ let merged_timestamps a b =
   in
   (winner, updated)
 
-let absorb_body other existing =
-  let created_at, updated_at = merged_timestamps existing other in
-  normalize
-    {
-      existing with
-      created_at;
-      updated_at;
-      names = Name_set.union existing.names other.names;
-      labels = Label_set.union existing.labels other.labels;
-      extended = Extended_set.union existing.extended other.extended;
-      shared = Shared.concat existing.shared other.shared;
-      to_read = To_read.concat existing.to_read other.to_read;
-      is_feed = Is_feed.concat existing.is_feed other.is_feed;
-      last_visited_at = Last_visited_at.concat existing.last_visited_at other.last_visited_at;
-    }
-
 (* Merging an entity that already equals [existing] is a no-op, and that is not redundant: the
    rule drops an update equal to created_at, so for an entity whose history repeats its own
    creation time the same mention twice would not read like it once.
@@ -505,7 +491,20 @@ let absorb_body other existing =
    later merge puts both creation times back regardless. *)
 let absorb other existing =
   if not (equal other existing) then
-    absorb_body other existing
+    let created_at, updated_at = merged_timestamps existing other in
+    normalize
+      {
+        existing with
+        created_at;
+        updated_at;
+        names = Name_set.union existing.names other.names;
+        labels = Label_set.union existing.labels other.labels;
+        extended = Extended_set.union existing.extended other.extended;
+        shared = Shared.concat existing.shared other.shared;
+        to_read = To_read.concat existing.to_read other.to_read;
+        is_feed = Is_feed.concat existing.is_feed other.is_feed;
+        last_visited_at = Last_visited_at.concat existing.last_visited_at other.last_visited_at;
+      }
   else
     existing
 
