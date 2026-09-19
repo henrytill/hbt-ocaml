@@ -501,8 +501,9 @@ let test_entity_yaml_rejects_missing_uri () =
       ignore (Entity.t_of_yaml (Yaml.of_string_exn "{createdAt: 0, names: [], labels: []}")))
 
 (* Decoding normalizes, so a serialized collection cannot reintroduce an entity whose history
-   repeats its own creation time. The corpus cannot pin this: hbt has no YAML *input* format, so
-   nothing round-trips there.
+   repeats its own creation time. This is reachable from the CLI - hbt-ocaml accepts -f yaml -
+   but no shared fixture can pin it, because it is the only implementation that does: hbt-rs,
+   hbt-go and hbt-hs all reject -f yaml. Hence a unit test.
 
    Both halves are asserted, because an implementation that dropped every update at or below
    createdAt would pass on the 100 alone; only the 50 separates it from the rule that removes

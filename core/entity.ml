@@ -417,8 +417,13 @@ let t_of_yaml value =
   if Uri.equal entity.uri Uri.empty then
     raise Missing_uri;
   (* A serialized history is input like any other, so decoding must not reintroduce an entity
-     whose updated_at holds its created_at. The corpus cannot pin this half - there is no YAML
-     *input* format - so a unit test does. *)
+     whose updated_at holds its created_at.
+
+     This is a real CLI path here, not an internal one: hbt-ocaml accepts [-f yaml], so
+     [hbt -f yaml -t yaml] over a collection whose updatedAt repeats its createdAt now emits the
+     normalized form. It is also the only implementation that accepts YAML as *input* - hbt-rs,
+     hbt-go and hbt-hs all reject [-f yaml] - which is why no shared fixture can pin this half
+     and a unit test does instead. *)
   normalize entity
 
 let yaml_of_t entity =

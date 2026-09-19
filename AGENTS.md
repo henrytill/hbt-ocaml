@@ -77,7 +77,7 @@ The most-revised part of the codebase, and where the cross-implementation issues
 
 **`absorb` is the only merge entry point.** `Entity.update` - a bare timestamp plus name, label and extended sets - was removed with #56: it was a second statement of the same rule that only its own tests reached, and its shape was what forced `merged_timestamps` into taking pairs rather than the two entities it is about. `Collection.upsert` calls `absorb`, and nothing else merges.
 
-The corpus cannot reach the decoding half - `hbt` has no YAML *input* format, so nothing round-trips there - and `entity normalizes updates` is what covers it. The other three implementations unit-test their own decode path for the same reason.
+The decoding half **is** reachable from the CLI here: this implementation accepts `-f yaml` (see [CLI](#cli)), so `hbt -f yaml -t yaml` over a collection whose `updatedAt` repeats its `createdAt` emits the normalized form. It is nonetheless not pinnable by a shared fixture, because hbt-ocaml is the only implementation that accepts YAML as *input* - hbt-rs, hbt-go and hbt-hs all reject `-f yaml`. So `entity normalizes updates` covers it here, as a unit test on each decode path does in the other three.
 
 When touching this, add a unit test in `core/collection_test.ml` *and* consider whether the case deserves a shared fixture. Use three occurrences rather than two when the bug is a duplication - two cannot distinguish "deduplicated" from "recorded once by accident".
 
