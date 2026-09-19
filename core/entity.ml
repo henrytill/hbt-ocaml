@@ -292,6 +292,29 @@ type t = {
   is_feed : Is_feed.t;
 }
 
+(* Drop an update that merely repeats the creation time.
+
+   A timestamp equal to created_at carries no information that created_at does not
+   (henrytill/hbt-go#57). An update strictly *below* created_at is a different thing and is
+   untouched: henrytill/hbt-data#34.
+
+   This is the whole of the normal form (henrytill/hbt-data#38), and three places maintain it -
+   the three that take a history from input. [absorb] ends here, so a merge that demotes the later
+   creation time to an update does not then record the earlier one twice. [t_of_yaml] ends here
+   because a serialized history is input like any other. [Html.entity_of_attrs] ends here because
+   HTML reads ADD_DATE and LAST_MODIFIED independently, so one anchor may state the same instant
+   in both - html/bookmarks_simple.
+
+   [empty] and [of_post] are normal for a weaker reason: they record no updates at all. [make]
+   deliberately does *not* normalize, even though its ?updated_at could carry a repeat. No
+   production caller passes it - the parsers and the decoder fold the record directly - so
+   nothing the program builds is non-normal. What it buys is that the tests, which live outside
+   this module and so have no other way in, can still construct the un-normalized values the
+   merge properties have to range over: associativity and the identical-entity guard are claims
+   about every value of the type, not only the reachable ones. Normalizing here would leave both
+   tests passing while testing nothing. *)
+let normalize e = { e with updated_at = Time_set.remove e.created_at e.updated_at }
+
 let make uri created_at ?(updated_at = Time_set.empty) ?(maybe_name = None)
     ?(labels = Label_set.empty) ?(extended = Extended_set.empty) ?(shared = Shared.empty)
     ?(to_read = To_read.empty) ?(last_visited_at = Last_visited_at.empty) ?(is_feed = Is_feed.empty)
@@ -391,7 +414,10 @@ let t_of_yaml value =
      keys on - so enforce it here rather than in any one caller. *)
   if Uri.equal entity.uri Uri.empty then
     raise Missing_uri;
-  entity
+  (* A serialized history is input like any other, so decoding must not reintroduce an entity
+     whose updated_at holds its created_at. The corpus cannot pin this half - there is no YAML
+     *input* format - so a unit test does. *)
+  normalize entity
 
 let yaml_of_t entity =
   let base_fields =
@@ -431,25 +457,28 @@ let yaml_of_t entity =
   in
   `O (base_fields @ shared @ to_read @ is_feed @ extended @ last_visited)
 
-(* Both histories and both creation times, minus the one that wins. Putting both creation times
-   back into the history before removing the winner is what makes merging associative: however a
-   sequence of mentions is bracketed, the result is every history and every creation time in it
-   minus the smallest creation time -- an update below that one stays, henrytill/hbt-data#34. Removing the winner only when the two differ is not associative, and
+(* Both histories and both creation times. Putting both creation times back into the history, and
+   leaving it to [normalize] to take the winner back out, is what makes merging associative:
+   however a sequence of mentions is bracketed, the result is every history and every creation
+   time in it minus the smallest creation time -- an update below that one stays,
+   henrytill/hbt-data#34. Removing the winner only when the two differ is not associative, and
    neither is removing every update at or below created_at; henrytill/hbt-data#36 pins both, and
-   henrytill/hbt-go#57 is the case where the winner was merely repeated. *)
+   henrytill/hbt-go#57 is the case where the winner was merely repeated.
+
+   The removal is deliberately not spelled here: [absorb] is field-wise, then normalized, and two
+   spellings of one rule is what a later change would have to keep in step. *)
 let merged_timestamps a b =
   let winner = if Time.compare a.created_at b.created_at <= 0 then a.created_at else b.created_at in
   let updated =
     Time_set.union a.updated_at b.updated_at
     |> Time_set.add a.created_at
     |> Time_set.add b.created_at
-    |> Time_set.remove winner
   in
   (winner, updated)
 
-let absorb other existing =
-  if not (equal other existing) then
-    let created_at, updated_at = merged_timestamps existing other in
+let absorb_body other existing =
+  let created_at, updated_at = merged_timestamps existing other in
+  normalize
     {
       existing with
       created_at;
@@ -462,6 +491,21 @@ let absorb other existing =
       is_feed = Is_feed.concat existing.is_feed other.is_feed;
       last_visited_at = Last_visited_at.concat existing.last_visited_at other.last_visited_at;
     }
+
+(* Merging an entity that already equals [existing] is a no-op, and that is not redundant: the
+   rule drops an update equal to created_at, so for an entity whose history repeats its own
+   creation time the same mention twice would not read like it once.
+
+   Normalizing at the parse and decode boundaries means such an entity no longer arrives from
+   input - html/bookmarks_simple, which used to parse to that shape, no longer does - so what the
+   guard protects is now reachable only through [make] with an ?updated_at carrying the repeat.
+   That is exactly what [test_entity_absorb_identical] builds, which is why [make] does not
+   normalize. hbt-hs guards the same way in its own [absorb], outside the Semigroup instance, and
+   hbt-rs and hbt-go each guard in [merge]. It cannot affect associativity either way, since any
+   later merge puts both creation times back regardless. *)
+let absorb other existing =
+  if not (equal other existing) then
+    absorb_body other existing
   else
     existing
 
@@ -546,5 +590,8 @@ module Html = struct
       | None -> entity.to_read
     in
     let labels = Label_set.union entity.labels folder_labels in
-    { entity with labels; to_read }
+    (* ADD_DATE and LAST_MODIFIED are read independently above, so an anchor stating the same
+       instant in both arrives here with the repeat - the html/bookmarks_simple shape.
+       Normalizing once the whole anchor is read is what drops it. *)
+    normalize { entity with labels; to_read }
 end

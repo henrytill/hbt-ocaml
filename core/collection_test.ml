@@ -493,6 +493,30 @@ let test_entity_yaml_rejects_missing_uri () =
   Alcotest.check_raises "entity without a uri" Entity.Missing_uri (fun () ->
       ignore (Entity.t_of_yaml (Yaml.of_string_exn "{createdAt: 0, names: [], labels: []}")))
 
+(* Decoding normalizes, so a serialized collection cannot reintroduce an entity whose history
+   repeats its own creation time. The corpus cannot pin this: hbt has no YAML *input* format, so
+   nothing round-trips there.
+
+   Both halves are asserted, because an implementation that dropped every update at or below
+   createdAt would pass on the 100 alone; only the 50 separates it from the rule that removes
+   exactly createdAt (henrytill/hbt-data#34). *)
+let test_entity_yaml_normalizes_updates () =
+  let open Entity in
+  let entity =
+    Entity.t_of_yaml
+      (Yaml.of_string_exn
+         "{uri: 'https://foo.org', createdAt: 100, updatedAt: [50, 100, 300], names: [], labels: \
+          []}")
+  in
+  Alcotest.(check (module Time))
+    same_created_at
+    (Time.t_of_yaml (Yaml.Util.float 100.))
+    (Entity.created_at entity);
+  Alcotest.(check (module Time_set))
+    same_updated_at
+    (Time_set.t_of_yaml (Yaml.of_string_exn "[50, 300]"))
+    (Entity.updated_at entity)
+
 let test_yaml_rejects_bad_version () =
   Alcotest.check_raises "malformed version" (Collection.Version.Malformed "not-semver") (fun () ->
       ignore (of_yaml_string "version: not-semver\nlength: 0\nvalue: []\n"));
@@ -600,6 +624,7 @@ let tests =
         test_case "rejects duplicate uri" `Quick test_yaml_rejects_duplicate_uri;
         test_case "rejects missing uri" `Quick test_yaml_rejects_missing_uri;
         test_case "entity rejects missing uri" `Quick test_entity_yaml_rejects_missing_uri;
+        test_case "entity normalizes updates" `Quick test_entity_yaml_normalizes_updates;
         test_case "rejects bad version" `Quick test_yaml_rejects_bad_version;
       ] );
   ]
