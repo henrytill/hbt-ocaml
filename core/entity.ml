@@ -385,7 +385,7 @@ let pp =
   record
     [
       field "uri" uri Uri.pp;
-      field "created_at" created_at Fmt.(option Time.pp);
+      field "created_at" created_at (option Time.pp);
       field "updated_at" updated_at Time_set.pp;
       field "names" names Name_set.pp;
       field "labels" labels Label_set.pp;
