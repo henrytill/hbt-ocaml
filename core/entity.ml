@@ -196,6 +196,13 @@ module Time = struct
     let f = Yaml.Util.to_float_exn value in
     (f, Unix.gmtime f)
 
+  (* An absent time is omitted on the wire rather than written as null, but a
+     hand-written document can still spell it that way, and both optional time
+     fields read it the same. *)
+  let option_of_yaml = function
+    | `Null -> None
+    | value -> Some (t_of_yaml value)
+
   let yaml_of_t time = Yaml.Util.float (fst time)
 end
 
@@ -277,6 +284,8 @@ module Last_visited_at = struct
     | None, None -> None
     | Some t, None | None, Some t -> Some t
     | Some t1, Some t2 -> Some (if Time.compare t1 t2 < 0 then t2 else t1)
+
+  let t_of_yaml = Time.option_of_yaml
 end
 
 type t = {
@@ -399,21 +408,14 @@ let pp =
 let build e (k, v) =
   match k with
   | "uri" -> { e with uri = Uri.t_of_yaml v }
-  | "createdAt" ->
-      {
-        e with
-        created_at =
-          (match v with
-          | `Null -> None
-          | v -> Some (Time.t_of_yaml v));
-      }
+  | "createdAt" -> { e with created_at = Time.option_of_yaml v }
   | "updatedAt" -> { e with updated_at = Time_set.t_of_yaml v }
   | "names" -> { e with names = Name_set.t_of_yaml v }
   | "labels" -> { e with labels = Label_set.t_of_yaml v }
   | "extended" -> { e with extended = Extended_set.t_of_yaml v }
   | "shared" -> { e with shared = Shared.of_bool (Yaml.Util.to_bool_exn v) }
   | "toRead" -> { e with to_read = To_read.of_bool (Yaml.Util.to_bool_exn v) }
-  | "lastVisitedAt" -> { e with last_visited_at = Last_visited_at.of_time (Time.t_of_yaml v) }
+  | "lastVisitedAt" -> { e with last_visited_at = Last_visited_at.t_of_yaml v }
   | "isFeed" -> { e with is_feed = Is_feed.of_bool (Yaml.Util.to_bool_exn v) }
   | _ -> e
 
