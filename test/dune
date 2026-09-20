@@ -9,3 +9,16 @@
   (chdir
    data
    (run python3 -m hbt.conformance --binary %{bin:hbt}))))
+
+; The harness is a test, not something a plain build should run, so it hangs
+; off runtest as well as its own alias - which stays, so it can still be run
+; alone. Dev profile only: [dune build -p hbt-cli @runtest] is what the opam
+; build runs, and its sandbox has no python3 - the Nix build runs the harness
+; as the separate `conformance` flake check instead.
+
+(alias
+ (name runtest)
+ (enabled_if
+  (= %{profile} dev))
+ (deps
+  (alias conformance)))
