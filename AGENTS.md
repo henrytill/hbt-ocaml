@@ -93,10 +93,11 @@ Three layers: unit tests beside the code in `core/`, the conformance harness run
 
 ```sh
 dune build @conformance                                                                    # every fixture, against a freshly built hbt
+dune runtest                                                                               # the same run, alongside the cram and unit tests
 (cd test/data && python3 -m hbt.conformance --binary ../../_build/install/default/bin/hbt markdown/basic)  # after dune build; a name, substring or glob
 ```
 
-The `conformance` alias in `test/dune` runs against dune's copy of the corpus, which has no `.git`, so its header reports the revision as `unknown`; the direct form reads it.
+The `conformance` alias in `test/dune` runs against dune's copy of the corpus, which has no `.git`, so its header reports the revision as `unknown`; the direct form reads it. It also hangs off `runtest`, so `dune runtest` covers it - but only under the `dev` profile, because `dune build -p hbt-cli @runtest` is what the opam build runs and that sandbox has no `python3`. The Nix build gets its coverage from the separate `conformance` flake check instead, so the guard costs nothing.
 
 The harness's flags, what counts as a match, and its timezone policy are documented in `test/data/README.md`.
 
@@ -116,7 +117,7 @@ A `github:` flake reference carries no submodules, so it lacks the `hbt-data` in
 
 ```sh
 dune build                 # everything
-dune runtest               # cram + unit tests
+dune runtest               # cram + unit tests + conformance
 dune fmt                   # ocamlformat, pinned; run before every commit
 dune promote               # accept reviewed cram/expect diffs
 dune exec -- hbt -t yaml test/data/html/bookmarks_simple.input.html
