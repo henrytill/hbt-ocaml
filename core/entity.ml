@@ -512,9 +512,9 @@ let merged_timestamps a b =
   in
   (* Only a creation time that exists goes back into the history: an absent one has nothing to
      contribute and must not arrive as an epoch update. henrytill/hbt-data#37. *)
+  let add_created = Option.fold ~none:Fun.id ~some:Time_set.add in
   let updated =
-    List.filter_map Fun.id [ a.created_at; b.created_at ]
-    |> List.fold_left (Fun.flip Time_set.add) (Time_set.union a.updated_at b.updated_at)
+    Time_set.union a.updated_at b.updated_at |> add_created a.created_at |> add_created b.created_at
   in
   (winner, updated)
 
