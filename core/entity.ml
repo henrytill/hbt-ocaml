@@ -591,7 +591,8 @@ module Html = struct
   let build r (e, tag_to_read) ((_, k), v) =
     match String.lowercase_ascii k with
     | "href" -> ({ e with uri = Uri.canonicalize (Uri.of_string v) }, tag_to_read)
-    | "add_date" -> ({ e with created_at = Some (parse_timestamp v) }, tag_to_read)
+    | "add_date" when v <> String.empty ->
+        ({ e with created_at = Some (parse_timestamp v) }, tag_to_read)
     | "last_modified" when v <> String.empty ->
         let time = parse_timestamp v in
         ({ e with updated_at = Time_set.singleton time }, tag_to_read)

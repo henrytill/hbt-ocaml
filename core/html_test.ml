@@ -137,6 +137,44 @@ let test_empty_anchor_text_is_no_name () =
   check_contains output {|ADD_DATE="0">https://a.org/</A>|};
   check_contains output {|ADD_DATE="0">https://b.org/</A>|}
 
+let parse_uri doc =
+  let coll = Html.parse doc in
+  let id =
+    Option.get (Collection.id coll Entity.(Uri.canonicalize (Uri.of_string "https://a.org/")))
+  in
+  Collection.entity coll id
+
+(* An empty ADD_DATE states nothing, so it is an absence rather than the epoch -- the
+   distinction henrytill/hbt-data#37 turns on. LAST_MODIFIED, LAST_VISIT and TAGS already
+   ignored an empty value; ADD_DATE did not, so an anchor carrying one claimed 1970-01-01,
+   won every merge, and demoted a real creation time to an update. hbt-rs and hbt-go read
+   an empty ADD_DATE as an absence too. No corpus fixture states one. *)
+let test_empty_add_date_is_absent () =
+  let undated_then_dated =
+    "<!DOCTYPE NETSCAPE-Bookmark-file-1>\n\
+     <DL><p>\n\
+     <DT><A HREF=\"https://a.org/\" ADD_DATE=\"\">first</A>\n\
+     <DT><A HREF=\"https://a.org/\" ADD_DATE=\"1700006400\">second</A>\n\
+     </DL><p>\n"
+  in
+  let dated_only =
+    "<!DOCTYPE NETSCAPE-Bookmark-file-1>\n\
+     <DL><p>\n\
+     <DT><A HREF=\"https://a.org/\" ADD_DATE=\"1700006400\">second</A>\n\
+     </DL><p>\n"
+  in
+  let merged = parse_uri undated_then_dated in
+  let dated = parse_uri dated_only in
+  let open Entity in
+  Alcotest.(check (option (module Time)))
+    "the dated mention keeps its instant"
+    (created_at dated)
+    (created_at merged);
+  Alcotest.(check (module Time_set))
+    "an empty ADD_DATE contributes no update"
+    Time_set.empty
+    (updated_at merged)
+
 let tests =
   let open Alcotest in
   [
@@ -147,6 +185,7 @@ let tests =
         test_case "toread matched exactly" `Quick test_toread_matched_exactly;
         test_case "explicit toread wins either order" `Quick test_explicit_toread_wins_either_order;
         test_case "empty anchor text is no name" `Quick test_empty_anchor_text_is_no_name;
+        test_case "empty ADD_DATE is absent" `Quick test_empty_add_date_is_absent;
       ] );
     ( "Formatter",
       [
