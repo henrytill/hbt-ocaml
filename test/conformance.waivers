@@ -1,0 +1,2 @@
+pinboard/json/url_opaque_path_trailing_space  # hbt-ocaml#77 - ocaml-uri encodes the space inside the opaque path too
+pinboard/json/url_file_drive_letter_pipe  # hbt-ocaml#77 - ocaml-uri encodes the | drive letter as %7C
