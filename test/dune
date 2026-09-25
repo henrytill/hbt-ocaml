@@ -8,7 +8,14 @@
  (action
   (chdir
    data
-   (run python3 -m hbt.conformance --binary %{bin:hbt}))))
+   (run
+    python3
+    -m
+    hbt.conformance
+    --binary
+    %{bin:hbt}
+    --waivers
+    %{dep:conformance.waivers}))))
 
 ; The harness is a test, not something a plain build should run, so it hangs
 ; off runtest as well as its own alias - which stays, so it can still be run
