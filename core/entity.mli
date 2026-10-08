@@ -63,8 +63,10 @@ module Time : sig
       carrying the string. *)
 
   val of_string_exn : string -> t
-  (** Raises {!Invalid_month_name} for an unknown month name and {!Malformed} for any other
-      unparseable date. Unlike {!Name.of_string} there is no option-returning counterpart: no caller
+  (** Raises {!Invalid_month_name} for an unknown month name and {!Malformed} for any other string
+      that does not parse. A date that parses but is out of range, such as a year of
+      [99999999999999], is not caught: it raises [Unix.Unix_error], which the CLI does not report
+      cleanly (#89). Unlike {!Name.of_string} there is no option-returning counterpart: no caller
       wants to skip a bad date quietly, and an option would discard what was wrong with it. *)
 
   val to_string : t -> string
