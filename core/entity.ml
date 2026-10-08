@@ -153,7 +153,7 @@ module Time = struct
     let days = days_from_civil year month day in
     float_of_int ((days * 86400) + (hour * 3600) + (min * 60) + sec)
 
-  let of_string (s : string) : t =
+  let of_string_exn (s : string) : t =
     let year, month, day, hour, min, sec =
       try parse_iso8601 s
       with e when is_scan_failure e ->
@@ -517,7 +517,7 @@ let map_labels f e = { e with labels = f e.labels }
 
 let of_post (p : Pinboard.Post.t) : t =
   let uri = Uri.of_string (Post.href p) in
-  let created_at = Time.of_string (Post.time p) in
+  let created_at = Time.of_string_exn (Post.time p) in
   let maybe_name = Option.bind (Post.description p) Name.of_string in
   let labels = Label_set.of_list (List.filter_map Label.of_string (Post.tag p)) in
   let extended = Extended_set.of_option (Option.bind (Post.extended p) Extended.of_string) in
@@ -529,7 +529,7 @@ let of_post (p : Pinboard.Post.t) : t =
 module Html = struct
   module Attrs = Prelude.Markup_ext.Attrs
 
-  (* Deliberately lenient, unlike Time.of_string: exported bookmark files in
+  (* Deliberately lenient, unlike Time.of_string_exn: exported bookmark files in
      the wild carry missing or malformed ADD_DATE values, and falling back to
      the epoch imports the bookmark rather than rejecting the whole file. *)
   let parse_timestamp (value : string) : Time.t =

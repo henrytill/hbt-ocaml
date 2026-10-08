@@ -49,7 +49,7 @@ let block m ((c, st) : Collection.t * Fold_state.t) = function
       match get_heading_text heading with
       | None -> Folder.default
       | Some heading_text ->
-          let time = Some (Entity.Time.of_string heading_text) in
+          let time = Some (Entity.Time.of_string_exn heading_text) in
           let st = { st with time; maybe_parent = None; labels = [] } in
           Folder.ret (c, st)
     end

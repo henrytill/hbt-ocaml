@@ -13,7 +13,7 @@ let test_entity_equal () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
   let maybe_name = Some (Name.of_string_exn "foo") in
-  let created = Time.of_string "September 2, 2024" in
+  let created = Time.of_string_exn "September 2, 2024" in
   let labels = Label_set.singleton (Label.of_string_exn "foo") in
   let a = Entity.make uri created ~maybe_name ~labels () in
   let b = Entity.make uri created ~maybe_name ~labels () in
@@ -24,8 +24,8 @@ let test_entity_equal () =
 let test_entity_absorb_later_mention () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
-  let created = Time.of_string "September 2, 2024" in
-  let updated = Time.of_string "September 4, 2024" in
+  let created = Time.of_string_exn "September 2, 2024" in
+  let updated = Time.of_string_exn "September 4, 2024" in
   let a =
     Entity.make
       uri
@@ -64,7 +64,7 @@ let test_entity_absorb_later_mention () =
 let test_entity_absorb_equal_timestamp () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
-  let created = Time.of_string "September 2, 2024" in
+  let created = Time.of_string_exn "September 2, 2024" in
   let a = Entity.make uri created ~maybe_name:(Some (Name.of_string_exn "foo")) () in
   let b = Entity.make uri created ~maybe_name:(Some (Name.of_string_exn "bar")) () in
   let a = Entity.absorb b a in
@@ -80,8 +80,8 @@ let test_entity_absorb () =
   let uri = Uri.of_string "https://foo.org" in
   let name = Name.of_string_exn "foo" in
   let names = Name_set.singleton name in
-  let created_a = Time.of_string "September 4, 2024" in
-  let created_b = Time.of_string "September 2, 2024" in
+  let created_a = Time.of_string_exn "September 4, 2024" in
+  let created_b = Time.of_string_exn "September 2, 2024" in
   let labels_foo = Label_set.singleton (Label.of_string_exn "foo") in
   let labels_bar = Label_set.singleton (Label.of_string_exn "bar") in
   let a = Entity.make uri created_a ~labels:labels_foo () in
@@ -103,8 +103,8 @@ let test_entity_absorb () =
 let test_entity_absorb_superseded_creation () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
-  let created_a = Time.of_string "September 4, 2024" in
-  let created_b = Time.of_string "September 2, 2024" in
+  let created_a = Time.of_string_exn "September 4, 2024" in
+  let created_b = Time.of_string_exn "September 2, 2024" in
   let a = Entity.make uri created_a ~updated_at:(Time_set.singleton created_b) () in
   let b = Entity.make uri created_b () in
   let a = Entity.absorb b a in
@@ -119,9 +119,9 @@ let test_entity_absorb_superseded_creation () =
 let test_entity_absorb_keeps_incoming_history () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
-  let created_a = Time.of_string "September 2, 2024" in
-  let created_b = Time.of_string "September 4, 2024" in
-  let updated_b = Time.of_string "September 6, 2024" in
+  let created_a = Time.of_string_exn "September 2, 2024" in
+  let created_b = Time.of_string_exn "September 4, 2024" in
+  let updated_b = Time.of_string_exn "September 6, 2024" in
   let a = Entity.make uri created_a () in
   let b = Entity.make uri created_b ~updated_at:(Time_set.singleton updated_b) () in
   let a = Entity.absorb b a in
@@ -136,8 +136,8 @@ let test_entity_absorb_keeps_incoming_history () =
 let test_entity_absorb_repeated_creation () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
-  let created = Time.of_string "September 2, 2024" in
-  let later = Time.of_string "September 4, 2024" in
+  let created = Time.of_string_exn "September 2, 2024" in
+  let later = Time.of_string_exn "September 4, 2024" in
   let a = Entity.make uri created ~updated_at:(Time_set.singleton created) () in
   let b = Entity.make uri later () in
   let a = Entity.absorb b a in
@@ -160,7 +160,7 @@ let test_entity_absorb_repeated_creation () =
 let test_entity_absorb_identical () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
-  let created = Time.of_string "September 2, 2024" in
+  let created = Time.of_string_exn "September 2, 2024" in
   let a = Entity.make uri created ~updated_at:(Time_set.singleton created) () in
   let merged = Entity.absorb a a in
   Alcotest.(check (module Entity)) same_entity a merged
@@ -176,8 +176,8 @@ let test_entity_absorb_identical () =
 let test_entity_absorb_associative () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
-  let early = Time.of_string "September 2, 2024" in
-  let late = Time.of_string "September 6, 2024" in
+  let early = Time.of_string_exn "September 2, 2024" in
+  let late = Time.of_string_exn "September 6, 2024" in
   let a = Entity.make uri early ~updated_at:(Time_set.singleton early) () in
   let b = Entity.make uri early () in
   let c = Entity.make uri late () in
@@ -189,8 +189,8 @@ let test_entity_absorb_associative () =
 let test_entity_absorb_extended () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
-  let created_a = Time.of_string "September 4, 2024" in
-  let created_b = Time.of_string "September 2, 2024" in
+  let created_a = Time.of_string_exn "September 4, 2024" in
+  let created_b = Time.of_string_exn "September 2, 2024" in
   let extended_a = Extended_set.singleton (Extended.of_string_exn "description from source A") in
   let extended_b = Extended_set.singleton (Extended.of_string_exn "description from source B") in
   let a = Entity.make uri created_a ~extended:extended_a () in
@@ -208,7 +208,7 @@ let test_entity_absorb_extended () =
 let test_entity_absorb_extended_shared () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
-  let created = Time.of_string "September 2, 2024" in
+  let created = Time.of_string_exn "September 2, 2024" in
   let extended = Extended_set.singleton (Extended.of_string_exn "a shared description") in
   let described label =
     Entity.make uri created ~labels:(Label_set.singleton (Label.of_string_exn label)) ~extended ()
@@ -226,8 +226,8 @@ let test_entity_absorb_extended_shared () =
 let test_entity_absorb_shared_timestamp () =
   let open Entity in
   let uri = Uri.of_string "https://foo.org" in
-  let created = Time.of_string "September 2, 2024" in
-  let updated = Time.of_string "September 4, 2024" in
+  let created = Time.of_string_exn "September 2, 2024" in
+  let updated = Time.of_string_exn "September 4, 2024" in
   let labelled time label =
     Entity.make uri time ~labels:(Label_set.singleton (Label.of_string_exn label)) ()
   in
@@ -248,8 +248,8 @@ let test_collection_upsert () =
   let uri = Uri.of_string "https://foo.org" in
   let name = Name.of_string_exn "foo" in
   let names = Name_set.singleton name in
-  let created_a = Time.of_string "September 4, 2024" in
-  let created_b = Time.of_string "September 2, 2024" in
+  let created_a = Time.of_string_exn "September 4, 2024" in
+  let created_b = Time.of_string_exn "September 2, 2024" in
   let labels_foo = Label_set.singleton (Label.of_string_exn "foo") in
   let labels_bar = Label_set.singleton (Label.of_string_exn "bar") in
   let a = Entity.make uri created_a ~labels:labels_foo () in
@@ -278,8 +278,8 @@ let test_collection_add_edge () =
   let open Entity in
   let uri_a = Uri.of_string "https://foo.org" in
   let uri_b = Uri.of_string "https://foo.net" in
-  let created_a = Time.of_string "September 4, 2024" in
-  let created_b = Time.of_string "September 2, 2024" in
+  let created_a = Time.of_string_exn "September 4, 2024" in
+  let created_b = Time.of_string_exn "September 2, 2024" in
   let a = Entity.make uri_a created_a () in
   let b = Entity.make uri_b created_b () in
   let coll = Collection.create () in
@@ -303,7 +303,7 @@ let test_collection_id_protection () =
   let open Entity in
   let uri_a = Uri.of_string "https://foo.org" in
   let uri_b = Uri.of_string "https://bar.org" in
-  let created = Time.of_string "September 2, 2024" in
+  let created = Time.of_string_exn "September 2, 2024" in
   let coll_a = Collection.create () in
   let coll_b = Collection.create () in
   let id_a = Collection.insert coll_a (Entity.make uri_a created ()) in
@@ -346,13 +346,13 @@ let test_time_of_string () =
       Alcotest.(check (float 0.))
         (Printf.sprintf "%S parses to %.0f" input expected)
         expected
-        (float_of_string (Time.to_string (Time.of_string input))))
+        (float_of_string (Time.to_string (Time.of_string_exn input))))
     cases
 
 let test_time_of_string_rejects_garbage () =
   let open Entity in
   Alcotest.check_raises "unknown month name" (Time.Invalid_month_name "Smarch") (fun () ->
-      ignore (Time.of_string "Smarch 3, 2023"))
+      ignore (Time.of_string_exn "Smarch 3, 2023"))
 
 let post_json href description time tags =
   Printf.sprintf
@@ -378,11 +378,11 @@ let test_of_posts_merges_duplicates () =
   let e = Collection.entity coll id in
   Alcotest.(check (option (module Time)))
     "earliest post wins created_at"
-    (Some (Time.of_string "2024-09-02T00:00:00Z"))
+    (Some (Time.of_string_exn "2024-09-02T00:00:00Z"))
     (Entity.created_at e);
   Alcotest.(check (module Time_set))
     same_updated_at
-    (Time_set.singleton (Time.of_string "2024-09-04T00:00:00Z"))
+    (Time_set.singleton (Time.of_string_exn "2024-09-04T00:00:00Z"))
     (Entity.updated_at e);
   Alcotest.(check (module Name_set))
     same_names
@@ -427,7 +427,7 @@ let test_yaml_roundtrip () =
   let a =
     Entity.make
       (Uri.of_string "https://foo.org")
-      (Time.of_string "September 2, 2024")
+      (Time.of_string_exn "September 2, 2024")
       ~maybe_name:(Some (Name.of_string_exn "Foo"))
       ~labels:(Label_set.singleton (Label.of_string_exn "one"))
       ~extended:(Extended_set.singleton (Extended.of_string_exn "a description"))
@@ -435,7 +435,9 @@ let test_yaml_roundtrip () =
       ~to_read:(To_read.of_bool false)
       ()
   in
-  let b = Entity.make (Uri.of_string "https://bar.org") (Time.of_string "September 4, 2024") () in
+  let b =
+    Entity.make (Uri.of_string "https://bar.org") (Time.of_string_exn "September 4, 2024") ()
+  in
   let id_a = Collection.upsert coll a in
   let id_b = Collection.upsert coll b in
   Collection.add_edges coll id_a id_b;
@@ -643,7 +645,8 @@ let labelled_collection strings =
   let coll = Collection.create () in
   let uri = Uri.of_string "https://foo.org" in
   let labels = Label_set.of_list (List.map Label.of_string_exn strings) in
-  ignore (Collection.upsert coll (Entity.make uri (Time.of_string "September 2, 2024") ~labels ()));
+  ignore
+    (Collection.upsert coll (Entity.make uri (Time.of_string_exn "September 2, 2024") ~labels ()));
   coll
 
 let labels_of coll =
