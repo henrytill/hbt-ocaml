@@ -374,7 +374,7 @@ let pp =
       field "is_feed" is_feed Is_feed.pp;
     ]
 
-let build e (k, v) =
+let build_field e (k, v) =
   match k with
   | "uri" -> { e with uri = Uri.t_of_yaml v }
   | "createdAt" -> { e with created_at = Time.option_of_yaml v }
@@ -387,6 +387,15 @@ let build e (k, v) =
   | "lastVisitedAt" -> { e with last_visited_at = Last_visited_at.t_of_yaml v }
   | "isFeed" -> { e with is_feed = Is_feed.of_bool (Yaml.Util.to_bool_exn v) }
   | _ -> e
+
+(* A null field reads as if it were omitted, whichever field it is
+   (henrytill/hbt-data#44): a set is empty, a flag or time absent, and a null
+   uri is a missing one. It used to be a type error everywhere but the two
+   optional times, though [key:] with nothing after it is what a hand edit
+   produces, and the writers omit an unset field rather than null it. *)
+let build e = function
+  | _, `Null -> e
+  | field -> build_field e field
 
 exception Missing_uri
 
