@@ -35,7 +35,7 @@ module Name : sig
   val yaml_of_t : t -> Yaml.value
 end
 
-module Name_set : Yaml_set_intf.S with type elt = Name.t
+module Name_set : Yaml_set.S with type elt = Name.t
 
 module Label : sig
   type t
@@ -50,7 +50,7 @@ module Label : sig
   val yaml_of_t : t -> Yaml.value
 end
 
-module Label_set : Yaml_set_intf.S with type elt = Label.t
+module Label_set : Yaml_set.S with type elt = Label.t
 module Label_map : Map.S with type key = Label.t
 
 module Time : sig
@@ -67,7 +67,7 @@ module Time : sig
   val yaml_of_t : t -> Yaml.value
 end
 
-module Time_set : Yaml_set_intf.S with type elt = Time.t
+module Time_set : Yaml_set.S with type elt = Time.t
 (** Update timestamps are a set so that an instant recorded by two entities with the same URI
     appears once however many times the input carried it, as with {!Extended_set}. A set is also
     sorted by construction, which is what the merge path used to maintain by hand; note that this
@@ -91,7 +91,7 @@ end
     {!Label_set}: a description shared by two entities with the same URI appears once however many
     times the input carried it. *)
 module Extended_set : sig
-  include Yaml_set_intf.S with type elt = Extended.t
+  include Yaml_set.S with type elt = Extended.t
 
   val of_option : Extended.t option -> t
 end

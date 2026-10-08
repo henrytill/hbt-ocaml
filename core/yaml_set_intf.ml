@@ -1,4 +1,4 @@
-module type Elt = sig
+module type ORDERED_YAML_TYPE = sig
   include Set.OrderedType
 
   val pp : Format.formatter -> t -> unit
