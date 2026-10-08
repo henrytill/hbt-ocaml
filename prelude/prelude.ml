@@ -52,7 +52,7 @@ end
 module Yaml_ext = struct
   exception Missing_field of string
 
-  let get_field ~key value =
+  let get_field_exn ~key value =
     match Yaml.Util.find_exn key value with
     | None -> raise (Missing_field key)
     | Some v -> v

@@ -124,26 +124,26 @@ let invalid fmt = Printf.ksprintf (fun msg -> raise (Invalid msg)) fmt
 let t_of_yaml value =
   let open Yaml_ext in
   begin
-    let version = get_field ~key:"version" value |> Version.t_of_yaml in
+    let version = get_field_exn ~key:"version" value |> Version.t_of_yaml in
     Version.check version
   end;
-  let length = get_field ~key:"length" value |> int_of_float_exn in
+  let length = get_field_exn ~key:"length" value |> int_of_float_exn in
   if length < 0 then
     invalid "negative length %d" length;
   let coll = make length in
   let seen = Array.make length false in
   let count = ref 0 in
   let process_item pairs =
-    let i = get_field ~key:"id" pairs |> int_of_float_exn in
+    let i = get_field_exn ~key:"id" pairs |> int_of_float_exn in
     if i < 0 || i >= length then
       invalid "node id %d out of bounds for length %d" i length;
     if seen.(i) then
       invalid "duplicate node id %d" i;
     let entity =
-      try get_field ~key:"entity" pairs |> Entity.t_of_yaml
+      try get_field_exn ~key:"entity" pairs |> Entity.t_of_yaml
       with Entity.Missing_uri -> invalid "node %d has no uri" i
     in
-    let edges = get_field ~key:"edges" pairs |> map_array_exn int_of_float_exn in
+    let edges = get_field_exn ~key:"edges" pairs |> map_array_exn int_of_float_exn in
     let check_edge target =
       if target < 0 || target >= length then
         invalid "node %d has an edge to %d, out of bounds for length %d" i target length
@@ -158,7 +158,7 @@ let t_of_yaml value =
     seen.(i) <- true;
     incr count
   in
-  get_field ~key:"value" value |> iter_array_exn process_item;
+  get_field_exn ~key:"value" value |> iter_array_exn process_item;
   (* Ids are in bounds and distinct, so matching the count means every slot
      was filled - no node is left as the Entity.empty that make installed. *)
   if !count <> length then
