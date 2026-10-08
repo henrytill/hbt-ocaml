@@ -144,11 +144,11 @@ let t_of_yaml value =
       with Entity.Missing_uri -> invalid "node %d has no uri" i
     in
     let edges = get_field_exn ~key:"edges" pairs |> map_array_exn int_of_float_exn in
-    let check_edge target =
+    let check_edge_exn target =
       if target < 0 || target >= length then
         invalid "node %d has an edge to %d, out of bounds for length %d" i target length
     in
-    List.iter check_edge edges;
+    List.iter check_edge_exn edges;
     let uri = Entity.uri entity in
     if Uri_hashtbl.mem coll.uris uri then
       invalid "duplicate uri %s at node %d" (Entity.Uri.to_string uri) i;
