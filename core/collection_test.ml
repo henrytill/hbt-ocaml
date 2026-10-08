@@ -322,7 +322,7 @@ let test_collection_id_protection () =
   Alcotest.check_raises "add_edge rejects foreign target" foreign_id_err (fun () ->
       Collection.add_edge coll_b id_b id_a)
 
-let test_time_of_string () =
+let test_time_of_string_exn () =
   let open Entity in
   (* Expected values are UTC epoch seconds. They must not depend on the TZ
      this test runs under. *)
@@ -349,7 +349,7 @@ let test_time_of_string () =
         (float_of_string (Time.to_string (Time.of_string_exn input))))
     cases
 
-let test_time_of_string_rejects_garbage () =
+let test_time_of_string_exn_rejects_garbage () =
   let open Entity in
   Alcotest.check_raises "unknown month name" (Time.Invalid_month_name "Smarch") (fun () ->
       ignore (Time.of_string_exn "Smarch 3, 2023"));
@@ -705,8 +705,8 @@ let tests =
       ] );
     ( "Time",
       [
-        test_case "of_string" `Quick test_time_of_string;
-        test_case "of_string rejects garbage" `Quick test_time_of_string_rejects_garbage;
+        test_case "of_string_exn" `Quick test_time_of_string_exn;
+        test_case "of_string_exn rejects garbage" `Quick test_time_of_string_exn_rejects_garbage;
       ] );
     ( "Collection",
       [
