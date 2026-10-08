@@ -94,18 +94,18 @@ module Time = struct
     (t, Unix.gmtime t)
 
   let int_of_month_exn = function
-    | "January" -> 0
-    | "February" -> 1
-    | "March" -> 2
-    | "April" -> 3
-    | "May" -> 4
-    | "June" -> 5
-    | "July" -> 6
-    | "August" -> 7
-    | "September" -> 8
-    | "October" -> 9
-    | "November" -> 10
-    | "December" -> 11
+    | "January" -> 1
+    | "February" -> 2
+    | "March" -> 3
+    | "April" -> 4
+    | "May" -> 5
+    | "June" -> 6
+    | "July" -> 7
+    | "August" -> 8
+    | "September" -> 9
+    | "October" -> 10
+    | "November" -> 11
+    | "December" -> 12
     | month -> raise (Invalid_month_name month)
 
   (* Scanf signals a failed parse with any of these. *)
@@ -114,13 +114,13 @@ module Time = struct
     | _ -> false
 
   (* Each format yields (year, month, day, hour, min, sec), with [month]
-     0-based as in Unix.tm.tm_mon, and signals a mismatch with a scan failure. *)
+     1-based, and signals a mismatch with a scan failure. *)
   let iso8601_datetime_exn s =
-    let f year month day hour min sec = (year, month - 1, day, hour, min, sec) in
+    let f year month day hour min sec = (year, month, day, hour, min, sec) in
     Scanf.sscanf s "%d-%d-%dT%d:%d:%dZ" f
 
   let iso8601_date_exn s =
-    let f year month day = (year, month - 1, day, 0, 0, 0) in
+    let f year month day = (year, month, day, 0, 0, 0) in
     Scanf.sscanf s "%d-%d-%d" f
 
   let long_date_exn s =
@@ -130,11 +130,10 @@ module Time = struct
   let formats = [ iso8601_datetime_exn; iso8601_date_exn; long_date_exn ]
 
   (* Days from the Unix epoch to a proleptic Gregorian date, after Howard
-     Hinnant's days_from_civil. [month] is 0-based, as in Unix.tm.tm_mon. *)
+     Hinnant's days_from_civil. [month] is 1-based. *)
   let days_from_civil year month day =
-    let m = month + 1 in
     let y =
-      if m <= 2 then
+      if month <= 2 then
         year - 1
       else
         year
@@ -147,7 +146,7 @@ module Time = struct
       / 400
     in
     let yoe = y - (era * 400) in
-    let mp = (m + 9) mod 12 in
+    let mp = (month + 9) mod 12 in
     let doy = (((153 * mp) + 2) / 5) + day - 1 in
     let doe = (yoe * 365) + (yoe / 4) - (yoe / 100) + doy in
     (era * 146097) + doe - 719468
