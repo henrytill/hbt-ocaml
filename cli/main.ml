@@ -84,11 +84,11 @@ let explain (file : string) : exn -> string option =
   | Entity.Missing_uri -> in_file "an entity has no uri"
   | Entity.Empty field -> in_file "a %s cannot be empty" field
   | Entity.Time.Invalid_month_name month -> in_file "unknown month name %S" month
+  | Entity.Time.Malformed date -> in_file "malformed date %S" date
   | Markdown.Missing_date uri -> in_file "%s appears before any date heading" uri
   | Pinboard.Post.Unexpected_xml_element name -> in_file "unexpected XML element %S" name
   | Yaml.Util.Value_error msg -> in_file "%s" msg
   | Prelude.Yaml_ext.Missing_field key -> in_file "missing field %S" key
-  | Scanf.Scan_failure msg -> in_file "could not parse a date: %s" msg
   | _ -> None
 
 let process_file (args : Args.t) (file : string) : (unit, string) result =

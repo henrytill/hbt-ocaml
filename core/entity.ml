@@ -87,6 +87,7 @@ module Time = struct
   type t = float * Unix.tm
 
   exception Invalid_month_name of string
+  exception Malformed of string
 
   let empty =
     let t = 0.0 in
@@ -156,9 +157,13 @@ module Time = struct
   let of_string_exn (s : string) : t =
     let year, month, day, hour, min, sec =
       try parse_iso8601 s
-      with e when is_scan_failure e ->
-        let month, day, year = parse_date s in
-        (year, month, day, 0, 0, 0)
+      with e when is_scan_failure e -> (
+        (* The fallback's failure used to escape as whichever exception Scanf
+           chose, and End_of_file - what it picks for a heading like "Notes"
+           that ends before the format does - crashed the CLI (#86). *)
+        match parse_date s with
+        | month, day, year -> (year, month, day, 0, 0, 0)
+        | exception e when is_scan_failure e -> raise (Malformed s))
     in
     let t = timegm ~year ~month ~day ~hour ~min ~sec in
     (t, Unix.gmtime t)

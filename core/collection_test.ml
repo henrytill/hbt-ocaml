@@ -352,7 +352,15 @@ let test_time_of_string () =
 let test_time_of_string_rejects_garbage () =
   let open Entity in
   Alcotest.check_raises "unknown month name" (Time.Invalid_month_name "Smarch") (fun () ->
-      ignore (Time.of_string_exn "Smarch 3, 2023"))
+      ignore (Time.of_string_exn "Smarch 3, 2023"));
+  (* Scanf reports each of these differently - End_of_file for the first
+     three, Scan_failure for the rest - and all of them must come out as
+     Malformed, which is the one the CLI explains (#86). *)
+  List.iter
+    (fun input ->
+      Alcotest.check_raises input (Time.Malformed input) (fun () ->
+          ignore (Time.of_string_exn input)))
+    [ "Notes"; "September"; ""; "Not A Date"; "September 99999999999999999999, 2024" ]
 
 let post_json href description time tags =
   Printf.sprintf
