@@ -20,11 +20,6 @@ module Args = struct
     { input_format; output_format; output; info; list_tags; mappings_file }
 end
 
-let detect_input_format file =
-  match Data.detect_input_format file with
-  | None -> raise (Unsupported_file_format (Filename.extension file))
-  | Some format -> format
-
 let read_file file =
   let ic = open_in file in
   let finally () = close_in ic in
@@ -110,8 +105,11 @@ let process_file (args : Args.t) (file : string) : (unit, string) result =
   let* input_format =
     stage file (fun () ->
         match args.input_format with
-        | None -> detect_input_format file
-        | Some format -> format)
+        | Some format -> format
+        | None -> (
+            match Data.detect_input_format file with
+            | Some format -> format
+            | None -> raise (Unsupported_file_format (Filename.extension file))))
   in
   let* content = stage file (fun () -> read_file file) in
   let updated_args = { args with input_format = Some input_format } in
