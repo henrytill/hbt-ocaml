@@ -4,8 +4,8 @@ module type ORDERED_YAML_TYPE = sig
   val pp : Format.formatter -> t -> unit
   val yaml_of_t : t -> Yaml.value
 
-  (* Decodes one entry of the array, where [None] drops it. *)
-  val entry_of_yaml : Yaml.value -> t option
+  (* Decodes one entry of the array, where [None] is an absent entry and is dropped. *)
+  val option_of_yaml : Yaml.value -> t option
 end
 
 module type S = sig

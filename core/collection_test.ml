@@ -603,6 +603,25 @@ let test_label_set_yaml_drops_empty () =
     (Label_set.singleton (Label.of_string_exn "one"))
     (Label_set.t_of_yaml (Yaml.of_string_exn {|["", one]|}))
 
+(* A null entry is absent and dropped, in every set (henrytill/hbt-data#44). A bare [-] in a block
+   list is the spelling a hand edit actually produces, and YAML reads it as null too. *)
+let test_set_yaml_drops_null () =
+  let open Entity in
+  let one = Label_set.singleton (Label.of_string_exn "one") in
+  Alcotest.(check (module Label_set))
+    "flow null"
+    one
+    (Label_set.t_of_yaml (Yaml.of_string_exn {|[null, one]|}));
+  Alcotest.(check (module Label_set))
+    "bare item"
+    one
+    (Label_set.t_of_yaml (Yaml.of_string_exn "-\n- one\n"));
+  (* Dropped, not decoded as the epoch: that is henrytill/hbt-go#101. *)
+  Alcotest.(check (module Time_set))
+    same_updated_at
+    (Time_set.singleton (Time.t_of_yaml (Yaml.Util.float 1.)))
+    (Time_set.t_of_yaml (Yaml.of_string_exn {|[null, 1]|}))
+
 let labelled_collection strings =
   let open Entity in
   let coll = Collection.create () in
@@ -655,6 +674,7 @@ let tests =
         test_case "absorb shared timestamp" `Quick test_entity_absorb_shared_timestamp;
         test_case "of_string refuses the empty string" `Quick test_nonempty_strings;
         test_case "labels yaml drops empty" `Quick test_label_set_yaml_drops_empty;
+        test_case "set yaml drops null" `Quick test_set_yaml_drops_null;
       ] );
     ( "Time",
       [
