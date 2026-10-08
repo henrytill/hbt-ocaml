@@ -1,8 +1,6 @@
 module Post = Pinboard.Post
 open Prelude
 
-let pp_print_set pp_item = Fmt.(braces (list ~sep:semi pp_item))
-
 (* The set behind each multi-valued field. Its element modules are kept
    apart on purpose (see Name), and applying this to each of them keeps the
    sets apart too: every application is its own type, so a Label_set.t is
@@ -24,7 +22,7 @@ end) =
 struct
   include Set.Make (Elt)
 
-  let pp fmt s = pp_print_set Elt.pp fmt (elements s)
+  let pp = Fmt.braces (Fmt.iter ~sep:Fmt.semi iter Elt.pp)
   let t_of_yaml value = of_list (Yaml_ext.filter_map_array_exn Elt.entry_of_yaml value)
   let yaml_of_t set = Yaml.Util.list Elt.yaml_of_t (elements set)
 end
