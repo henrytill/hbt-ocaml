@@ -92,7 +92,7 @@ module Time = struct
     let t = 0.0 in
     (t, Unix.gmtime t)
 
-  let int_of_month = function
+  let int_of_month_exn = function
     | "January" -> 0
     | "February" -> 1
     | "March" -> 2
@@ -113,7 +113,7 @@ module Time = struct
     | _ -> false
 
   let parse_date s =
-    Scanf.sscanf s "%s %d, %d" (fun month day year -> (int_of_month month, day, year))
+    Scanf.sscanf s "%s %d, %d" (fun month day year -> (int_of_month_exn month, day, year))
 
   let parse_iso8601 s =
     try
