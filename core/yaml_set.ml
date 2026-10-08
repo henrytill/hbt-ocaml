@@ -1,7 +1,3 @@
-(* The set behind each multi-valued field of an entity. Its encoding used to
-   be written out once per field, and the copies had begun to drift (#52).
-   Each application is still its own type, so a Label_set.t is not a
-   Name_set.t. *)
 module Make (Elt : Yaml_set_intf.Elt) = struct
   include Set.Make (Elt)
 
