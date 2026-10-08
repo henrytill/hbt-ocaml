@@ -108,11 +108,6 @@ module Time = struct
     | "December" -> 12
     | month -> raise (Invalid_month_name month)
 
-  (* Scanf signals a failed parse with any of these. *)
-  let is_scan_failure = function
-    | Scanf.Scan_failure _ | Failure _ | End_of_file -> true
-    | _ -> false
-
   (* Each format yields (year, month, day, hour, min, sec), with [month]
      1-based, and signals a mismatch with a scan failure. *)
   let iso8601_datetime_exn s =
@@ -166,7 +161,9 @@ module Time = struct
        (#86). Invalid_month_name is not a scan failure, so it passes through. *)
     let rec go = function
       | [] -> raise (Malformed s)
-      | parse :: rest -> ( try parse s with e when is_scan_failure e -> go rest)
+      | parse :: rest -> begin
+          try parse s with Scanf.Scan_failure _ | Failure _ | End_of_file -> go rest
+        end
     in
     let year, month, day, hour, min, sec = go formats in
     let t = timegm ~year ~month ~day ~hour ~min ~sec in
