@@ -122,6 +122,9 @@ module Time = struct
     let f month day year = (year, int_of_month_exn month, day, 0, 0, 0) in
     Scanf.sscanf s "%s %d, %d" f
 
+  (* Tried in order. No format requires the input to end where it does (#88),
+     so "%d-%d-%d" also matches the front of a datetime, and would drop its
+     time of day if it came first. *)
   let formats = [ iso8601_datetime_exn; iso8601_date_exn; long_date_exn ]
 
   (* Days from the Unix epoch to a proleptic Gregorian date, after Howard
