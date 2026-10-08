@@ -3,6 +3,32 @@ open Prelude
 
 let pp_print_set pp_item = Fmt.(braces (list ~sep:semi pp_item))
 
+(* The set behind each multi-valued field. Its element modules are kept
+   apart on purpose (see Name), and applying this to each of them keeps the
+   sets apart too: every application is its own type, so a Label_set.t is
+   not a Name_set.t. What is shared is only the encoding, which used to be
+   written out once per field and had begun to drift between the copies
+   (#52). *)
+module Yaml_set (Elt : sig
+  include Set.OrderedType
+
+  val pp : Format.formatter -> t -> unit
+  val yaml_of_t : t -> Yaml.value
+
+  (* Decodes one entry of the array, where [None] drops it. The string
+     fields drop an empty entry rather than refuse it: nothing this project
+     writes produces one, but hand-written YAML can, and hbt-go's reader
+     drops them too (henrytill/hbt-go#73). *)
+  val entry_of_yaml : Yaml.value -> t option
+end) =
+struct
+  include Set.Make (Elt)
+
+  let pp fmt s = pp_print_set Elt.pp fmt (elements s)
+  let t_of_yaml value = of_list (Yaml_ext.filter_map_array_exn Elt.entry_of_yaml value)
+  let yaml_of_t set = Yaml.Util.list Elt.yaml_of_t (elements set)
+end
+
 (* Names, labels and descriptions are nonempty by construction. An empty one
    is a value the formatters write and readers drop, so a collection carrying
    one does not round-trip, and every producer used to have to remember to
@@ -54,23 +80,11 @@ module Name = struct
   let compare = String.compare
   let pp = Fmt.(quote string)
   let t_of_yaml value = of_string_exn (Yaml.Util.to_string_exn value)
+  let entry_of_yaml value = of_string (Yaml.Util.to_string_exn value)
   let yaml_of_t = Yaml.Util.string
 end
 
-module Name_set = struct
-  include Set.Make (Name)
-
-  let pp fmt s = pp_print_set Name.pp fmt (elements s)
-
-  (* Empty entries are dropped rather than refused: nothing this project
-     writes produces one, but hand-written YAML can, and hbt-go's reader
-     drops them too (henrytill/hbt-go#73). *)
-  let t_of_yaml value =
-    of_list
-      (Yaml_ext.filter_map_array_exn (fun v -> Name.of_string (Yaml.Util.to_string_exn v)) value)
-
-  let yaml_of_t set = Yaml.Util.list Name.yaml_of_t (to_list set)
-end
+module Name_set = Yaml_set (Name)
 
 module Label = struct
   type t = string
@@ -87,24 +101,11 @@ module Label = struct
   let compare = String.compare
   let pp = Fmt.(quote string)
   let t_of_yaml value = of_string_exn (Yaml.Util.to_string_exn value)
+  let entry_of_yaml value = of_string (Yaml.Util.to_string_exn value)
   let yaml_of_t = Yaml.Util.string
 end
 
-module Label_set = struct
-  include Set.Make (Label)
-
-  let pp fmt s = pp_print_set Label.pp fmt (elements s)
-
-  (* Empty entries are dropped rather than refused: nothing this project
-     writes produces one, but hand-written YAML can, and hbt-go's reader
-     drops them too (henrytill/hbt-go#73). *)
-  let t_of_yaml value =
-    of_list
-      (Yaml_ext.filter_map_array_exn (fun v -> Label.of_string (Yaml.Util.to_string_exn v)) value)
-
-  let yaml_of_t set = Yaml.Util.list Label.yaml_of_t (to_list set)
-end
-
+module Label_set = Yaml_set (Label)
 module Label_map = Map.Make (Label)
 
 module Time = struct
@@ -203,16 +204,12 @@ module Time = struct
     | `Null -> None
     | value -> Some (t_of_yaml value)
 
+  (* An instant is never dropped: one that does not decode is bad input. *)
+  let entry_of_yaml value = Some (t_of_yaml value)
   let yaml_of_t time = Yaml.Util.float (fst time)
 end
 
-module Time_set = struct
-  include Set.Make (Time)
-
-  let pp fmt s = pp_print_set Time.pp fmt (elements s)
-  let t_of_yaml value = of_list (Yaml_ext.map_array_exn Time.t_of_yaml value)
-  let yaml_of_t set = Yaml.Util.list Time.yaml_of_t (to_list set)
-end
+module Time_set = Yaml_set (Time)
 
 module Extended = struct
   type t = string
@@ -229,24 +226,13 @@ module Extended = struct
   let compare = String.compare
   let pp = Fmt.(quote string)
   let t_of_yaml value = of_string_exn (Yaml.Util.to_string_exn value)
+  let entry_of_yaml value = of_string (Yaml.Util.to_string_exn value)
   let yaml_of_t = Yaml.Util.string
 end
 
 module Extended_set = struct
-  include Set.Make (Extended)
+  include Yaml_set (Extended)
 
-  let pp fmt s = pp_print_set Extended.pp fmt (elements s)
-
-  (* Empty entries are dropped rather than refused: nothing this project
-     writes produces one, but hand-written YAML can, and hbt-go's reader
-     drops them too (henrytill/hbt-go#73). *)
-  let t_of_yaml value =
-    of_list
-      (Yaml_ext.filter_map_array_exn
-         (fun v -> Extended.of_string (Yaml.Util.to_string_exn v))
-         value)
-
-  let yaml_of_t set = Yaml.Util.list Extended.yaml_of_t (to_list set)
   let of_option = Option.fold ~none:empty ~some:singleton
 end
 
