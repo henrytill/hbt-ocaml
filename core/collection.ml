@@ -133,7 +133,7 @@ let t_of_yaml value =
   let coll = make length in
   let seen = Array.make length false in
   let count = ref 0 in
-  let process_item pairs =
+  let process_item_exn pairs =
     let i = get_field_exn ~key:"id" pairs |> int_of_float_exn in
     if i < 0 || i >= length then
       invalid "node id %d out of bounds for length %d" i length;
@@ -158,7 +158,7 @@ let t_of_yaml value =
     seen.(i) <- true;
     incr count
   in
-  get_field_exn ~key:"value" value |> iter_array_exn process_item;
+  get_field_exn ~key:"value" value |> iter_array_exn process_item_exn;
   (* Ids are in bounds and distinct, so matching the count means every slot
      was filled - no node is left as the Entity.empty that make installed. *)
   if !count <> length then
