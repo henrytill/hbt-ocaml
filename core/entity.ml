@@ -1,26 +1,6 @@
 module Post = Pinboard.Post
 open Prelude
 
-(* The set behind each multi-valued field. Its encoding used to be written
-   out once per field, and the copies had begun to drift (#52). Each
-   application is still its own type, so a Label_set.t is not a Name_set.t. *)
-module Yaml_set (Elt : sig
-  include Set.OrderedType
-
-  val pp : Format.formatter -> t -> unit
-  val yaml_of_t : t -> Yaml.value
-
-  (* Decodes one entry of the array, where [None] drops it. *)
-  val entry_of_yaml : Yaml.value -> t option
-end) =
-struct
-  include Set.Make (Elt)
-
-  let pp = Fmt.braces (Fmt.iter ~sep:Fmt.semi iter Elt.pp)
-  let t_of_yaml value = of_list (Yaml_ext.filter_map_array_exn Elt.entry_of_yaml value)
-  let yaml_of_t set = Yaml.Util.list Elt.yaml_of_t (elements set)
-end
-
 (* Names, labels and descriptions are nonempty by construction. An empty one
    is a value the formatters write and readers drop, so a collection carrying
    one does not round-trip, and every producer used to have to remember to
@@ -79,7 +59,7 @@ module Name = struct
   let yaml_of_t = Yaml.Util.string
 end
 
-module Name_set = Yaml_set (Name)
+module Name_set = Yaml_set.Make (Name)
 
 module Label = struct
   type t = string
@@ -100,7 +80,7 @@ module Label = struct
   let yaml_of_t = Yaml.Util.string
 end
 
-module Label_set = Yaml_set (Label)
+module Label_set = Yaml_set.Make (Label)
 module Label_map = Map.Make (Label)
 
 module Time = struct
@@ -204,7 +184,7 @@ module Time = struct
   let yaml_of_t time = Yaml.Util.float (fst time)
 end
 
-module Time_set = Yaml_set (Time)
+module Time_set = Yaml_set.Make (Time)
 
 module Extended = struct
   type t = string
@@ -226,7 +206,7 @@ module Extended = struct
 end
 
 module Extended_set = struct
-  include Yaml_set (Extended)
+  include Yaml_set.Make (Extended)
 
   let of_option = Option.fold ~none:empty ~some:singleton
 end

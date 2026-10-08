@@ -1,3 +1,13 @@
+module type Elt = sig
+  include Set.OrderedType
+
+  val pp : Format.formatter -> t -> unit
+  val yaml_of_t : t -> Yaml.value
+
+  (* Decodes one entry of the array, where [None] drops it. *)
+  val entry_of_yaml : Yaml.value -> t option
+end
+
 module type S = sig
   include Set.S
 
