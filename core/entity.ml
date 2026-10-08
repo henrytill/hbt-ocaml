@@ -9,10 +9,10 @@ open Prelude
    henrytill/hbt-go#66 where it was found). [of_string] returns an option, for
    producers with untrusted text in hand; [of_string_exn] is for the
    deserialization path, where an empty value is bad input with nothing to
-   recover to. The set decoders take [of_string] as their [entry_of_yaml]
-   and drop an empty entry rather than refuse it: nothing this project
-   writes produces one, but hand-written YAML can, and hbt-go's reader
-   drops them too (henrytill/hbt-go#73). *)
+   recover to. The set decoders go through [option_of_yaml], which reads an
+   empty entry as absent, like a null one, and drops it rather than refuse it:
+   nothing this project writes produces one, but hand-written YAML can, and
+   hbt-go's reader drops them too (henrytill/hbt-go#73, henrytill/hbt-data#44). *)
 exception Empty of string
 
 module Uri = struct
@@ -55,7 +55,11 @@ module Name = struct
   let compare = String.compare
   let pp = Fmt.(quote string)
   let t_of_yaml value = of_string_exn (Yaml.Util.to_string_exn value)
-  let entry_of_yaml value = of_string (Yaml.Util.to_string_exn value)
+
+  let option_of_yaml = function
+    | `Null -> None
+    | value -> of_string (Yaml.Util.to_string_exn value)
+
   let yaml_of_t = Yaml.Util.string
 end
 
@@ -76,7 +80,11 @@ module Label = struct
   let compare = String.compare
   let pp = Fmt.(quote string)
   let t_of_yaml value = of_string_exn (Yaml.Util.to_string_exn value)
-  let entry_of_yaml value = of_string (Yaml.Util.to_string_exn value)
+
+  let option_of_yaml = function
+    | `Null -> None
+    | value -> of_string (Yaml.Util.to_string_exn value)
+
   let yaml_of_t = Yaml.Util.string
 end
 
@@ -174,13 +182,13 @@ module Time = struct
 
   (* An absent time is omitted on the wire rather than written as null, but a
      hand-written document can still spell it that way, and both optional time
-     fields read it the same. *)
+     fields read it the same. So does an updatedAt entry, which is dropped:
+     null is absent in any position (henrytill/hbt-data#44). Anything else that
+     does not decode, the empty string included, is bad input. *)
   let option_of_yaml = function
     | `Null -> None
     | value -> Some (t_of_yaml value)
 
-  (* An instant is never dropped: one that does not decode is bad input. *)
-  let entry_of_yaml value = Some (t_of_yaml value)
   let yaml_of_t time = Yaml.Util.float (fst time)
 end
 
@@ -201,7 +209,11 @@ module Extended = struct
   let compare = String.compare
   let pp = Fmt.(quote string)
   let t_of_yaml value = of_string_exn (Yaml.Util.to_string_exn value)
-  let entry_of_yaml value = of_string (Yaml.Util.to_string_exn value)
+
+  let option_of_yaml = function
+    | `Null -> None
+    | value -> of_string (Yaml.Util.to_string_exn value)
+
   let yaml_of_t = Yaml.Util.string
 end
 
