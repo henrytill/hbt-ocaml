@@ -572,7 +572,7 @@ let test_entity_yaml_reads_null_fields_as_omitted () =
           shared: null, toRead: null, isFeed: null, lastVisitedAt: null}")
   in
   Alcotest.(check (module Time_set)) same_updated_at Time_set.empty (Entity.updated_at entity);
-  Alcotest.(check (module Name_set)) "same names" Name_set.empty (Entity.names entity);
+  Alcotest.(check (module Name_set)) same_names Name_set.empty (Entity.names entity);
   Alcotest.(check (module Label_set)) same_labels Label_set.empty (Entity.labels entity);
   Alcotest.(check (module Extended_set)) "same extended" Extended_set.empty (Entity.extended entity);
   Alcotest.(check (module Shared)) "shared" Shared.empty (Entity.shared entity);
