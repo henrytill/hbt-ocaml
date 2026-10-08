@@ -10,7 +10,7 @@ module Version = struct
   let expected : t = (0, 1, 0)
   let to_string = Semver.to_string
 
-  let check version =
+  let check_exn version =
     if not (Semver.equal version expected) then
       raise (Unsupported (Semver.to_string version))
 
@@ -125,7 +125,7 @@ let t_of_yaml value =
   let open Yaml_ext in
   begin
     let version = get_field_exn ~key:"version" value |> Version.t_of_yaml in
-    Version.check version
+    Version.check_exn version
   end;
   let length = get_field_exn ~key:"length" value |> int_of_float_exn in
   if length < 0 then
