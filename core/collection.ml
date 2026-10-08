@@ -191,7 +191,7 @@ let iter_labels (f : Entity.Label_set.t -> Entity.Label_set.t) (c : t) : unit =
 let yaml_to_map (yaml : Yaml.value) : Entity.Label.t option Entity.Label_map.t =
   let f acc (k, v) =
     let k = Entity.Label.of_string_exn k in
-    let v = Entity.Label.of_string (Yaml.Util.to_string_exn v) in
+    let v = Entity.Label.option_of_yaml v in
     Entity.Label_map.add k v acc
   in
   Yaml_ext.fold_object_exn f Entity.Label_map.empty yaml
