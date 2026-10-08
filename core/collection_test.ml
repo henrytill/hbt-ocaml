@@ -561,6 +561,26 @@ let test_entity_yaml_reads_null_created_at_as_absent () =
   in
   Alcotest.(check (option (module Entity.Time))) "null is absent" None (Entity.created_at entity)
 
+(* Every null field reads as if it were omitted, not only the two optional times
+   (henrytill/hbt-data#44): the sets come out empty and the flags absent. *)
+let test_entity_yaml_reads_null_fields_as_omitted () =
+  let open Entity in
+  let entity =
+    Entity.t_of_yaml
+      (Yaml.of_string_exn
+         "{uri: 'https://foo.org', updatedAt: null, names: null, labels: null, extended: null, \
+          shared: null, toRead: null, isFeed: null, lastVisitedAt: null}")
+  in
+  Alcotest.(check (module Time_set)) same_updated_at Time_set.empty (Entity.updated_at entity);
+  Alcotest.(check (module Name_set)) "same names" Name_set.empty (Entity.names entity);
+  Alcotest.(check (module Label_set)) same_labels Label_set.empty (Entity.labels entity);
+  Alcotest.(check (module Extended_set)) "same extended" Extended_set.empty (Entity.extended entity);
+  Alcotest.(check (module Shared)) "shared" Shared.empty (Entity.shared entity);
+  Alcotest.(check (module To_read)) "toRead" To_read.empty (Entity.to_read entity);
+  Alcotest.(check (module Is_feed)) "isFeed" Is_feed.empty (Entity.is_feed entity);
+  Alcotest.check_raises "a null uri is a missing one" Entity.Missing_uri (fun () ->
+      ignore (Entity.t_of_yaml (Yaml.of_string_exn "{uri: null, names: [], labels: []}")))
+
 (* A creation time of 0 is a real instant, not absence -- the distinction the wire form buys.
    An implementation testing truthiness rather than presence collapses the two. *)
 let test_entity_yaml_keeps_an_epoch_created_at () =
@@ -712,6 +732,10 @@ let tests =
           "entity reads a null createdAt as absent"
           `Quick
           test_entity_yaml_reads_null_created_at_as_absent;
+        test_case
+          "entity reads null fields as omitted"
+          `Quick
+          test_entity_yaml_reads_null_fields_as_omitted;
         test_case
           "entity keeps an epoch createdAt"
           `Quick
