@@ -14,4 +14,5 @@ module type S = sig
   val pp : Format.formatter -> t -> unit
   val t_of_yaml : Yaml.value -> t
   val yaml_of_t : t -> Yaml.value
+  val of_option : elt option -> t
 end
