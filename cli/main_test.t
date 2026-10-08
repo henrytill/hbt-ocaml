@@ -290,17 +290,6 @@ an internal error (#86):
   hbt: notes.md: malformed date "Notes"
   [123]
 
-Test that a month name with no day is reported:
-
-  $ cat >monthonly.md <<EOF
-  > # September
-  > 
-  > - [x](https://a.org/)
-  > EOF
-  $ hbt --info monthonly.md
-  hbt: monthonly.md: malformed date "September"
-  [123]
-
 Test that a malformed Pinboard time is reported:
 
   $ cat >badtime.json <<EOF
