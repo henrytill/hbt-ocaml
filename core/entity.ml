@@ -1,22 +1,16 @@
 module Post = Pinboard.Post
 open Prelude
 
-(* The set behind each multi-valued field. Its element modules are kept
-   apart on purpose (see Name), and applying this to each of them keeps the
-   sets apart too: every application is its own type, so a Label_set.t is
-   not a Name_set.t. What is shared is only the encoding, which used to be
-   written out once per field and had begun to drift between the copies
-   (#52). *)
+(* The set behind each multi-valued field. Its encoding used to be written
+   out once per field, and the copies had begun to drift (#52). Each
+   application is still its own type, so a Label_set.t is not a Name_set.t. *)
 module Yaml_set (Elt : sig
   include Set.OrderedType
 
   val pp : Format.formatter -> t -> unit
   val yaml_of_t : t -> Yaml.value
 
-  (* Decodes one entry of the array, where [None] drops it. The string
-     fields drop an empty entry rather than refuse it: nothing this project
-     writes produces one, but hand-written YAML can, and hbt-go's reader
-     drops them too (henrytill/hbt-go#73). *)
+  (* Decodes one entry of the array, where [None] drops it. *)
   val entry_of_yaml : Yaml.value -> t option
 end) =
 struct
@@ -35,7 +29,10 @@ end
    henrytill/hbt-go#66 where it was found). [of_string] returns an option, for
    producers with untrusted text in hand; [of_string_exn] is for the
    deserialization path, where an empty value is bad input with nothing to
-   recover to. *)
+   recover to. The set decoders take [of_string] as their [entry_of_yaml]
+   and drop an empty entry rather than refuse it: nothing this project
+   writes produces one, but hand-written YAML can, and hbt-go's reader
+   drops them too (henrytill/hbt-go#73). *)
 exception Empty of string
 
 module Uri = struct
