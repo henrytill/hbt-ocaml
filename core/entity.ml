@@ -172,9 +172,11 @@ module Time = struct
     let f = Yaml.Util.to_float_exn value in
     (f, Unix.gmtime f)
 
-  (* A time has no absent value of its own: null is dropped before it gets
-     here, and anything else that does not decode, the empty string included,
-     is bad input. *)
+  (* Time_set's entry hook, and only that: Yaml_set.Make drops a null entry
+     before calling it, so it never sees one. A time has no absent value of its
+     own, so anything else that does not decode, the empty string included,
+     is bad input. The optional time fields call t_of_yaml directly, since
+     Entity.build skips a null field before decoding it. *)
   let option_of_yaml value = Some (t_of_yaml value)
   let yaml_of_t time = Yaml.Util.float (fst time)
 end
@@ -237,7 +239,7 @@ module Last_visited_at = struct
     | Some t, None | None, Some t -> Some t
     | Some t1, Some t2 -> Some (if Time.compare t1 t2 < 0 then t2 else t1)
 
-  let t_of_yaml = Time.option_of_yaml
+  let t_of_yaml value = of_time (Time.t_of_yaml value)
 end
 
 type t = {
@@ -360,7 +362,7 @@ let pp =
 let build_field e (k, v) =
   match k with
   | "uri" -> { e with uri = Uri.t_of_yaml v }
-  | "createdAt" -> { e with created_at = Time.option_of_yaml v }
+  | "createdAt" -> { e with created_at = Some (Time.t_of_yaml v) }
   | "updatedAt" -> { e with updated_at = Time_set.t_of_yaml v }
   | "names" -> { e with names = Name_set.t_of_yaml v }
   | "labels" -> { e with labels = Label_set.t_of_yaml v }
