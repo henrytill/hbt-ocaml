@@ -50,6 +50,7 @@ The dependency flow is a chain: `hbt-prelude` → `hbt-pinboard` → `hbt-core` 
 ### `hbt-core`
 
 - `entity.ml` / `.mli` - `Entity.t`, where every field is a module rather than a bare primitive, and `Flag`, the tri-state that `Shared`, `To_read`, and `Is_feed` share. Merge semantics live here; the naming rules are under [Conventions](#conventions).
+- `yaml_set.ml` / `.mli` - `Yaml_set.Make`, the functor behind every multi-valued `Entity` field, with its module types `ORDERED_YAML_TYPE` and `S` kept in `yaml_set_intf.ml` and re-exported. See [Conventions](#conventions).
 - `collection.ml` / `.mli` - `Collection.t`: an `Entity.t Dynarray.t`, an edge adjacency list, and a `Uri_hashtbl` index. `upsert` is the merge entry point; `add_edges` is bidirectional (`add_edge` is one-way and idempotent). `Version` pins the wire format and refuses anything else.
   - An `Id.t` is not a bare index: it pairs the index with the owning collection, and `equal` compares the owner physically. An id minted by one collection is not equal to one from another. Keep that when adding APIs that hand out or accept ids.
   - `Uri.hash` forces the URI's lazy query field before hashing, and the uri index depends on it: do not remove the forcing as dead code. The comment at `core/entity.ml:17` has the reasoning.
