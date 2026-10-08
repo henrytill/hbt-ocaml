@@ -113,21 +113,21 @@ module Time = struct
     | Scanf.Scan_failure _ | Failure _ | End_of_file -> true
     | _ -> false
 
-  (* The last format tried, so its failure is the date's. It used to escape as
-     whichever exception Scanf chose, and End_of_file - what it picks for a
-     heading like "Notes" that ends before the format does - crashed the CLI
-     (#86). *)
-  let parse_date_exn s =
-    try Scanf.sscanf s "%s %d, %d" (fun month day year -> (int_of_month_exn month, day, year))
-    with e when is_scan_failure e -> raise (Malformed s)
+  (* Each format yields (year, month, day, hour, min, sec), with [month]
+     0-based as in Unix.tm.tm_mon, and signals a mismatch with a scan failure. *)
+  let iso8601_datetime_exn s =
+    let f year month day hour min sec = (year, month - 1, day, hour, min, sec) in
+    Scanf.sscanf s "%d-%d-%dT%d:%d:%dZ" f
 
-  let parse_iso8601 s =
-    try
-      let f year month day hour min sec = (year, month - 1, day, hour, min, sec) in
-      Scanf.sscanf s "%d-%d-%dT%d:%d:%dZ" f
-    with e when is_scan_failure e ->
-      let f year month day = (year, month - 1, day, 0, 0, 0) in
-      Scanf.sscanf s "%d-%d-%d" f
+  let iso8601_date_exn s =
+    let f year month day = (year, month - 1, day, 0, 0, 0) in
+    Scanf.sscanf s "%d-%d-%d" f
+
+  let long_date_exn s =
+    let f month day year = (year, int_of_month_exn month, day, 0, 0, 0) in
+    Scanf.sscanf s "%s %d, %d" f
+
+  let formats = [ iso8601_datetime_exn; iso8601_date_exn; long_date_exn ]
 
   (* Days from the Unix epoch to a proleptic Gregorian date, after Howard
      Hinnant's days_from_civil. [month] is 0-based, as in Unix.tm.tm_mon. *)
@@ -160,12 +160,16 @@ module Time = struct
     float_of_int ((days * 86400) + (hour * 3600) + (min * 60) + sec)
 
   let of_string_exn (s : string) : t =
-    let year, month, day, hour, min, sec =
-      try parse_iso8601 s
-      with e when is_scan_failure e ->
-        let month, day, year = parse_date_exn s in
-        (year, month, day, 0, 0, 0)
+    (* The first format that parses wins. Running out of formats is the
+       string's failure, whichever exception Scanf chose for the last one: it
+       used to escape as that, and End_of_file - what Scanf picks for a
+       heading like "Notes" that ends before the format does - crashed the CLI
+       (#86). Invalid_month_name is not a scan failure, so it passes through. *)
+    let rec go = function
+      | [] -> raise (Malformed s)
+      | parse :: rest -> ( try parse s with e when is_scan_failure e -> go rest)
     in
+    let year, month, day, hour, min, sec = go formats in
     let t = timegm ~year ~month ~day ~hour ~min ~sec in
     (t, Unix.gmtime t)
 
