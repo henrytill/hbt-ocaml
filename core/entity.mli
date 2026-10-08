@@ -87,14 +87,10 @@ module Extended : sig
   val yaml_of_t : t -> Yaml.value
 end
 
+module Extended_set : Yaml_set.S with type elt = Extended.t
 (** Descriptions are a set so that merging entities unions them, as it does {!Name_set} and
     {!Label_set}: a description shared by two entities with the same URI appears once however many
     times the input carried it. *)
-module Extended_set : sig
-  include Yaml_set.S with type elt = Extended.t
-
-  val of_option : Extended.t option -> t
-end
 
 module Shared : Flag_intf.S
 module To_read : Flag_intf.S

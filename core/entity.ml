@@ -205,11 +205,7 @@ module Extended = struct
   let yaml_of_t = Yaml.Util.string
 end
 
-module Extended_set = struct
-  include Yaml_set.Make (Extended)
-
-  let of_option = Option.fold ~none:empty ~some:singleton
-end
+module Extended_set = Yaml_set.Make (Extended)
 
 module Flag = struct
   type t = bool option
@@ -299,7 +295,7 @@ let make uri created_at ?(updated_at = Time_set.empty) ?(maybe_name = None)
     ?(to_read = To_read.empty) ?(last_visited_at = Last_visited_at.empty) ?(is_feed = Is_feed.empty)
     () =
   let uri = Uri.canonicalize uri in
-  let names = Option.fold ~none:Name_set.empty ~some:Name_set.singleton maybe_name in
+  let names = Name_set.of_option maybe_name in
   {
     uri;
     created_at = Some created_at;
