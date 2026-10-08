@@ -55,11 +55,7 @@ module Name = struct
   let compare = String.compare
   let pp = Fmt.(quote string)
   let t_of_yaml value = of_string_exn (Yaml.Util.to_string_exn value)
-
-  let option_of_yaml = function
-    | `Null -> None
-    | value -> of_string (Yaml.Util.to_string_exn value)
-
+  let option_of_yaml value = of_string (Yaml.Util.to_string_exn value)
   let yaml_of_t = Yaml.Util.string
 end
 
@@ -80,11 +76,7 @@ module Label = struct
   let compare = String.compare
   let pp = Fmt.(quote string)
   let t_of_yaml value = of_string_exn (Yaml.Util.to_string_exn value)
-
-  let option_of_yaml = function
-    | `Null -> None
-    | value -> of_string (Yaml.Util.to_string_exn value)
-
+  let option_of_yaml value = of_string (Yaml.Util.to_string_exn value)
   let yaml_of_t = Yaml.Util.string
 end
 
@@ -180,15 +172,10 @@ module Time = struct
     let f = Yaml.Util.to_float_exn value in
     (f, Unix.gmtime f)
 
-  (* An absent time is omitted on the wire rather than written as null, but a
-     hand-written document can still spell it that way, and both optional time
-     fields read it the same. So does an updatedAt entry, which is dropped:
-     null is absent in any position (henrytill/hbt-data#44). Anything else that
-     does not decode, the empty string included, is bad input. *)
-  let option_of_yaml = function
-    | `Null -> None
-    | value -> Some (t_of_yaml value)
-
+  (* A time has no absent value of its own: null is dropped before it gets
+     here, and anything else that does not decode, the empty string included,
+     is bad input. *)
+  let option_of_yaml value = Some (t_of_yaml value)
   let yaml_of_t time = Yaml.Util.float (fst time)
 end
 
@@ -209,11 +196,7 @@ module Extended = struct
   let compare = String.compare
   let pp = Fmt.(quote string)
   let t_of_yaml value = of_string_exn (Yaml.Util.to_string_exn value)
-
-  let option_of_yaml = function
-    | `Null -> None
-    | value -> of_string (Yaml.Util.to_string_exn value)
-
+  let option_of_yaml value = of_string (Yaml.Util.to_string_exn value)
   let yaml_of_t = Yaml.Util.string
 end
 
