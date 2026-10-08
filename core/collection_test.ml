@@ -552,25 +552,17 @@ let test_entity_yaml_round_trips_an_absent_created_at () =
     None
     (Entity.created_at (Entity.t_of_yaml encoded))
 
-(* An explicit null is the schema's other spelling of absent, and is read the same way. *)
-let test_entity_yaml_reads_null_created_at_as_absent () =
-  let entity =
-    Entity.t_of_yaml
-      (Yaml.of_string_exn
-         "{uri: 'https://foo.org', createdAt: null, updatedAt: [], names: [], labels: []}")
-  in
-  Alcotest.(check (option (module Entity.Time))) "null is absent" None (Entity.created_at entity)
-
-(* Every null field reads as if it were omitted, not only the two optional times
-   (henrytill/hbt-data#44): the sets come out empty and the flags absent. *)
+(* Every null field reads as if it were omitted (henrytill/hbt-data#44): the sets come out empty
+   and the flags and times absent. Only the two optional times used to; the rest raised. *)
 let test_entity_yaml_reads_null_fields_as_omitted () =
   let open Entity in
   let entity =
     Entity.t_of_yaml
       (Yaml.of_string_exn
-         "{uri: 'https://foo.org', updatedAt: null, names: null, labels: null, extended: null, \
-          shared: null, toRead: null, isFeed: null, lastVisitedAt: null}")
+         "{uri: 'https://foo.org', createdAt: null, updatedAt: null, names: null, labels: null, \
+          extended: null, shared: null, toRead: null, isFeed: null, lastVisitedAt: null}")
   in
+  Alcotest.(check (option (module Time))) same_created_at None (Entity.created_at entity);
   Alcotest.(check (module Time_set)) same_updated_at Time_set.empty (Entity.updated_at entity);
   Alcotest.(check (module Name_set)) same_names Name_set.empty (Entity.names entity);
   Alcotest.(check (module Label_set)) same_labels Label_set.empty (Entity.labels entity);
@@ -578,6 +570,10 @@ let test_entity_yaml_reads_null_fields_as_omitted () =
   Alcotest.(check (module Shared)) "shared" Shared.empty (Entity.shared entity);
   Alcotest.(check (module To_read)) "toRead" To_read.empty (Entity.to_read entity);
   Alcotest.(check (module Is_feed)) "isFeed" Is_feed.empty (Entity.is_feed entity);
+  Alcotest.(check (module Last_visited_at))
+    "lastVisitedAt"
+    Last_visited_at.empty
+    (Entity.last_visited_at entity);
   Alcotest.check_raises "a null uri is a missing one" Entity.Missing_uri (fun () ->
       ignore (Entity.t_of_yaml (Yaml.of_string_exn "{uri: null, names: [], labels: []}")))
 
@@ -728,10 +724,6 @@ let tests =
           "entity round-trips an absent createdAt"
           `Quick
           test_entity_yaml_round_trips_an_absent_created_at;
-        test_case
-          "entity reads a null createdAt as absent"
-          `Quick
-          test_entity_yaml_reads_null_created_at_as_absent;
         test_case
           "entity reads null fields as omitted"
           `Quick
