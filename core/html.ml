@@ -50,8 +50,7 @@ let parse content =
   let add_pending () =
     let entity =
       let open Entity in
-      let name = Option.bind !maybe_description Name.of_string in
-      let names = Name_set.of_option name in
+      let names = Name_set.of_option (Option.bind !maybe_description Name.of_string) in
       let folder_labels = Stack.fold mk_labels Entity.Label_set.empty folder_stack in
       let extended = Extended_set.of_option (Option.bind !maybe_extended Extended.of_string) in
       Html.entity_of_attrs !attributes names folder_labels extended
