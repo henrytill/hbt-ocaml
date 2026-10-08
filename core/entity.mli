@@ -59,9 +59,11 @@ module Time : sig
   exception Invalid_month_name of string
 
   val of_string_exn : string -> t
-  (** Raises {!Invalid_month_name} or [Scanf.Scan_failure] on a malformed date. Unlike
-      {!Name.of_string} there is no option-returning counterpart: no caller wants to skip a bad date
-      quietly, and an option would discard which month name was wrong. *)
+  (** Raises {!Invalid_month_name} for an unknown month name. Any other malformed date raises
+      whichever of [Scanf.Scan_failure], [Failure] or [End_of_file] [Scanf] chose, and only the
+      first of those is reported cleanly by the CLI (#86). Unlike {!Name.of_string} there is no
+      option-returning counterpart: no caller wants to skip a bad date quietly, and an option would
+      discard which month name was wrong. *)
 
   val to_string : t -> string
   val equal : t -> t -> bool
