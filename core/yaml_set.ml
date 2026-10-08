@@ -1,4 +1,6 @@
-module Make (Elt : Yaml_set_intf.Elt) = struct
+include Yaml_set_intf
+
+module Make (Elt : ORDERED_YAML_TYPE) = struct
   include Set.Make (Elt)
 
   let pp = Fmt.braces (Fmt.iter ~sep:Fmt.semi iter Elt.pp)
