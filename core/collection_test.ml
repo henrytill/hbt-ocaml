@@ -621,8 +621,8 @@ let test_nonempty_strings () =
   Alcotest.check_raises "extended" (Entity.Empty "extended") (fun () ->
       ignore (Extended.of_string_exn String.empty))
 
-(* The scalar decoders have no caller on any input path, since no field of the wire format holds a
-   bare name, label or description, so this is what exercises them (#64). *)
+(* The raising scalar decoders have no caller on any input path, since no field of the wire format
+   holds a bare name, label or description, so this is what exercises them (#64). *)
 let test_nonempty_yaml () =
   let open Entity in
   let empty = Yaml.Util.string String.empty in
