@@ -275,7 +275,39 @@ Test that an unparseable date is reported:
   > - [x](https://a.org/)
   > EOF
   $ hbt --info baddate.md
-  hbt: baddate.md: could not parse a date: scanf: bad input at char number 4: character 'A' is not a decimal digit
+  hbt: baddate.md: malformed date "Not A Date"
+  [123]
+
+Test that a heading which ends before the date format does is reported, not
+an internal error (#86):
+
+  $ cat >notes.md <<EOF
+  > # Notes
+  > 
+  > - [x](https://a.org/)
+  > EOF
+  $ hbt --info notes.md
+  hbt: notes.md: malformed date "Notes"
+  [123]
+
+Test that a month name with no day is reported:
+
+  $ cat >monthonly.md <<EOF
+  > # September
+  > 
+  > - [x](https://a.org/)
+  > EOF
+  $ hbt --info monthonly.md
+  hbt: monthonly.md: malformed date "September"
+  [123]
+
+Test that a malformed Pinboard time is reported:
+
+  $ cat >badtime.json <<EOF
+  > [{"href": "https://a.org/", "description": "x", "extended": "", "meta": "", "hash": "", "time": "yesterday", "shared": "no", "toread": "no", "tags": ""}]
+  > EOF
+  $ hbt --info badtime.json
+  hbt: badtime.json: malformed date "yesterday"
   [123]
 
 # Local Variables:
