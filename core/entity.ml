@@ -113,8 +113,13 @@ module Time = struct
     | Scanf.Scan_failure _ | Failure _ | End_of_file -> true
     | _ -> false
 
-  let parse_date s =
-    Scanf.sscanf s "%s %d, %d" (fun month day year -> (int_of_month_exn month, day, year))
+  (* The last format tried, so its failure is the date's. It used to escape as
+     whichever exception Scanf chose, and End_of_file - what it picks for a
+     heading like "Notes" that ends before the format does - crashed the CLI
+     (#86). *)
+  let parse_date_exn s =
+    try Scanf.sscanf s "%s %d, %d" (fun month day year -> (int_of_month_exn month, day, year))
+    with e when is_scan_failure e -> raise (Malformed s)
 
   let parse_iso8601 s =
     try
@@ -157,13 +162,9 @@ module Time = struct
   let of_string_exn (s : string) : t =
     let year, month, day, hour, min, sec =
       try parse_iso8601 s
-      with e when is_scan_failure e -> (
-        (* The fallback's failure used to escape as whichever exception Scanf
-           chose, and End_of_file - what it picks for a heading like "Notes"
-           that ends before the format does - crashed the CLI (#86). *)
-        match parse_date s with
-        | month, day, year -> (year, month, day, 0, 0, 0)
-        | exception e when is_scan_failure e -> raise (Malformed s))
+      with e when is_scan_failure e ->
+        let month, day, year = parse_date_exn s in
+        (year, month, day, 0, 0, 0)
     in
     let t = timegm ~year ~month ~day ~hour ~min ~sec in
     (t, Unix.gmtime t)
