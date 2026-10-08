@@ -37,7 +37,7 @@ let write (content : string) : string option -> unit = function
       let finally () = close_out oc in
       Fun.protect ~finally (fun () -> output_string oc content)
 
-let print (file : string) (args : Args.t) (coll : Collection.t) : unit =
+let print_exn (file : string) (args : Args.t) (coll : Collection.t) : unit =
   let open Collection in
   let output =
     if args.info then
@@ -117,7 +117,7 @@ let process_file (args : Args.t) (file : string) : (unit, string) result =
   let* () =
     stage (Option.value ~default:file args.mappings_file) (fun () -> update coll updated_args)
   in
-  stage file (fun () -> print file updated_args coll)
+  stage file (fun () -> print_exn file updated_args coll)
 
 let from_format =
   let open Data in
