@@ -10,7 +10,7 @@ let collection_with ~name ~label ~description =
   let e =
     Entity.make
       (Uri.of_string uri_string)
-      (Time.of_string "2023-11-15T00:00:00Z")
+      (Time.of_string_exn "2023-11-15T00:00:00Z")
       ~maybe_name:(Some (Name.of_string_exn name))
       ~labels:(Label_set.singleton (Label.of_string_exn label))
       ~extended:(Extended_set.singleton (Extended.of_string_exn description))
@@ -63,7 +63,7 @@ let test_preserves_non_http_schemes () =
   let coll = Collection.create () in
   List.iter
     (fun s ->
-      let e = Entity.(make (Uri.of_string s) (Time.of_string "2023-11-15T00:00:00Z") ()) in
+      let e = Entity.(make (Uri.of_string s) (Time.of_string_exn "2023-11-15T00:00:00Z") ()) in
       ignore (Collection.upsert coll e))
     [ "ftp://ftp.example.org/pub"; "gopher://gopher.example.org/" ];
   let output = Html.format coll in
