@@ -3,9 +3,12 @@ exception Empty of string
     refuse the empty string: an empty name, label or description is a value the formatters write and
     readers drop, so a collection carrying one does not round-trip. The payload names the field.
 
-    The set decoders differ from the scalar ones here: {!Name_set.t_of_yaml}, {!Label_set.t_of_yaml}
-    and {!Extended_set.t_of_yaml} drop an empty entry rather than raising, as every set drops a null
-    one: both are absent (henrytill/hbt-go#73, henrytill/hbt-data#44). *)
+    Each of the three decodes a YAML string both ways: [t_of_yaml] raises this, [option_of_yaml]
+    returns [None]. The set decoders {!Name_set.t_of_yaml}, {!Label_set.t_of_yaml} and
+    {!Extended_set.t_of_yaml} go through [option_of_yaml] and drop an empty entry rather than
+    raising, as every set drops a null one: both are absent (henrytill/hbt-go#73,
+    henrytill/hbt-data#44). So does the value side of a mappings file, where an empty value is a
+    deletion (#50). *)
 
 module Uri : sig
   type t
@@ -32,6 +35,7 @@ module Name : sig
   val compare : t -> t -> int
   val pp : Format.formatter -> t -> unit
   val t_of_yaml : Yaml.value -> t
+  val option_of_yaml : Yaml.value -> t option
   val yaml_of_t : t -> Yaml.value
 end
 
@@ -47,6 +51,7 @@ module Label : sig
   val compare : t -> t -> int
   val pp : Format.formatter -> t -> unit
   val t_of_yaml : Yaml.value -> t
+  val option_of_yaml : Yaml.value -> t option
   val yaml_of_t : t -> Yaml.value
 end
 
@@ -94,6 +99,7 @@ module Extended : sig
   val compare : t -> t -> int
   val pp : Format.formatter -> t -> unit
   val t_of_yaml : Yaml.value -> t
+  val option_of_yaml : Yaml.value -> t option
   val yaml_of_t : t -> Yaml.value
 end
 
