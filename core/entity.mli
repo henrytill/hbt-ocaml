@@ -4,8 +4,8 @@ exception Empty of string
     readers drop, so a collection carrying one does not round-trip. The payload names the field.
 
     The set decoders differ from the scalar ones here: {!Name_set.t_of_yaml}, {!Label_set.t_of_yaml}
-    and {!Extended_set.t_of_yaml} drop an empty entry rather than raising, matching hbt-go's reader.
-*)
+    and {!Extended_set.t_of_yaml} drop an empty entry rather than raising, as every set drops a null
+    one: both are absent (henrytill/hbt-go#73, henrytill/hbt-data#44). *)
 
 module Uri : sig
   type t
