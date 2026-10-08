@@ -176,6 +176,14 @@ let test_consensus () =
   check "B consensus F" f (Belnap.consensus b f);
   check "B consensus B" b (Belnap.consensus b b)
 
+let test_of_bits () =
+  check "0b00 is U" u (Belnap.of_bits 0b00);
+  check "0b01 is T" t (Belnap.of_bits 0b01);
+  check "0b10 is F" f (Belnap.of_bits 0b10);
+  check "0b11 is B" b (Belnap.of_bits 0b11);
+  check "high bits are masked" b (Belnap.of_bits 0b111);
+  check "a negative int is masked" b (Belnap.of_bits (-1))
+
 let tests =
   let open Alcotest in
   [
@@ -190,6 +198,7 @@ let tests =
         test_case "queries" `Quick test_queries;
         test_case "leq_truth" `Quick test_leq_truth;
         test_case "leq_knowledge" `Quick test_leq_knowledge;
+        test_case "of_bits" `Quick test_of_bits;
       ] );
   ]
 

@@ -10,7 +10,10 @@ val of_view : view -> t
 val to_view : t -> view
 val of_bool : bool -> t
 val to_bool : t -> bool option
+
 val of_bits : int -> t
+(** Keeps the low two bits and ignores the rest, so any [int] gives a valid [t]. *)
+
 val to_bits : t -> int
 val pp : Format.formatter -> t -> unit
 val equal : t -> t -> bool
