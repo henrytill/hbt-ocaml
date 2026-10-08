@@ -27,7 +27,10 @@ let to_bool a =
   | True -> Some true
   | False -> Some false
 
-let of_bits a = a
+(* Masked, not the identity: of_bits used to accept any int, so
+   to_view (of_bits 7) built a t the signature allowed and then hit the
+   assert false above. Masking keeps that case unreachable. *)
+let of_bits a = a land 0b11
 let to_bits a = a
 
 let to_string a =
