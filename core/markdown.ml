@@ -76,7 +76,7 @@ let block m ((c, st) : Collection.t * Fold_state.t) = function
 
 exception Missing_date of string
 
-let save_entity c st =
+let save_entity_exn c st =
   let entity =
     match Fold_state.to_entity st with
     | Some entity -> entity
@@ -93,7 +93,7 @@ let handle_autolink (link : Inline.Autolink.t) ((c, st) : Collection.t * Fold_st
   let link_text, _ = Inline.Autolink.link link in
   let uri = Some (Entity.Uri.of_string link_text) in
   let st = { st with uri } in
-  save_entity c st
+  save_entity_exn c st
 
 let get_def (l : Inline.Link.t) : Link_definition.t option =
   match Inline.Link.reference l with
@@ -129,7 +129,7 @@ let handle_link (link : Inline.Link.t) ((c, st) : Collection.t * Fold_state.t) =
       let uri = Some (Entity.Uri.of_string link_dest) in
       let name = Entity.Name.of_string (get_text link) in
       let st = { st with uri; name } in
-      save_entity c st
+      save_entity_exn c st
 
 let inline _m (acc : Collection.t * Fold_state.t) = function
   | Inline.Autolink (a, _) -> handle_autolink a acc
