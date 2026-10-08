@@ -621,6 +621,22 @@ let test_nonempty_strings () =
   Alcotest.check_raises "extended" (Entity.Empty "extended") (fun () ->
       ignore (Extended.of_string_exn String.empty))
 
+(* The scalar decoders have no caller on any input path, since no field of the wire format holds a
+   bare name, label or description, so this is what exercises them (#64). *)
+let test_nonempty_yaml () =
+  let open Entity in
+  let empty = Yaml.Util.string String.empty in
+  Alcotest.check_raises "name" (Entity.Empty "name") (fun () -> ignore (Name.t_of_yaml empty));
+  Alcotest.check_raises "label" (Entity.Empty "label") (fun () -> ignore (Label.t_of_yaml empty));
+  Alcotest.check_raises "extended" (Entity.Empty "extended") (fun () ->
+      ignore (Extended.t_of_yaml empty));
+  Alcotest.(check bool) "Name.option_of_yaml" true (Option.is_none (Name.option_of_yaml empty));
+  Alcotest.(check bool) "Label.option_of_yaml" true (Option.is_none (Label.option_of_yaml empty));
+  Alcotest.(check bool)
+    "Extended.option_of_yaml"
+    true
+    (Option.is_none (Extended.option_of_yaml empty))
+
 let test_label_set_yaml_drops_empty () =
   let open Entity in
   (* Nothing here writes an empty label, but hand-written YAML can carry one. *)
@@ -700,6 +716,7 @@ let tests =
         test_case "absorb shared extended" `Quick test_entity_absorb_extended_shared;
         test_case "absorb shared timestamp" `Quick test_entity_absorb_shared_timestamp;
         test_case "of_string refuses the empty string" `Quick test_nonempty_strings;
+        test_case "t_of_yaml refuses the empty string" `Quick test_nonempty_yaml;
         test_case "labels yaml drops empty" `Quick test_label_set_yaml_drops_empty;
         test_case "set yaml drops null" `Quick test_set_yaml_drops_null;
       ] );
