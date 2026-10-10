@@ -126,33 +126,33 @@ module Time = struct
   let formats = [ iso8601_datetime_exn; iso8601_date_exn; long_date_exn ]
 
   (* Days from the Unix epoch to a proleptic Gregorian date, after Howard
-     Hinnant's days_from_civil. [month] is 1-based. *)
+     Hinnant's days_from_civil. [month] is 1-based. Computed in float, as is
+     timegm, because the fields come straight from Scanf's %d: in int, a
+     large enough year or day wrapped around silently and produced an
+     in-range instant that the input never stated (#89). Every value a real
+     date produces is a small integer, which float represents exactly, and
+     floor and trunc stand in for int division where its sign matters. *)
   let days_from_civil year month day =
     let y =
-      if month <= 2 then
-        year - 1
+      if month <= 2. then
+        year -. 1.
       else
         year
     in
-    let era =
-      (if y >= 0 then
-         y
-       else
-         y - 399)
-      / 400
-    in
-    let yoe = y - (era * 400) in
-    let mp = (month + 9) mod 12 in
-    let doy = (((153 * mp) + 2) / 5) + day - 1 in
-    let doe = (yoe * 365) + (yoe / 4) - (yoe / 100) + doy in
-    (era * 146097) + doe - 719468
+    let era = Float.floor (y /. 400.) in
+    let yoe = y -. (era *. 400.) in
+    let mp = Float.rem (month +. 9.) 12. in
+    let doy = Float.trunc (((153. *. mp) +. 2.) /. 5.) +. day -. 1. in
+    let doe = (yoe *. 365.) +. Float.trunc (yoe /. 4.) -. Float.trunc (yoe /. 100.) +. doy in
+    (era *. 146097.) +. doe -. 719468.
 
   (* The UTC counterpart of Unix.mktime. Unix offers no timegm, and mktime
      interprets its argument as local time, which made parsed timestamps -
      and therefore all output - depend on the caller's TZ. *)
   let timegm ~year ~month ~day ~hour ~min ~sec =
-    let days = days_from_civil year month day in
-    float_of_int ((days * 86400) + (hour * 3600) + (min * 60) + sec)
+    let f = float_of_int in
+    let days = days_from_civil (f year) (f month) (f day) in
+    (days *. 86400.) +. (f hour *. 3600.) +. (f min *. 60.) +. f sec
 
   let of_string_exn (s : string) : t =
     (* The first format that parses wins. Running out of formats is the
