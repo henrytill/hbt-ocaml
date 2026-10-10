@@ -587,9 +587,13 @@ let of_post (p : Pinboard.Post.t) : t =
 module Html = struct
   module Attrs = Prelude.Markup_ext.Attrs
 
-  (* Deliberately lenient, unlike Time.of_string_exn: exported bookmark files in
-     the wild carry missing or malformed ADD_DATE values, and falling back to
-     the epoch imports the bookmark rather than rejecting the whole file. *)
+  (* Lenient only about a value that is not a number: exported bookmark files
+     in the wild carry malformed ADD_DATE values, and falling back to the
+     epoch imports the bookmark rather than rejecting the whole file. A value
+     that parses but is out of range - NaN and the infinities included, which
+     Float.of_string_opt accepts - still rejects it, as in hbt-rs, rather than
+     inventing a 1970 instant that wins every merge. Both halves are interim
+     until henrytill/hbt-data#45 settles what such a value means. *)
   let parse_timestamp (value : string) : Time.t =
     match Float.of_string_opt value with
     | None -> Time.empty
