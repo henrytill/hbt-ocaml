@@ -100,13 +100,15 @@ module Time = struct
   let max_magnitude = 9007199254740991.
 
   (* Every route to a Time.t goes through here, the parsers in this module
-     and Html.parse_timestamp alike. [input] is what the user wrote, for the
-     message; NaN fails the comparison and so is out of range too. *)
+     and Html.parse_timestamp alike. [input] renders what the user wrote, for
+     the message, and is called only to raise: YAML has to format it, and
+     doing that for every timestamp in range was wasted work. NaN fails the
+     comparison and so is out of range too. *)
   let of_float_exn ~input t =
     if Float.abs t <= max_magnitude then
       t
     else
-      raise (Out_of_range input)
+      raise (Out_of_range (input ()))
 
   let int_of_month_exn = function
     | "January" -> 1
@@ -184,7 +186,7 @@ module Time = struct
         end
     in
     let year, month, day, hour, min, sec = go formats in
-    of_float_exn ~input:s (timegm ~year ~month ~day ~hour ~min ~sec)
+    of_float_exn ~input:(fun () -> s) (timegm ~year ~month ~day ~hour ~min ~sec)
 
   let to_string t = int_of_float t |> string_of_int
   let equal = Float.equal
@@ -194,7 +196,7 @@ module Time = struct
   let t_of_yaml value =
     let f = Yaml.Util.to_float_exn value in
     (* Spelled as ocaml-yaml writes a float, so 2^53 reads as an integer. *)
-    of_float_exn ~input:(Printf.sprintf "%.16g" f) f
+    of_float_exn ~input:(fun () -> Printf.sprintf "%.16g" f) f
 
   (* Time_set's entry hook, and only that: Yaml_set.Make drops a null entry
      before calling it, so it never sees one. A time has no absent value of its
@@ -559,7 +561,7 @@ module Html = struct
   let parse_timestamp (value : string) : Time.t =
     match Float.of_string_opt value with
     | None -> Time.empty
-    | Some timestamp -> Time.of_float_exn ~input:value timestamp
+    | Some timestamp -> Time.of_float_exn ~input:(fun () -> value) timestamp
 
   (* Split a TAGS attribute, trimming each tag and dropping empty ones. A
      value like "x, toread" is one tag "x" and the toread marker, not a tag
