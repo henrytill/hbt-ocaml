@@ -69,9 +69,7 @@ module Time : sig
 
   exception Out_of_range of string
   (** Raised for an instant more than [2^53 - 1] seconds from the epoch, or not a number at all,
-      carrying the input as written (by {!t_of_yaml}, the number as YAML would write it). That is
-      the largest integer a [t] holds exactly, and some 285 million years either side; every route
-      to a [t] checks it, including {!t_of_yaml} and an HTML [ADD_DATE]. *)
+      carrying the input as written (by {!t_of_yaml}, the number as YAML would write it). *)
 
   val of_string_exn : string -> t
   (** Raises {!Invalid_month_name} for an unknown month name, {!Malformed} for any other string that
