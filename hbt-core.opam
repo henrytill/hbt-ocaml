@@ -15,6 +15,7 @@ depends: [
   "hbt-pinboard" {= version}
   "alcotest" {with-test & >= "1.7.0"}
   "qcheck-alcotest" {with-test & >= "0.91"}
+  "qcheck-core" {with-test & >= "0.91"}
   "cmarkit" {>= "0.3.0"}
   "fmt" {>= "0.11.0"}
   "markup" {>= "1.0.3"}

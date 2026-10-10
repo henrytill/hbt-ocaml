@@ -16,6 +16,7 @@ depends: [
   "conf-npm" {with-test}
   "js_of_ocaml-compiler" {with-test & >= "6.2.0"}
   "qcheck-alcotest" {with-test & >= "0.91"}
+  "qcheck-core" {with-test & >= "0.91"}
   "odoc" {with-doc}
 ]
 build: [
