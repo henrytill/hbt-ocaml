@@ -47,7 +47,14 @@
  (name collection_test)
  (modules collection_test)
  (package hbt-core)
- (libraries alcotest hbt-core hbt-pinboard uri yaml))
+ (libraries
+  alcotest
+  hbt-core
+  hbt-pinboard
+  qcheck-alcotest
+  qcheck-core
+  uri
+  yaml))
 
 (test
  (name html_test)

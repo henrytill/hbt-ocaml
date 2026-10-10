@@ -81,6 +81,10 @@
    (and
     :with-test
     (>= 1.7.0)))
+  (qcheck-alcotest
+   (and
+    :with-test
+    (>= 0.91)))
   (cmarkit
    (>= 0.3.0))
   (fmt

@@ -403,6 +403,132 @@ let test_time_rejects_out_of_range () =
         (Time.to_string (Time.t_of_yaml (Yaml.Util.float f))))
     [ (9007199254740991., "9007199254740991"); (-9007199254740991., "-9007199254740991") ]
 
+(* --- QCheck2 properties of Time --- *)
+
+module Gen = QCheck2.Gen
+module Test = QCheck2.Test
+
+let max_magnitude = 9007199254740991.
+let max_field = 268435456
+let in_range t = Float.abs (float_of_string (Entity.Time.to_string t)) <= max_magnitude
+
+(* The int days_from_civil and timegm that the float ones replaced (#89).
+   Within the field bound nothing here comes near overflowing a 63-bit int,
+   so this is exact, and it is the arithmetic every fixture was produced
+   with. *)
+let reference_timegm year month day hour min sec =
+  let y =
+    if month <= 2 then
+      year - 1
+    else
+      year
+  in
+  let era =
+    (if y >= 0 then
+       y
+     else
+       y - 399)
+    / 400
+  in
+  let yoe = y - (era * 400) in
+  let mp = (month + 9) mod 12 in
+  let doy = (((153 * mp) + 2) / 5) + day - 1 in
+  let doe = (yoe * 365) + (yoe / 4) - (yoe / 100) + doy in
+  let days = (era * 146097) + doe - 719468 in
+  (days * 86400) + (hour * 3600) + (min * 60) + sec
+
+let iso8601 (year, month, day, hour, min, sec) =
+  Printf.sprintf "%d-%d-%dT%d:%d:%dZ" year month day hour min sec
+
+let month_names =
+  [
+    "January";
+    "February";
+    "March";
+    "April";
+    "May";
+    "June";
+    "July";
+    "August";
+    "September";
+    "October";
+    "November";
+    "December";
+  ]
+
+(* Strings shaped like each of Time's formats, with fields from the whole of
+   int, alongside arbitrary text: the shapes are what reach timegm and the
+   range checks, which arbitrary text almost never does. *)
+let gen_date_string =
+  let open Gen in
+  let field = oneof [ int; int_range (-1000) 3000 ] in
+  oneof
+    [
+      string_printable;
+      map iso8601 (tup6 field field field field field field);
+      map3 (Printf.sprintf "%d-%d-%d") field field field;
+      map3
+        (Printf.sprintf "%s %d, %d")
+        (oneof [ oneof_list month_names; string_small_of (char_range 'A' 'z') ])
+        field
+        field;
+    ]
+
+let gen_time_float =
+  Gen.oneof
+    [
+      Gen.float;
+      Gen.oneof_list
+        [ Float.nan; Float.infinity; Float.neg_infinity; max_magnitude; max_magnitude +. 1. ];
+      Gen.map float_of_int Gen.int;
+    ]
+
+(* #86 and #89 were both an exception escaping these: whatever the input,
+   each must return an instant in range or raise one it documents. *)
+let time_constructors_are_total =
+  [
+    Test.make
+      ~name:"of_string_exn returns in range or raises a documented exception"
+      ~count:10_000
+      ~print:(Printf.sprintf "%S")
+      gen_date_string
+      (fun s ->
+        match Entity.Time.of_string_exn s with
+        | t -> in_range t
+        | exception Entity.Time.(Malformed _ | Invalid_month_name _ | Out_of_range _) -> true);
+    Test.make
+      ~name:"t_of_yaml returns in range or raises Out_of_range"
+      ~count:10_000
+      ~print:(Printf.sprintf "%h")
+      gen_time_float
+      (fun f ->
+        match Entity.Time.t_of_yaml (Yaml.Util.float f) with
+        | t -> in_range t
+        | exception Entity.Time.Out_of_range _ -> true);
+  ]
+
+(* Within the field bound the float arithmetic is exact, and so agrees with
+   the int arithmetic it replaced. The edges are weighted in because they
+   are where rounding would show first. *)
+let time_matches_int_arithmetic =
+  let field =
+    Gen.oneof
+      [
+        Gen.int_range (-max_field) max_field;
+        Gen.oneof_list
+          [ -max_field; -max_field + 1; -1; 0; 1; 2; 3; 12; 13; max_field - 1; max_field ];
+      ]
+  in
+  Test.make
+    ~name:"of_string_exn agrees with int arithmetic within the field bound"
+    ~count:10_000
+    ~print:iso8601
+    (Gen.tup6 field field field field field field)
+    (fun ((year, month, day, hour, min, sec) as fields) ->
+      String.equal
+        (Entity.Time.to_string (Entity.Time.of_string_exn (iso8601 fields)))
+        (string_of_int (reference_timegm year month day hour min sec)))
+
 let post_json href description time tags =
   Printf.sprintf
     {|{"href":%S,"description":%S,"time":%S,"extended":"","tags":%S,"shared":"yes","toread":"no"}|}
@@ -804,6 +930,10 @@ let tests =
           test_entity_yaml_keeps_an_epoch_created_at;
         test_case "rejects bad version" `Quick test_yaml_rejects_bad_version;
       ] );
+    ( "Time properties",
+      List.map
+        QCheck_alcotest.to_alcotest
+        (time_matches_int_arithmetic :: time_constructors_are_total) );
   ]
 
 let () = Alcotest.run "Collection" tests
