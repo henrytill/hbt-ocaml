@@ -362,9 +362,7 @@ let test_time_of_string_exn_rejects_garbage () =
           ignore (Time.of_string_exn input)))
     [ "Notes"; "September"; ""; "Not A Date"; "September 99999999999999999999, 2024" ]
 
-(* Each of these used to crash in Unix.gmtime (#89). The year of a date is
-   checked through the instant it produces, which is computed in float so
-   that a large one cannot wrap around into range first. *)
+(* Each of these used to crash in Unix.gmtime (#89). *)
 let test_time_rejects_out_of_range () =
   let open Entity in
   List.iter
