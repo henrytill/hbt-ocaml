@@ -67,12 +67,18 @@ module Time : sig
   (** Raised by {!of_string_exn} for a string that is neither ISO 8601 nor [Month day, year],
       carrying the string. *)
 
+  exception Out_of_range of string
+  (** Raised for an instant more than [2^53 - 1] seconds from the epoch, or not a number at all,
+      carrying the input as written (by {!t_of_yaml}, the number as YAML would write it). That is
+      the largest integer a [t] holds exactly, and some 285 million years either side; every route
+      to a [t] checks it, including {!t_of_yaml} and an HTML [ADD_DATE]. *)
+
   val of_string_exn : string -> t
-  (** Raises {!Invalid_month_name} for an unknown month name and {!Malformed} for any other string
-      that does not parse. A date that parses but is out of range, such as a year of
-      [99999999999999], is not yet caught (#89). Unlike {!Name.of_string} there is no
-      option-returning counterpart: no caller wants to skip a bad date quietly, and an option would
-      discard what was wrong with it. *)
+  (** Raises {!Invalid_month_name} for an unknown month name, {!Malformed} for any other string that
+      does not parse, and {!Out_of_range} for one that parses to an instant out of range, such as a
+      year of [99999999999999]. Unlike {!Name.of_string} there is no option-returning counterpart:
+      no caller wants to skip a bad date quietly, and an option would discard what was wrong with
+      it. *)
 
   val to_string : t -> string
   val equal : t -> t -> bool

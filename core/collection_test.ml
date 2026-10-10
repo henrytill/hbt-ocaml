@@ -362,6 +362,35 @@ let test_time_of_string_exn_rejects_garbage () =
           ignore (Time.of_string_exn input)))
     [ "Notes"; "September"; ""; "Not A Date"; "September 99999999999999999999, 2024" ]
 
+(* Each of these used to crash in Unix.gmtime (#89). The year of a date is
+   checked through the instant it produces, which is computed in float so
+   that a large one cannot wrap around into range first. *)
+let test_time_rejects_out_of_range () =
+  let open Entity in
+  List.iter
+    (fun input ->
+      Alcotest.check_raises input (Time.Out_of_range input) (fun () ->
+          ignore (Time.of_string_exn input)))
+    [ "September 3, 99999999999999"; "99999999999999-01-01"; "-99999999999999-01-01" ];
+  List.iter
+    (fun (f, input) ->
+      Alcotest.check_raises input (Time.Out_of_range input) (fun () ->
+          ignore (Time.t_of_yaml (Yaml.Util.float f))))
+    [
+      (1e300, "1e+300");
+      (Float.nan, "nan");
+      (Float.infinity, "inf");
+      (9007199254740992., "9007199254740992");
+      (-9007199254740992., "-9007199254740992");
+    ];
+  List.iter
+    (fun (f, expected) ->
+      Alcotest.(check string)
+        expected
+        expected
+        (Time.to_string (Time.t_of_yaml (Yaml.Util.float f))))
+    [ (9007199254740991., "9007199254740991"); (-9007199254740991., "-9007199254740991") ]
+
 let post_json href description time tags =
   Printf.sprintf
     {|{"href":%S,"description":%S,"time":%S,"extended":"","tags":%S,"shared":"yes","toread":"no"}|}
@@ -724,6 +753,7 @@ let tests =
       [
         test_case "of_string_exn" `Quick test_time_of_string_exn;
         test_case "of_string_exn rejects garbage" `Quick test_time_of_string_exn_rejects_garbage;
+        test_case "rejects out of range" `Quick test_time_rejects_out_of_range;
       ] );
     ( "Collection",
       [
