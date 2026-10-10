@@ -118,7 +118,7 @@ end = struct
      the integer the wire format states, and ocaml-yaml writes a float with
      %.16g, which puts anything from 10^16 up in exponent form. An instant
      out of range used to reach Unix.gmtime, which crashed the CLI (#89). *)
-  let max_magnitude = 9007199254740991.
+  let max_magnitude = (2. ** 53.) -. 1.
 
   (* The only way to make a Time.t other than [empty]. [input] renders what
      the user wrote, for the message, and is called only to raise: YAML has
