@@ -29,7 +29,6 @@
   mustache
   semver
   str
-  unix
   uri
   yaml)
  (modules
