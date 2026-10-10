@@ -84,14 +84,12 @@ module Label_set = Yaml_set.Make (Label)
 module Label_map = Map.Make (Label)
 
 module Time = struct
-  type t = float * Unix.tm
+  type t = float
 
   exception Invalid_month_name of string
   exception Malformed of string
 
-  let empty =
-    let t = 0.0 in
-    (t, Unix.gmtime t)
+  let empty = 0.0
 
   let int_of_month_exn = function
     | "January" -> 1
@@ -169,17 +167,13 @@ module Time = struct
         end
     in
     let year, month, day, hour, min, sec = go formats in
-    let t = timegm ~year ~month ~day ~hour ~min ~sec in
-    (t, Unix.gmtime t)
+    timegm ~year ~month ~day ~hour ~min ~sec
 
-  let to_string t = fst t |> int_of_float |> string_of_int
-  let equal x y = Float.equal (fst x) (fst y)
-  let compare x y = Float.compare (fst x) (fst y)
+  let to_string t = int_of_float t |> string_of_int
+  let equal = Float.equal
+  let compare = Float.compare
   let pp = Fmt.(using to_string (quote string))
-
-  let t_of_yaml value =
-    let f = Yaml.Util.to_float_exn value in
-    (f, Unix.gmtime f)
+  let t_of_yaml = Yaml.Util.to_float_exn
 
   (* Time_set's entry hook, and only that: Yaml_set.Make drops a null entry
      before calling it, so it never sees one. A time has no absent value of its
@@ -187,7 +181,7 @@ module Time = struct
      is bad input. The optional time fields call t_of_yaml directly, since
      Entity.build skips a null field before decoding it. *)
   let option_of_yaml value = Some (t_of_yaml value)
-  let yaml_of_t time = Yaml.Util.float (fst time)
+  let yaml_of_t = Yaml.Util.float
 end
 
 module Time_set = Yaml_set.Make (Time)
@@ -544,7 +538,7 @@ module Html = struct
   let parse_timestamp (value : string) : Time.t =
     match Float.of_string_opt value with
     | None -> Time.empty
-    | Some timestamp -> (timestamp, Unix.gmtime timestamp)
+    | Some timestamp -> timestamp
 
   (* Split a TAGS attribute, trimming each tag and dropping empty ones. A
      value like "x, toread" is one tag "x" and the toread marker, not a tag
