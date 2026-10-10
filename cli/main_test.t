@@ -318,6 +318,17 @@ route that reads one (#89):
   hbt: fartime.json: date out of range "99999999999999-01-01T00:00:00Z"
   [123]
 
+Fields that would cancel into a wrong instant in range are refused too:
+
+  $ cat >cancel.md <<EOF
+  > # September -3652425000000000000, 10000000000000000
+  > 
+  > - [x](https://a.org/)
+  > EOF
+  $ hbt --info cancel.md
+  hbt: cancel.md: date out of range "September -3652425000000000000, 10000000000000000"
+  [123]
+
   $ cat >faradd.html <<EOF
   > <DL><p>
   > <DT><A HREF="https://a.org/" ADD_DATE="1e300">x</A>

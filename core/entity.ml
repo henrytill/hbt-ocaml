@@ -168,9 +168,10 @@ end = struct
      Hinnant's days_from_civil. [month] is 1-based. Computed in float, as is
      timegm, because the fields come straight from Scanf's %d: in int, a
      large enough year or day wrapped around silently and produced an
-     in-range instant that the input never stated (#89). Every value a real
-     date produces is a small integer, which float represents exactly, and
-     floor and trunc stand in for int division where its sign matters. *)
+     in-range instant that the input never stated (#89). Within
+     of_string_exn's field bound every value is an integer below 2^53, which
+     float represents exactly, and floor and trunc stand in for int division
+     where its sign matters. *)
   let days_from_civil year month day =
     let y =
       if month <= 2. then
@@ -193,6 +194,15 @@ end = struct
     let days = days_from_civil (f year) (f month) (f day) in
     (days *. 86400.) +. (f hour *. 3600.) +. (f min *. 60.) +. f sec
 
+  (* Fields of opposite sign can cancel: a huge year and a huge negative day
+     can sum to a date in range, through intermediates past 2^53 that float
+     has already rounded, so checking only the instant let a wrong one
+     through. Within 2^28 a field cannot do that - every intermediate and
+     partial sum timegm forms stays below 2^53, where float is exact - and a
+     year of 2^28 is about as far out as max_magnitude reaches anyway. *)
+  let max_field = 1 lsl 28
+  let out_of_field_range x = x > max_field || x < -max_field
+
   let of_string_exn (s : string) : t =
     (* The first format that parses wins. Running out of formats is the
        string's failure, whichever exception Scanf chose for the last one: it
@@ -206,6 +216,8 @@ end = struct
         end
     in
     let year, month, day, hour, min, sec = go formats in
+    if List.exists out_of_field_range [ year; month; day; hour; min; sec ] then
+      raise (Out_of_range s);
     of_float_exn ~input:(fun () -> s) (timegm ~year ~month ~day ~hour ~min ~sec)
 
   let to_string t = int_of_float t |> string_of_int
