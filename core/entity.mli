@@ -69,14 +69,18 @@ module Time : sig
 
   exception Out_of_range of string
   (** Raised for an instant more than [2^53 - 1] seconds from the epoch, or not a number at all,
-      carrying the input as written (by {!t_of_yaml}, the number as YAML would write it). *)
+      carrying the input as written (by {!t_of_yaml}, the number as YAML would write it). Also
+      raised by {!of_string_exn} for a date with any field beyond [2^28], whatever instant it would
+      produce. *)
 
   val of_string_exn : string -> t
   (** Raises {!Invalid_month_name} for an unknown month name, {!Malformed} for any other string that
       does not parse, and {!Out_of_range} for one that parses to an instant out of range, such as a
-      year of [99999999999999]. Unlike {!Name.of_string} there is no option-returning counterpart:
-      no caller wants to skip a bad date quietly, and an option would discard what was wrong with
-      it. *)
+      year of [99999999999999], or that has any field - year, month, day, hour, minute or second -
+      beyond [2^28], such as [1970-01-01T00:00:300000000Z]. The field bound keeps the arithmetic
+      exact: fields of opposite sign could otherwise cancel into a wrong instant that is in range.
+      Unlike {!Name.of_string} there is no option-returning counterpart: no caller wants to skip a
+      bad date quietly, and an option would discard what was wrong with it. *)
 
   val to_string : t -> string
   val equal : t -> t -> bool
