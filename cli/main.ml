@@ -85,6 +85,7 @@ let explain (file : string) : exn -> string option =
   | Entity.Empty field -> in_file "a %s cannot be empty" field
   | Entity.Time.Invalid_month_name month -> in_file "unknown month name %S" month
   | Entity.Time.Malformed date -> in_file "malformed date %S" date
+  | Entity.Time.Out_of_range date -> in_file "date out of range %S" date
   | Markdown.Missing_date uri -> in_file "%s appears before any date heading" uri
   | Pinboard.Post.Unexpected_xml_element name -> in_file "unexpected XML element %S" name
   | Yaml.Util.Value_error msg -> in_file "%s" msg

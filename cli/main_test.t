@@ -299,6 +299,58 @@ Test that a malformed Pinboard time is reported:
   hbt: badtime.json: malformed date "yesterday"
   [123]
 
+Test that a date out of range is reported, not an internal error, by every
+route that reads one (#89):
+
+  $ cat >farheading.md <<EOF
+  > # September 3, 99999999999999
+  > 
+  > - [x](https://a.org/)
+  > EOF
+  $ hbt --info farheading.md
+  hbt: farheading.md: date out of range "September 3, 99999999999999"
+  [123]
+
+  $ cat >fartime.json <<EOF
+  > [{"href": "https://a.org/", "description": "x", "extended": "", "meta": "", "hash": "", "time": "99999999999999-01-01T00:00:00Z", "shared": "no", "toread": "no", "tags": ""}]
+  > EOF
+  $ hbt --info fartime.json
+  hbt: fartime.json: date out of range "99999999999999-01-01T00:00:00Z"
+  [123]
+
+  $ cat >faradd.html <<EOF
+  > <DL><p>
+  > <DT><A HREF="https://a.org/" ADD_DATE="1e300">x</A>
+  > </DL><p>
+  > EOF
+  $ hbt --info faradd.html
+  hbt: faradd.html: date out of range "1e300"
+  [123]
+
+  $ cat >nanadd.html <<EOF
+  > <DL><p>
+  > <DT><A HREF="https://a.org/" LAST_MODIFIED="nan">x</A>
+  > </DL><p>
+  > EOF
+  $ hbt --info nanadd.html
+  hbt: nanadd.html: date out of range "nan"
+  [123]
+
+  $ cat >far.yaml <<EOF
+  > version: 0.1.0
+  > length: 1
+  > value:
+  > - id: 0
+  >   entity:
+  >     uri: https://a.org/
+  >     createdAt: 1e300
+  >     updatedAt: []
+  >   edges: []
+  > EOF
+  $ hbt --info far.yaml
+  hbt: far.yaml: date out of range "1e+300"
+  [123]
+
 # Local Variables:
 # mode: prog
 # tab-width: 2

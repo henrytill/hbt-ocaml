@@ -88,8 +88,25 @@ module Time = struct
 
   exception Invalid_month_name of string
   exception Malformed of string
+  exception Out_of_range of string
 
   let empty = 0.0
+
+  (* 2^53 - 1, the largest integer a float represents exactly, so some 285
+     million years either side of the epoch. Beyond it a Time.t cannot hold
+     the integer the wire format states, and ocaml-yaml writes a float with
+     %.16g, which puts anything from 10^16 up in exponent form. An instant
+     out of range used to reach Unix.gmtime, which crashed the CLI (#89). *)
+  let max_magnitude = 9007199254740991.
+
+  (* Every route to a Time.t goes through here, the parsers in this module
+     and Html.parse_timestamp alike. [input] is what the user wrote, for the
+     message; NaN fails the comparison and so is out of range too. *)
+  let of_float_exn ~input t =
+    if Float.abs t <= max_magnitude then
+      t
+    else
+      raise (Out_of_range input)
 
   let int_of_month_exn = function
     | "January" -> 1
@@ -167,13 +184,17 @@ module Time = struct
         end
     in
     let year, month, day, hour, min, sec = go formats in
-    timegm ~year ~month ~day ~hour ~min ~sec
+    of_float_exn ~input:s (timegm ~year ~month ~day ~hour ~min ~sec)
 
   let to_string t = int_of_float t |> string_of_int
   let equal = Float.equal
   let compare = Float.compare
   let pp = Fmt.(using to_string (quote string))
-  let t_of_yaml = Yaml.Util.to_float_exn
+
+  let t_of_yaml value =
+    let f = Yaml.Util.to_float_exn value in
+    (* Spelled as ocaml-yaml writes a float, so 2^53 reads as an integer. *)
+    of_float_exn ~input:(Printf.sprintf "%.16g" f) f
 
   (* Time_set's entry hook, and only that: Yaml_set.Make drops a null entry
      before calling it, so it never sees one. A time has no absent value of its
@@ -538,7 +559,7 @@ module Html = struct
   let parse_timestamp (value : string) : Time.t =
     match Float.of_string_opt value with
     | None -> Time.empty
-    | Some timestamp -> timestamp
+    | Some timestamp -> Time.of_float_exn ~input:value timestamp
 
   (* Split a TAGS attribute, trimming each tag and dropping empty ones. A
      value like "x, toread" is one tag "x" and the toread marker, not a tag
