@@ -83,7 +83,28 @@ end
 module Label_set = Yaml_set.Make (Label)
 module Label_map = Map.Make (Label)
 
-module Time = struct
+(* Abstract here as well as in entity.mli, so that of_float_exn's range
+   check binds the rest of this file too: Html.parse_timestamp used to build
+   a Time.t by hand, and nothing but a comment kept it going through the
+   check (#89). *)
+module Time : sig
+  type t
+
+  exception Invalid_month_name of string
+  exception Malformed of string
+  exception Out_of_range of string
+
+  val empty : t
+  val of_float_exn : input:(unit -> string) -> float -> t
+  val of_string_exn : string -> t
+  val to_string : t -> string
+  val equal : t -> t -> bool
+  val compare : t -> t -> int
+  val pp : Format.formatter -> t -> unit
+  val t_of_yaml : Yaml.value -> t
+  val option_of_yaml : Yaml.value -> t option
+  val yaml_of_t : t -> Yaml.value
+end = struct
   type t = float
 
   exception Invalid_month_name of string
@@ -99,11 +120,10 @@ module Time = struct
      out of range used to reach Unix.gmtime, which crashed the CLI (#89). *)
   let max_magnitude = 9007199254740991.
 
-  (* Every route to a Time.t goes through here, the parsers in this module
-     and Html.parse_timestamp alike. [input] renders what the user wrote, for
-     the message, and is called only to raise: YAML has to format it, and
-     doing that for every timestamp in range was wasted work. NaN fails the
-     comparison and so is out of range too. *)
+  (* The only way to make a Time.t other than [empty]. [input] renders what
+     the user wrote, for the message, and is called only to raise: YAML has
+     to format it, and doing that for every timestamp in range was wasted
+     work. NaN fails the comparison and so is out of range too. *)
   let of_float_exn ~input t =
     if Float.abs t <= max_magnitude then
       t
