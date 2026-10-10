@@ -369,7 +369,21 @@ let test_time_rejects_out_of_range () =
     (fun input ->
       Alcotest.check_raises input (Time.Out_of_range input) (fun () ->
           ignore (Time.of_string_exn input)))
-    [ "September 3, 99999999999999"; "99999999999999-01-01"; "-99999999999999-01-01" ];
+    [
+      "September 3, 99999999999999";
+      "99999999999999-01-01";
+      "-99999999999999-01-01";
+      (* Fields that cancel, through intermediates float has rounded, into a
+         wrong instant that is itself in range. *)
+      "September -3652425000000000000, 10000000000000000";
+      "1970-01-1000000000000000T-24000000000000000:00:00Z";
+      (* Just past the field bound. *)
+      "268435457-01-01";
+    ];
+  Alcotest.(check string)
+    "a year at the field bound parses"
+    "8470942632864000"
+    (Time.to_string (Time.of_string_exn "268435456-01-01"));
   List.iter
     (fun (f, input) ->
       Alcotest.check_raises input (Time.Out_of_range input) (fun () ->
