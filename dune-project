@@ -48,6 +48,10 @@
   (qcheck-alcotest
    (and
     :with-test
+    (>= 0.91)))
+  (qcheck-core
+   (and
+    :with-test
     (>= 0.91)))))
 
 (package
@@ -82,6 +86,10 @@
     :with-test
     (>= 1.7.0)))
   (qcheck-alcotest
+   (and
+    :with-test
+    (>= 0.91)))
+  (qcheck-core
    (and
     :with-test
     (>= 0.91)))
