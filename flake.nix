@@ -49,7 +49,12 @@
           });
           hbt-cli = prev.hbt-cli.overrideAttrs (
             as:
-            pkgs.lib.optionalAttrs isStatic {
+            {
+              meta = (as.meta or { }) // {
+                mainProgram = "hbt";
+              };
+            }
+            // pkgs.lib.optionalAttrs isStatic {
               buildPhase = ''
                 runHook preBuild
                 dune build -p hbt-cli --profile static -j $NIX_BUILD_CORES
