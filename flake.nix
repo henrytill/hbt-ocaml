@@ -108,7 +108,7 @@
             pkgs = nixpkgs.legacyPackages.${system};
 
             ocaml-manual-wrapped = pkgs.writeShellScriptBin "ocaml-manual" ''
-              exec ${pkgs.xdg-utils}/bin/xdg-open "${scope.ocaml-manual}/share/doc/index.html"
+              exec ${pkgs.lib.getExe' pkgs.xdg-utils "xdg-open"} "${scope.ocaml-manual}/share/doc/index.html"
             '';
 
             ocpEnv = pkgs.buildEnv {
@@ -117,16 +117,16 @@
             };
 
             ocp-browser-wrapped = pkgs.writeShellScriptBin "ocp-browser" ''
-              exec ${scope.ocp-browser}/bin/ocp-browser --no-opamlib -I "${ocpEnv}/lib/ocaml/${scope.ocaml.version}/site-lib" "$@"
+              exec ${pkgs.lib.getExe' scope.ocp-browser "ocp-browser"} --no-opamlib -I "${ocpEnv}/lib/ocaml/${scope.ocaml.version}/site-lib" "$@"
             '';
 
             ocp-index-wrapped = pkgs.writeShellScriptBin "ocp-index" ''
               if [ $# -eq 0 ]; then
-                exec ${scope.ocp-index}/bin/ocp-index
+                exec ${pkgs.lib.getExe' scope.ocp-index "ocp-index"}
               else
                 cmd="$1"
                 shift
-                exec ${scope.ocp-index}/bin/ocp-index "$cmd" --no-opamlib -I "${ocpEnv}/lib/ocaml/${scope.ocaml.version}/site-lib" "$@"
+                exec ${pkgs.lib.getExe' scope.ocp-index "ocp-index"} "$cmd" --no-opamlib -I "${ocpEnv}/lib/ocaml/${scope.ocaml.version}/site-lib" "$@"
               fi
             '';
 
@@ -181,7 +181,7 @@
           hbt-attic = legacyPackages.hbt-attic;
           hbt-cli = legacyPackages.hbt-cli;
           conformance = hbt-data.lib.${system}.check {
-            binary = "${legacyPackages.hbt-cli}/bin/hbt";
+            binary = nixpkgs.lib.getExe legacyPackages.hbt-cli;
             waivers = ./conformance.waivers;
           };
         };
